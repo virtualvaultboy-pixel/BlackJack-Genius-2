@@ -2,7 +2,7 @@
   "name": "BlackJack Genius",
   "short_name": "BJ Genius",
   "description": "Tableau de stratégie de base pour le blackjack",
-  "start_url": "./Index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a5530",
   "theme_color": "#0a5530",
