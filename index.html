@@ -532,7 +532,7 @@ body.lite .ts-expert-card{position:relative;}
       </div>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.5</span></div>
       <div class="hdr-sub">Tableau de base standard</div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
@@ -4227,20 +4227,18 @@ let camStream=null,camOnnxSession=null,camOnnxLoading=false,camLastDetections=[]
 // Sert avec headers CORS, durable depuis 2017, gratuit pour les modèles publics.
 // Pour mettre à jour : push une nouvelle version sur huggingface.co/Deponchy/bjg-cards
 // et bump le query param ?v=N ci-dessous pour forcer le re-fetch.
-const CAM_MODEL_URL="https://huggingface.co/Deponchy/bjg-cards/resolve/main/bjg-cards.onnx?v=1";
+const CAM_MODEL_URL="https://huggingface.co/Deponchy/bjg-cards/resolve/main/bjg-cards.onnx?v=2";
 const CAM_INPUT_SIZE=640;
 const CAM_CONF=0.45;
 const CAM_IOU=0.45;
 const CAM_ORT_URL="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js";
-// Ordre des 52 classes du modèle BJ Genius (yolov8m_synthetic, source TeogopK).
-// Si tu remplaces par un autre modèle, vérifie son data.yaml (clé "names") et
-// remplace ce tableau par celui-ci. Les casses minuscules sont normales — la regex
-// camLabelToRank est insensible à la casse.
+// Ordre des 52 classes du modèle BJ Genius v2 (yolov8n, source mustafakemal0146/playing-cards-yolov8).
+// Suffixes en MAJUSCULES (C/D/H/S). La regex camLabelToRank est insensible à la casse.
 const CAM_CLASSES=[
-  "10c","10d","10h","10s","2c","2d","2h","2s","3c","3d","3h","3s",
-  "4c","4d","4h","4s","5c","5d","5h","5s","6c","6d","6h","6s",
-  "7c","7d","7h","7s","8c","8d","8h","8s","9c","9d","9h","9s",
-  "Ac","Ad","Ah","As","Jc","Jd","Jh","Js","Kc","Kd","Kh","Ks","Qc","Qd","Qh","Qs"
+  "10C","10D","10H","10S","2C","2D","2H","2S","3C","3D","3H","3S",
+  "4C","4D","4H","4S","5C","5D","5H","5S","6C","6D","6H","6S",
+  "7C","7D","7H","7S","8C","8D","8H","8S","9C","9D","9H","9S",
+  "AC","AD","AH","AS","JC","JD","JH","JS","KC","KD","KH","KS","QC","QD","QH","QS"
 ];
 
 function camLoadOrt(){
