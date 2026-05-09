@@ -475,6 +475,38 @@ body.lite .ts-expert-card{position:relative;}
 .promo-feedback{font-size:0.62rem;margin-top:7px;padding:6px 9px;border-radius:7px;letter-spacing:0.5px;min-height:14px;visibility:hidden;}
 .promo-feedback.ok{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);visibility:visible;}
 .promo-feedback.ko{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);visibility:visible;}
+
+/* ── CAMERA SCAN (PRO) ── */
+.hdr-row{display:flex;gap:4px;align-items:center;}
+.cam-btn-pill{border-radius:11px;background:rgba(0,0,0,0.32);border:1.5px solid rgba(212,184,99,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:3px 6px;gap:2px;transition:all 0.22s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);position:relative;}
+.cam-btn-pill:active{transform:scale(0.95);}
+.cam-btn-pill.on{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);}
+.cam-modal{display:none;position:fixed;inset:0;background:#000;z-index:300;}
+.cam-modal.show{display:block;}
+.cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;}
+.cam-topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;z-index:2;background:linear-gradient(180deg,rgba(0,0,0,0.7),transparent);}
+.cam-status{flex:1;font-size:0.7rem;color:#f0ece0;letter-spacing:0.5px;line-height:1.3;}
+.cam-close-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.55);color:#f0ece0;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;flex-shrink:0;}
+.cam-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84%;aspect-ratio:1;border:2px dashed rgba(201,168,76,0.6);border-radius:14px;pointer-events:none;z-index:1;}
+.cam-frame-hint{position:absolute;bottom:-30px;left:0;right:0;text-align:center;font-size:0.58rem;color:rgba(240,236,224,0.85);letter-spacing:1px;text-transform:uppercase;}
+.cam-bottombar{position:absolute;bottom:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding:24px 14px 32px;z-index:2;background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);gap:14px;}
+.cam-snap-btn{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid #f0ece0;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.cam-snap-btn:active{transform:scale(0.92);}
+.cam-snap-btn[disabled]{opacity:0.5;pointer-events:none;}
+.cam-snap-inner{width:56px;height:56px;border-radius:50%;background:#f0ece0;}
+.cam-results{width:100%;max-width:430px;background:rgba(10,20,14,0.95);border:1px solid rgba(201,168,76,0.3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.cam-results-title{font-size:0.62rem;color:rgba(240,236,224,0.55);letter-spacing:1px;text-transform:uppercase;text-align:center;}
+.cam-results-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+.cam-result-chip{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:#c9a84c;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;letter-spacing:0.5px;}
+.cam-result-chip.dealer{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:#ef4444;}
+.cam-result-chip.dealer::before{content:"♣ ";font-size:0.6rem;}
+.cam-result-chip.player{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;}
+.cam-result-chip.player::before{content:"♠ ";font-size:0.6rem;}
+.cam-results-actions{display:flex;gap:8px;justify-content:center;}
+.cam-btn-act{flex:1;padding:10px;border-radius:8px;font-size:0.68rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;border:none;cursor:pointer;}
+.cam-btn-act:active{transform:scale(0.96);}
+.cam-btn-retry{background:rgba(240,236,224,0.1);color:#f0ece0;border:1px solid rgba(240,236,224,0.2);}
+.cam-btn-confirm{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;}
 </style>
 </head>
 <body>
@@ -486,14 +518,21 @@ body.lite .ts-expert-card{position:relative;}
         <span style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Hi-Lo<br><span class="hilo-val neu" id="hilo-val">0</span></span>
         <div class="lock-ind">🔒</div>
       </div>
-      <div class="mic-btn" id="mic-btn" onclick="onMicBtnTap()">
-        <span style="font-size:0.85rem">🎤</span>
-        <span id="mic-label" style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Vocal<br>OFF</span>
-        <div class="lock-ind">🔒</div>
+      <div class="hdr-row">
+        <div class="mic-btn" id="mic-btn" onclick="onMicBtnTap()">
+          <span style="font-size:0.85rem">🎤</span>
+          <span id="mic-label" style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Vocal<br>OFF</span>
+          <div class="lock-ind">🔒</div>
+        </div>
+        <div class="cam-btn-pill" id="cam-btn" onclick="onCamBtnTap()">
+          <span style="font-size:0.85rem">📷</span>
+          <span id="cam-label" style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Scan<br>&nbsp;</span>
+          <div class="lock-ind">🔒</div>
+        </div>
       </div>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.5</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.7</span></div>
       <div class="hdr-sub">Tableau de base standard</div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
@@ -562,6 +601,31 @@ body.lite .ts-expert-card{position:relative;}
 <div class="voice-toast" id="voice-toast">
   <div class="voice-toast-ico">🎤</div>
   <div class="voice-toast-txt" id="voice-toast-txt">En écoute...</div>
+</div>
+
+<!-- CAMERA MODAL (PRO) -->
+<div class="cam-modal" id="cam-modal">
+  <video class="cam-video" id="cam-video" playsinline muted></video>
+  <div class="cam-topbar">
+    <div class="cam-status" id="cam-status"></div>
+    <div class="cam-close-btn" onclick="camClose()">✕</div>
+  </div>
+  <div class="cam-frame">
+    <div class="cam-frame-hint" id="cam-frame-hint">Cadre la main + carte du croupier</div>
+  </div>
+  <div class="cam-bottombar">
+    <div class="cam-snap-btn" id="cam-snap-btn" onclick="camSnap()">
+      <div class="cam-snap-inner"></div>
+    </div>
+    <div class="cam-results" id="cam-results" style="display:none">
+      <div class="cam-results-title" id="cam-results-title">Cartes détectées</div>
+      <div class="cam-results-list" id="cam-results-list"></div>
+      <div class="cam-results-actions">
+        <button class="cam-btn-act cam-btn-retry" onclick="camRetry()" id="cam-btn-retry">↺ Re-scan</button>
+        <button class="cam-btn-act cam-btn-confirm" onclick="camConfirm()" id="cam-btn-confirm">✓ Valider</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- EASTER EGG -->
@@ -740,6 +804,7 @@ body.lite .ts-expert-card{position:relative;}
     <div class="setting-row" id="si-discrete"><div class="setting-label">🌑 Mode discret</div><div class="toggle" id="toggle-discrete" onclick="toggleDiscrete()"></div></div>
     <div class="setting-row" id="si-font"><div class="setting-label">🔤 Grande police</div><div class="toggle" id="toggle-font" onclick="toggleFont()"></div></div>
     <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
+    <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
     <div class="setting-row">
       <div class="setting-label">🌍 Langue</div>
@@ -952,6 +1017,7 @@ body.lite .ts-expert-card{position:relative;}
     <div class="pw-features">
       <div class="pw-feat"><span class="pw-feat-ico">📊</span><span id="pw-f-stats">Statistiques détaillées (% gain / perte / bust / égalité)</span><span class="pw-feat-check">✓</span></div>
       <div class="pw-feat"><span class="pw-feat-ico">🎤</span><span id="pw-f-voice">Commande vocale</span><span class="pw-feat-check">✓</span></div>
+      <div class="pw-feat"><span class="pw-feat-ico">📷</span><span id="pw-f-cam">Scan caméra des cartes</span><span class="pw-feat-check">✓</span></div>
       <div class="pw-feat"><span class="pw-feat-ico">🔢</span><span id="pw-f-hilo">Compteur Hi-Lo en temps réel</span><span class="pw-feat-check">✓</span></div>
       <div class="pw-feat"><span class="pw-feat-ico">⚡</span><span id="pw-f-expert">Mode Expert — simulation casino</span><span class="pw-feat-check">✓</span></div>
     </div>
@@ -1194,6 +1260,8 @@ const LANGS={
     drawerDiscrete:"Mode discret", drawerDiscreteSub:"Écran sombre et discret",
     drawerFont:"Grande police", drawerFontSub:"Texte et cartes plus grands",
     drawerMic:"Commande vocale", drawerMicSub:"Entrée des cartes à la voix",
+    drawerCam:"Scan caméra", drawerCamSub:"Détecte les cartes par photo",
+    camRowOpen:"Ouvrir ›",
     drawerSpeak:"Annonce vocale", drawerSpeakSub:"L'app lit la décision à voix haute",
     drawerSettings:"Paramètres", drawerSettingsSub:"Affichage, son, langue",
     drawerLangLabel:"Langue de l'interface",
@@ -1209,6 +1277,12 @@ const LANGS={
     voiceErrChrome:"❌ Utilise Chrome", voiceLabelOn:"Vocal<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Vocal<br>OFF",
     voiceReset:"↺ Nouvelle main !", voiceSplit:"✂️ Split !", voiceNoSplit:"❌ Pas de split possible",
     voiceHand1:"→ Main 1", voiceHand2:"→ Main 2",
+    camStarting:"📷 Démarrage caméra...", camAnalyzing:"🔍 Analyse...", camErrPerm:"Caméra refusée",
+    camNoModel:"Modèle non chargé. Place bjg-cards.onnx à la racine.",
+    camInferErr:"Erreur de détection", camNoCard:"Aucune carte détectée — meilleure lumière ?",
+    camDealer:"Croupier", camPlayer:"Toi", camResultsTitle:"Cartes détectées",
+    camFrameHint:"Cadre la main + carte du croupier",
+    camRetry:"↺ Re-scan", camConfirm:"✓ Valider",
     explainH:"Votre total est trop bas pour rester. Tirer une bonne carte est plus probable que de perdre.",
     explainS:"Votre main est assez forte. Le croupier a plus de chances de bust que de vous battre.",
     explainD:"Configuration idéale : votre total fort + carte croupier faible = doublez !",
@@ -1258,6 +1332,7 @@ const LANGS={
     pwSubtitle:"Toutes les fonctionnalités avancées",
     pwFStats:"Statistiques détaillées (% gain / perte / bust / égalité)",
     pwFVoice:"Commande vocale",
+    pwFCam:"Scan caméra des cartes",
     pwFHilo:"Compteur Hi-Lo en temps réel",
     pwFExpert:"Mode Expert — simulation casino",
     pwFDiscrete:"Mode discret",
@@ -1418,6 +1493,8 @@ const LANGS={
     tutoSpD6:"Compte automatiquement les cartes du sabot pour savoir quand le jeu est en ta faveur. <strong>Disponible avec Pro</strong>.",
     tutoSpT7:"Commande vocale",
     tutoSpD7:"Annonce les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
+    tutoSpTcam:"Scan caméra",
+    tutoSpDcam:"Pointe ta caméra vers la table : l'app détecte ta main et la carte du croupier en une photo, sans saisie. <strong>Disponible avec Pro</strong>.",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -1465,6 +1542,8 @@ const LANGS={
     drawerDiscrete:"Discrete mode", drawerDiscreteSub:"Dark and discreet screen",
     drawerFont:"Large font", drawerFontSub:"Bigger text and cards",
     drawerMic:"Voice command", drawerMicSub:"Enter cards by voice",
+    drawerCam:"Camera scan", drawerCamSub:"Detect cards by photo",
+    camRowOpen:"Open ›",
     drawerSpeak:"Voice announcement", drawerSpeakSub:"App reads decision aloud",
     drawerSettings:"Settings", drawerSettingsSub:"Display, sound, language",
     drawerLangLabel:"Interface language",
@@ -1480,6 +1559,12 @@ const LANGS={
     voiceErrChrome:"❌ Use Chrome", voiceLabelOn:"Voice<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Voice<br>OFF",
     voiceReset:"↺ New hand!", voiceSplit:"✂️ Split!", voiceNoSplit:"❌ Split not available",
     voiceHand1:"→ Hand 1", voiceHand2:"→ Hand 2",
+    camStarting:"📷 Starting camera...", camAnalyzing:"🔍 Analyzing...", camErrPerm:"Camera denied",
+    camNoModel:"Model not loaded. Place bjg-cards.onnx at root.",
+    camInferErr:"Detection error", camNoCard:"No card detected — better light?",
+    camDealer:"Dealer", camPlayer:"You", camResultsTitle:"Detected cards",
+    camFrameHint:"Frame your hand + dealer card",
+    camRetry:"↺ Re-scan", camConfirm:"✓ Confirm",
     explainH:"Your total is too low to stand. Drawing a good card is more likely than losing.",
     explainS:"Your hand is strong enough. The dealer is more likely to bust than to beat you.",
     explainD:"Ideal setup: your strong total + weak dealer card = double!",
@@ -1529,6 +1614,7 @@ const LANGS={
     pwSubtitle:"All advanced features",
     pwFStats:"Detailed statistics (% win / lose / bust / push)",
     pwFVoice:"Voice command",
+    pwFCam:"Camera card scan",
     pwFHilo:"Real-time Hi-Lo counter",
     pwFExpert:"Expert Mode — casino simulation",
     pwFDiscrete:"Discrete mode",
@@ -1689,6 +1775,8 @@ const LANGS={
     tutoSpD6:"Automatically counts the shoe to know when the deck favors you. <strong>Available with Pro</strong>.",
     tutoSpT7:"Voice command",
     tutoSpD7:"Speak the cards out loud, the app recognizes them and computes the decision. <strong>Available with Pro</strong>.",
+    tutoSpTcam:"Camera scan",
+    tutoSpDcam:"Point your camera at the table: the app detects your hand and the dealer's card in one photo, no input. <strong>Available with Pro</strong>.",
     tutoSpT8:"Ready to level up?",
     tutoSpD8:"Unlock all Pro features for <strong>$4.99</strong> for life. One-time purchase, no subscription.",
     tutoSpFinal1:"5 Pro features for life",
@@ -1736,6 +1824,8 @@ const LANGS={
     drawerDiscrete:"Modo discreto", drawerDiscreteSub:"Pantalla oscura y discreta",
     drawerFont:"Letra grande", drawerFontSub:"Texto y cartas más grandes",
     drawerMic:"Comando de voz", drawerMicSub:"Entrada de cartas por voz",
+    drawerCam:"Escaneo cámara", drawerCamSub:"Detecta cartas por foto",
+    camRowOpen:"Abrir ›",
     drawerSpeak:"Anuncio de voz", drawerSpeakSub:"La app lee la decisión en voz alta",
     drawerSettings:"Ajustes", drawerSettingsSub:"Pantalla, sonido, idioma",
     drawerLangLabel:"Idioma de la interfaz",
@@ -1751,6 +1841,12 @@ const LANGS={
     voiceErrChrome:"❌ Usa Chrome", voiceLabelOn:"Voz<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Voz<br>OFF",
     voiceReset:"↺ ¡Nueva mano!", voiceSplit:"✂️ ¡Dividir!", voiceNoSplit:"❌ No se puede dividir",
     voiceHand1:"→ Mano 1", voiceHand2:"→ Mano 2",
+    camStarting:"📷 Iniciando cámara...", camAnalyzing:"🔍 Analizando...", camErrPerm:"Cámara denegada",
+    camNoModel:"Modelo no cargado. Coloca bjg-cards.onnx en la raíz.",
+    camInferErr:"Error de detección", camNoCard:"Ninguna carta detectada — ¿mejor luz?",
+    camDealer:"Crupier", camPlayer:"Tú", camResultsTitle:"Cartas detectadas",
+    camFrameHint:"Encuadra tu mano + carta del crupier",
+    camRetry:"↺ Re-scan", camConfirm:"✓ Confirmar",
     explainH:"Tu total es demasiado bajo para plantarte. Sacar una buena carta es más probable que perder.",
     explainS:"Tu mano es lo suficientemente fuerte. El crupier tiene más probabilidades de pasarse que de ganarte.",
     explainD:"Configuración ideal: tu total fuerte + carta débil del crupier = ¡dobla!",
@@ -1800,6 +1896,7 @@ const LANGS={
     pwSubtitle:"Todas las funciones avanzadas",
     pwFStats:"Estadísticas detalladas (% gana / pierde / bust / empate)",
     pwFVoice:"Comando de voz",
+    pwFCam:"Escaneo cámara de cartas",
     pwFHilo:"Contador Hi-Lo en tiempo real",
     pwFExpert:"Modo Experto — simulación casino",
     pwFDiscrete:"Modo discreto",
@@ -1960,6 +2057,8 @@ const LANGS={
     tutoSpD6:"Cuenta automáticamente las cartas del zapato para saber cuándo el juego te favorece. <strong>Disponible con Pro</strong>.",
     tutoSpT7:"Comando de voz",
     tutoSpD7:"Di las cartas en voz alta, la app las reconoce y calcula la decisión. <strong>Disponible con Pro</strong>.",
+    tutoSpTcam:"Escaneo cámara",
+    tutoSpDcam:"Apunta la cámara a la mesa: la app detecta tu mano y la carta del crupier en una foto, sin escribir. <strong>Disponible con Pro</strong>.",
     tutoSpT8:"¿Listo para subir de nivel?",
     tutoSpD8:"Desbloquea todas las funciones Pro por <strong>4,99 €</strong> de por vida. Compra única, sin suscripción.",
     tutoSpFinal1:"5 funciones Pro de por vida",
@@ -2084,24 +2183,29 @@ function applyLang(){
     if(l&&lbl)l.textContent=lbl;
     if(s&&sub)s.textContent=sub;
   });
-  // Settings popup items
+  // Settings popup items (avec emoji prefix conservé pour ne pas perdre l'icône au switch de langue)
+  const settingEmojis={'si-discrete':'🌑','si-font':'🔤','si-mic':'🎤','si-cam':'📷','si-speak':'🔊'};
   [['si-discrete',t.drawerDiscrete],['si-font',t.drawerFont],
-   ['si-mic',t.drawerMic],['si-speak',t.drawerSpeak]
+   ['si-mic',t.drawerMic],['si-cam',t.drawerCam],['si-speak',t.drawerSpeak]
   ].forEach(([id,lbl])=>{
     const el=document.getElementById(id);
-    if(el&&lbl){const l=el.querySelector('.setting-label');if(l)l.textContent=lbl;}
+    if(el&&lbl){const l=el.querySelector('.setting-label');if(l){const e=settingEmojis[id]||'';l.textContent=(e?e+' ':'')+lbl;}}
   });
     // Settings popup items
   const sm={
     'si-discrete':[t.drawerDiscrete,t.drawerDiscreteSub],
     'si-font':[t.drawerFont,t.drawerFontSub],
     'si-mic':[t.drawerMic,t.drawerMicSub],
+    'si-cam':[t.drawerCam,t.drawerCamSub],
     'si-speak':[t.drawerSpeak,t.drawerSpeakSub]
   };
   Object.entries(sm).forEach(([id,[lbl,sub]])=>{
     const el=document.getElementById(id);
-    if(el){el.querySelector('.setting-label').textContent=lbl;}
+    if(el){const e=settingEmojis[id]||'';el.querySelector('.setting-label').textContent=(e?e+' ':'')+lbl;}
   });
+  // Action "Ouvrir ›" du si-cam
+  const camAction=document.getElementById("cam-row-action");
+  if(camAction&&t.camRowOpen)camAction.textContent=t.camRowOpen;
   // Settings sub-page title
   const setTitle=document.getElementById("drawer-settings-title");
   if(setTitle)setTitle.textContent=t.drawerSettings;
@@ -2148,6 +2252,7 @@ function applyLang(){
   tut("pw-subtitle","pwSubtitle");
   tut("pw-f-stats","pwFStats");
   tut("pw-f-voice","pwFVoice");
+  tut("pw-f-cam","pwFCam");
   tut("pw-f-hilo","pwFHilo");
   tut("pw-f-expert","pwFExpert");
   tut("pw-cta-txt","pwCtaTxt");
@@ -2789,7 +2894,8 @@ const TUTO_STEPS=[
   {target:null,icon:"❌",titleKey:"tutoSpT4",descKey:"tutoSpD4",centered:true,interactive:'reset'},
   {target:"#burger-btn",icon:"☰",titleKey:"tutoSpT5",descKey:"tutoSpD5"},
   {target:"#hilo-badge",icon:"🔢",titleKey:"tutoSpT6",descKey:"tutoSpD6",pro:true},
-  {target:"#mic-btn",icon:"🎤",titleKey:"tutoSpT7",descKey:"tutoSpD7",pro:true}
+  {target:"#mic-btn",icon:"🎤",titleKey:"tutoSpT7",descKey:"tutoSpD7",pro:true},
+  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true}
 ];
 
 // Vérifie si la condition d'une étape interactive est remplie
@@ -4105,6 +4211,262 @@ function startRecognition(){
 
 function showVoiceToast(msg){document.getElementById("voice-toast-txt").textContent=msg;document.getElementById("voice-toast").classList.add("show");}
 function hideVoiceToast(){document.getElementById("voice-toast").classList.remove("show");}
+
+// ═══════════════════════════════════════════════════════════════════
+// ══ CAMERA SCAN (PRO) ══
+// ═══════════════════════════════════════════════════════════════════
+// Détection de cartes via modèle YOLOv8 ONNX local (bjg-cards.onnx).
+// Inférence 100% on-device via onnxruntime-web (chargé à la demande).
+// Aucun appel réseau après le 1er chargement (lib + modèle mis en cache navigateur).
+
+let camStream=null,camOnnxSession=null,camOnnxLoading=false,camLastDetections=[];
+const CAM_MODEL_URL="./bjg-cards.onnx";
+const CAM_INPUT_SIZE=640;
+const CAM_CONF=0.45;
+const CAM_IOU=0.45;
+const CAM_ORT_URL="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js";
+// Ordre des 52 classes du modèle Roboflow (ordre alphabétique standard).
+// Si l'export Roboflow utilise un autre ordre (vérifie dans data.yaml du download),
+// remplace ce tableau par celui du data.yaml (clés "names").
+const CAM_CLASSES=[
+  "10C","10D","10H","10S","2C","2D","2H","2S","3C","3D","3H","3S",
+  "4C","4D","4H","4S","5C","5D","5H","5S","6C","6D","6H","6S",
+  "7C","7D","7H","7S","8C","8D","8H","8S","9C","9D","9H","9S",
+  "AC","AD","AH","AS","JC","JD","JH","JS","KC","KD","KH","KS","QC","QD","QH","QS"
+];
+
+function camLoadOrt(){
+  return new Promise((res,rej)=>{
+    if(window.ort){res();return;}
+    const s=document.createElement("script");
+    s.src=CAM_ORT_URL;
+    s.onload=()=>res();
+    s.onerror=()=>rej(new Error("ort_load_failed"));
+    document.head.appendChild(s);
+  });
+}
+
+async function camLoadModel(){
+  if(camOnnxSession||camOnnxLoading)return;
+  camOnnxLoading=true;
+  try{
+    await camLoadOrt();
+    camOnnxSession=await window.ort.InferenceSession.create(CAM_MODEL_URL,{executionProviders:["wasm"]});
+    console.log("[BJG cam] Modèle chargé. Inputs:",camOnnxSession.inputNames,"Outputs:",camOnnxSession.outputNames);
+  } catch(e){
+    console.warn("[BJG cam] Modèle ONNX non chargé:",e.message);
+    camOnnxSession=null;
+  } finally {
+    camOnnxLoading=false;
+  }
+}
+
+async function camOpen(){
+  if(!isPremium){openPaywall("camera");return;}
+  const tr=LANGS[currentLang]||LANGS.fr;
+  document.getElementById("cam-modal").classList.add("show");
+  document.getElementById("cam-status").textContent=tr.camStarting||"📷 Caméra...";
+  document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Cadre la main + carte du croupier";
+  document.getElementById("cam-results-title").textContent=tr.camResultsTitle||"Cartes détectées";
+  document.getElementById("cam-btn-retry").textContent=tr.camRetry||"↺ Re-scan";
+  document.getElementById("cam-btn-confirm").textContent=tr.camConfirm||"✓ Valider";
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    const v=document.getElementById("cam-video");
+    v.srcObject=camStream;
+    await v.play();
+    document.getElementById("cam-status").textContent="";
+  } catch(e){
+    document.getElementById("cam-status").textContent="❌ "+(tr.camErrPerm||"Caméra refusée");
+    return;
+  }
+  camLoadModel(); // lazy load en parallèle
+}
+
+function camClose(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const v=document.getElementById("cam-video");
+  if(v)v.srcObject=null;
+  document.getElementById("cam-modal").classList.remove("show");
+  document.getElementById("cam-results").style.display="none";
+  document.getElementById("cam-snap-btn").style.display="";
+  document.getElementById("cam-snap-btn").disabled=false;
+  document.getElementById("cam-status").textContent="";
+  camLastDetections=[];
+}
+
+async function camSnap(){
+  if(!camStream)return;
+  const v=document.getElementById("cam-video");
+  if(!v.videoWidth)return;
+  const tr=LANGS[currentLang]||LANGS.fr;
+
+  document.getElementById("cam-status").textContent=tr.camAnalyzing||"🔍 Analyse...";
+  document.getElementById("cam-snap-btn").disabled=true;
+
+  // Capture: centre crop carré, redimensionné à 640x640
+  const canvas=document.createElement("canvas");
+  canvas.width=CAM_INPUT_SIZE;canvas.height=CAM_INPUT_SIZE;
+  const ctx=canvas.getContext("2d");
+  const vw=v.videoWidth,vh=v.videoHeight,size=Math.min(vw,vh);
+  const sx=(vw-size)/2,sy=(vh-size)/2;
+  ctx.drawImage(v,sx,sy,size,size,0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
+
+  if(!camOnnxSession){
+    if(camOnnxLoading){
+      // attendre 2s max le chargement
+      for(let i=0;i<20&&camOnnxLoading;i++){await new Promise(r=>setTimeout(r,100));}
+    }
+  }
+  if(!camOnnxSession){
+    document.getElementById("cam-status").textContent="❌ "+(tr.camNoModel||"Modèle non chargé");
+    document.getElementById("cam-snap-btn").disabled=false;
+    return;
+  }
+
+  try{
+    const imgData=ctx.getImageData(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
+    const data=imgData.data,n=CAM_INPUT_SIZE*CAM_INPUT_SIZE;
+    // Format CHW float32 normalisé [0,1]
+    const tensor=new Float32Array(3*n);
+    for(let i=0;i<n;i++){
+      tensor[i]=data[i*4]/255;
+      tensor[n+i]=data[i*4+1]/255;
+      tensor[2*n+i]=data[i*4+2]/255;
+    }
+    const input=new window.ort.Tensor("float32",tensor,[1,3,CAM_INPUT_SIZE,CAM_INPUT_SIZE]);
+    const inputName=camOnnxSession.inputNames[0];
+    const outputName=camOnnxSession.outputNames[0];
+    const results=await camOnnxSession.run({[inputName]:input});
+    const output=results[outputName];
+    const detections=camPostprocess(output.data,output.dims);
+    camShowResults(detections);
+  } catch(e){
+    console.warn("[BJG cam] Inférence échouée:",e);
+    document.getElementById("cam-status").textContent="❌ "+(tr.camInferErr||"Erreur de détection");
+    document.getElementById("cam-snap-btn").disabled=false;
+  }
+}
+
+// YOLOv8 post-processing : décodage + NMS
+function camPostprocess(data,dims){
+  // dims attendu : [1, 4+nClasses, nAnchors] (ex. [1, 56, 8400])
+  const nClasses=dims[1]-4;
+  const nAnchors=dims[2];
+  const boxes=[];
+  for(let i=0;i<nAnchors;i++){
+    let bestC=-1,bestS=0;
+    for(let c=0;c<nClasses;c++){
+      const s=data[(4+c)*nAnchors+i];
+      if(s>bestS){bestS=s;bestC=c;}
+    }
+    if(bestS<CAM_CONF)continue;
+    const cx=data[0*nAnchors+i],cy=data[1*nAnchors+i];
+    const w=data[2*nAnchors+i],h=data[3*nAnchors+i];
+    boxes.push({
+      x1:cx-w/2,y1:cy-h/2,x2:cx+w/2,y2:cy+h/2,
+      score:bestS,classId:bestC,
+      label:CAM_CLASSES[bestC]||("?"+bestC),
+      cx:cx
+    });
+  }
+  // NMS
+  boxes.sort((a,b)=>b.score-a.score);
+  const kept=[];
+  for(const b of boxes){
+    let drop=false;
+    for(const k of kept){
+      if(camIoU(b,k)>CAM_IOU){drop=true;break;}
+    }
+    if(!drop)kept.push(b);
+  }
+  // Tri spatial gauche-droite (pour ordonner croupier puis main)
+  kept.sort((a,b)=>a.cx-b.cx);
+  return kept;
+}
+
+function camIoU(a,b){
+  const xL=Math.max(a.x1,b.x1),yL=Math.max(a.y1,b.y1);
+  const xR=Math.min(a.x2,b.x2),yR=Math.min(a.y2,b.y2);
+  const i=Math.max(0,xR-xL)*Math.max(0,yR-yL);
+  const u=(a.x2-a.x1)*(a.y2-a.y1)+(b.x2-b.x1)*(b.y2-b.y1)-i;
+  return u>0?i/u:0;
+}
+
+function camLabelToRank(lbl){
+  // "10C"→"10", "AS"→"A", "KH"→"K", "7D"→"7"
+  return lbl.replace(/[CDHS]$/,"");
+}
+
+function camShowResults(detections){
+  const tr=LANGS[currentLang]||LANGS.fr;
+  // Dédoublonnage : si 2 détections quasi-superposées avec même rang → garder la mieux scorée
+  const seen=[];
+  const filtered=[];
+  detections.forEach(d=>{
+    const rank=camLabelToRank(d.label);
+    const dup=seen.find(s=>s.rank===rank&&Math.abs(s.cx-d.cx)<60);
+    if(dup)return;
+    seen.push({rank,cx:d.cx});
+    filtered.push({rank,score:d.score,cx:d.cx});
+  });
+
+  if(filtered.length===0){
+    document.getElementById("cam-status").textContent="❌ "+(tr.camNoCard||"Aucune carte");
+    document.getElementById("cam-snap-btn").disabled=false;
+    return;
+  }
+
+  camLastDetections=filtered;
+  const list=document.getElementById("cam-results-list");
+  list.innerHTML="";
+  // 1ère carte = croupier (si vide), reste = main — mirroring applyVoiceCards CASE 2
+  filtered.forEach((f,i)=>{
+    const chip=document.createElement("div");
+    const isDealer=(!DC&&i===0); // premier rang assigné au croupier seulement si pas déjà choisi
+    chip.className="cam-result-chip "+(isDealer?"dealer":"player");
+    chip.textContent=f.rank+"  "+Math.round(f.score*100)+"%";
+    list.appendChild(chip);
+  });
+  document.getElementById("cam-status").textContent="";
+  document.getElementById("cam-snap-btn").style.display="none";
+  document.getElementById("cam-snap-btn").disabled=false;
+  document.getElementById("cam-results").style.display="";
+}
+
+function camRetry(){
+  document.getElementById("cam-results").style.display="none";
+  document.getElementById("cam-snap-btn").style.display="";
+  document.getElementById("cam-snap-btn").disabled=false;
+  document.getElementById("cam-status").textContent="";
+  camLastDetections=[];
+}
+
+function camConfirm(){
+  if(camLastDetections.length===0){camClose();return;}
+  const ranks=camLastDetections.map(d=>d.rank);
+  // Réutilise la logique vocale : 1ère carte → croupier si vide, reste → main active
+  applyVoiceCards(ranks);
+  camClose();
+}
+
+function onCamBtnTap(){
+  if(!isPremium){openPaywall("camera");return;}
+  camOpen();
+}
+function onCamRowTap(e){
+  if(!isPremium){openPaywall("camera");e.stopPropagation();return;}
+}
+function onCamRowAction(e){
+  e.stopPropagation();
+  if(!isPremium){openPaywall("camera");return;}
+  // Ferme le popup paramètres pour que la caméra ait l'écran complet
+  if(typeof closePopup==="function")closePopup("popup-settings-modal");
+  setTimeout(camOpen,250);
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // ══ CODES PROMO ══
