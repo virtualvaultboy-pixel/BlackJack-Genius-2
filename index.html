@@ -491,7 +491,7 @@ body.lite .ts-expert-card{position:relative;}
 .cam-topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;z-index:2;background:linear-gradient(180deg,rgba(0,0,0,0.7),transparent);}
 .cam-status{flex:1;font-size:0.7rem;color:#f0ece0;letter-spacing:0.5px;line-height:1.3;}
 .cam-close-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.55);color:#f0ece0;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;flex-shrink:0;}
-.cam-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84%;aspect-ratio:1;border:2px dashed rgba(201,168,76,0.6);border-radius:14px;pointer-events:none;z-index:1;}
+.cam-frame{position:absolute;top:80px;left:14px;right:14px;bottom:130px;border:2px dashed rgba(201,168,76,0.6);border-radius:14px;pointer-events:none;z-index:1;}
 .cam-frame-hint{position:absolute;bottom:-30px;left:0;right:0;text-align:center;font-size:0.58rem;color:rgba(240,236,224,0.85);letter-spacing:1px;text-transform:uppercase;}
 .cam-bottombar{position:absolute;bottom:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding:24px 14px 32px;z-index:2;background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);gap:14px;}
 .cam-snap-btn{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid #f0ece0;display:flex;align-items:center;justify-content:center;cursor:pointer;}
@@ -517,7 +517,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.0</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4364,13 +4364,18 @@ async function camSnap(){
   camSetStatus(tr.camAnalyzing||"🔍 Analyse...");
   document.getElementById("cam-snap-btn").disabled=true;
 
-  // Capture: centre crop carré, redimensionné à 640x640
+  // Capture en letterbox 640x640 : conserve TOUTE la vidéo (pas de carte coupée).
+  // Convention YOLOv8 standard avec padding gris.
   const canvas=document.createElement("canvas");
   canvas.width=CAM_INPUT_SIZE;canvas.height=CAM_INPUT_SIZE;
   const ctx=canvas.getContext("2d");
-  const vw=v.videoWidth,vh=v.videoHeight,size=Math.min(vw,vh);
-  const sx=(vw-size)/2,sy=(vh-size)/2;
-  ctx.drawImage(v,sx,sy,size,size,0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
+  const vw=v.videoWidth,vh=v.videoHeight;
+  const scale=CAM_INPUT_SIZE/Math.max(vw,vh);
+  const dw=vw*scale,dh=vh*scale;
+  const dx=(CAM_INPUT_SIZE-dw)/2,dy=(CAM_INPUT_SIZE-dh)/2;
+  ctx.fillStyle="#727272"; // gris neutre standard YOLO
+  ctx.fillRect(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
+  ctx.drawImage(v,0,0,vw,vh,dx,dy,dw,dh);
 
   try{
     const imgData=ctx.getImageData(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
