@@ -532,7 +532,7 @@ body.lite .ts-expert-card{position:relative;}
       </div>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.8</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.9</span></div>
       <div class="hdr-sub">Tableau de base standard</div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
@@ -4220,7 +4220,9 @@ function hideVoiceToast(){document.getElementById("voice-toast").classList.remov
 // Aucun appel réseau après le 1er chargement (lib + modèle mis en cache navigateur).
 
 let camStream=null,camOnnxSession=null,camOnnxLoading=false,camLastDetections=[];
-const CAM_MODEL_URL="./bjg-cards.onnx";
+// Le modèle est hébergé en tant qu'asset de release GitHub (pas de limite 25 Mo de l'upload web).
+// Pour mettre à jour : crée une nouvelle release "model-vX" et change le tag dans l'URL ci-dessous.
+const CAM_MODEL_URL="https://github.com/virtualvaultboy-pixel/BlackJack-Genius-2/releases/download/model-v1/bjg-cards.onnx";
 const CAM_INPUT_SIZE=640;
 const CAM_CONF=0.45;
 const CAM_IOU=0.45;
