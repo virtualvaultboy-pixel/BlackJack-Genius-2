@@ -108,20 +108,28 @@ body.fs-large .adecision{font-size:2rem;}
 .strat-leg-item{display:flex;align-items:center;gap:3px;font-size:0.48rem;color:rgba(240,236,224,0.5);}
 .strat-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
 .app{width:100%;height:100%;max-width:430px;margin:0 auto;display:flex;flex-direction:column;padding:5px 9px 6px;gap:4px;}
-.hdr{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:1px 0;}
-.hdr-center{text-align:center;flex:1;}
+.hdr{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;padding:4px 0 6px;position:relative;}
+.hdr-pills{display:flex;gap:6px;align-items:center;justify-content:center;}
+.hdr-title-block{text-align:center;}
 .hdr-title{font-size:1rem;font-weight:900;letter-spacing:4px;color:#d4b863;text-transform:uppercase;line-height:1.1;text-shadow:0 0 14px rgba(212,184,99,0.25);}
-.hdr-sub{font-size:0.42rem;letter-spacing:2.5px;color:rgba(240,236,224,0.32);text-transform:uppercase;}
-.hdr-left{display:flex;flex-direction:column;align-items:center;gap:3px;}
-.hilo-badge{border-radius:11px;background:rgba(0,0,0,0.32);border:1.5px solid rgba(212,184,99,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:3px 6px;gap:3px;transition:all 0.22s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);}
-.hilo-badge:active{transform:scale(0.95);}
+.hdr-sub{font-size:0.42rem;letter-spacing:2.5px;color:rgba(240,236,224,0.32);text-transform:uppercase;margin-top:2px;}
+/* PILL UNIFIÉE (Hi-Lo, Vocal, Scan) - même format pour cohérence visuelle */
+.hdr-pill{border-radius:10px;background:rgba(0,0,0,0.32);border:1.5px solid rgba(212,184,99,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0 8px;gap:5px;height:30px;min-width:54px;transition:all 0.22s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);position:relative;}
+.hdr-pill:active{transform:scale(0.95);}
+.hdr-pill .pill-ico{font-size:0.85rem;line-height:1;}
+.hdr-pill .pill-txt{font-size:0.5rem;color:rgba(240,236,224,0.55);letter-spacing:0.6px;text-transform:uppercase;line-height:1;font-weight:700;white-space:nowrap;}
+.hilo-badge{}
+.hilo-badge .hilo-val{font-size:0.62rem;font-weight:900;}
+.mic-btn{}
+.mic-btn.on{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.5);}
+.mic-btn.on .pill-txt{color:#ef4444;}
+.mic-btn.listening{background:rgba(239,68,68,0.35);border-color:#ef4444;animation:pulse-mic 0.8s infinite;}
+.cam-btn-pill{}
+.cam-btn-pill.on{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);}
 .hilo-label{font-size:0.38rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,236,224,0.42);font-weight:700;}
 .hilo-val{font-size:0.62rem;font-weight:900;line-height:1;}
 .hilo-val.pos{color:#22c55e;}.hilo-val.neg{color:#ef4444;}.hilo-val.neu{color:rgba(240,236,224,0.6);}
-.mic-btn{border-radius:11px;background:rgba(0,0,0,0.32);border:1.5px solid rgba(212,184,99,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:3px 6px;gap:2px;transition:all 0.22s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);}
 .mic-btn:active{transform:scale(0.95);}
-.mic-btn.on{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.5);}
-.mic-btn.listening{background:rgba(239,68,68,0.35);border-color:#ef4444;animation:pulse-mic 0.8s infinite;}
 @keyframes pulse-mic{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}50%{box-shadow:0 0 0 5px rgba(239,68,68,0);}}
 .settings-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;background:rgba(0,0,0,0.32);border-radius:8px;border:1px solid rgba(212,184,99,0.16);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);transition:transform 0.18s ease,background 0.2s ease;}
 .settings-btn:active{transform:scale(0.92);background:rgba(212,184,99,0.18);}
@@ -281,7 +289,7 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
 .tut-desc{font-size:0.62rem;color:rgba(240,236,224,0.45);margin-top:1px;}
 .cta-btn{width:100%;padding:13px;border-radius:12px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.85rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;}
 /* BURGER MENU */
-.burger-btn{width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:rgba(0,0,0,0.2);border-radius:9px;padding:6px;}
+.burger-btn{width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:rgba(0,0,0,0.2);border-radius:9px;padding:6px;position:absolute;top:4px;right:0;z-index:2;}
 .burger-line{width:18px;height:2px;background:#c9a84c;border-radius:2px;transition:all 0.25s;}
 .burger-btn.open .burger-line:nth-child(1){transform:translateY(7px) rotate(45deg);}
 .burger-btn.open .burger-line:nth-child(2){opacity:0;}
@@ -316,7 +324,6 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
 /* ── PRO / PAYWALL ── */
 /* Indicateurs cadenas sur features Pro (visibles seulement en mode Lite) */
 .lock-ind{position:absolute;top:-3px;right:-3px;background:#c9a84c;color:#1a1000;font-size:0.5rem;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;border:1.5px solid #0a5530;line-height:1;pointer-events:none;}
-.mic-btn,.hilo-badge{position:relative;}
 body:not(.lite) .lock-ind,body:not(.lite) .pro-row-lock,body:not(.lite) .stats-pro-lock,body:not(.lite) .pro-card-lock{display:none !important;}
 body.lite .sbtn.lose,body.lite .sbtn.bust,body.lite .sbtn.push{display:none;}
 /* En mode Lite : la grille stats ne prend que sa largeur naturelle (juste le sbtn.win) */
@@ -477,10 +484,7 @@ body.lite .ts-expert-card{position:relative;}
 .promo-feedback.ko{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);visibility:visible;}
 
 /* ── CAMERA SCAN (PRO) ── */
-.hdr-row{display:flex;gap:4px;align-items:center;}
-.cam-btn-pill{border-radius:11px;background:rgba(0,0,0,0.32);border:1.5px solid rgba(212,184,99,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:3px 6px;gap:2px;transition:all 0.22s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);position:relative;}
-.cam-btn-pill:active{transform:scale(0.95);}
-.cam-btn-pill.on{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);}
+/* ── CAMERA SCAN MODAL ── */
 .cam-modal{display:none;position:fixed;inset:0;background:#000;z-index:300;}
 .cam-modal.show{display:block;}
 .cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;}
@@ -512,28 +516,26 @@ body.lite .ts-expert-card{position:relative;}
 <body>
 <div class="app">
   <div class="hdr">
-    <div class="hdr-left">
-      <div class="hilo-badge" id="hilo-badge" onclick="onHiloBadgeTap()">
-        <span style="font-size:0.85rem">🔢</span>
-        <span style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Hi-Lo<br><span class="hilo-val neu" id="hilo-val">0</span></span>
+    <div class="hdr-title-block">
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.0</span></div>
+      <div class="hdr-sub">Tableau standard</div>
+    </div>
+    <div class="hdr-pills">
+      <div class="hdr-pill hilo-badge" id="hilo-badge" onclick="onHiloBadgeTap()">
+        <span class="pill-ico">🔢</span>
+        <span class="pill-txt"><span class="hilo-val neu" id="hilo-val">0</span></span>
         <div class="lock-ind">🔒</div>
       </div>
-      <div class="hdr-row">
-        <div class="mic-btn" id="mic-btn" onclick="onMicBtnTap()">
-          <span style="font-size:0.85rem">🎤</span>
-          <span id="mic-label" style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Vocal<br>OFF</span>
-          <div class="lock-ind">🔒</div>
-        </div>
-        <div class="cam-btn-pill" id="cam-btn" onclick="onCamBtnTap()">
-          <span style="font-size:0.85rem">📷</span>
-          <span id="cam-label" style="font-size:0.42rem;color:rgba(240,236,224,0.35);letter-spacing:0.5px;text-transform:uppercase;line-height:1.2">Scan<br>&nbsp;</span>
-          <div class="lock-ind">🔒</div>
-        </div>
+      <div class="hdr-pill mic-btn" id="mic-btn" onclick="onMicBtnTap()">
+        <span class="pill-ico">🎤</span>
+        <span id="mic-label" class="pill-txt">OFF</span>
+        <div class="lock-ind">🔒</div>
       </div>
-    </div>
-    <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.7</span></div>
-      <div class="hdr-sub">Tableau de base standard</div>
+      <div class="hdr-pill cam-btn-pill" id="cam-btn" onclick="onCamBtnTap()">
+        <span class="pill-ico">📷</span>
+        <span id="cam-label" class="pill-txt">Scan</span>
+        <div class="lock-ind">🔒</div>
+      </div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
       <div class="burger-line"></div>
@@ -611,7 +613,7 @@ body.lite .ts-expert-card{position:relative;}
     <div class="cam-close-btn" onclick="camClose()">✕</div>
   </div>
   <div class="cam-frame">
-    <div class="cam-frame-hint" id="cam-frame-hint">Cadre la main + carte du croupier</div>
+    <div class="cam-frame-hint" id="cam-frame-hint">Croupier en haut · Ta main en bas</div>
   </div>
   <div class="cam-bottombar">
     <div class="cam-snap-btn" id="cam-snap-btn" onclick="camSnap()">
@@ -766,7 +768,7 @@ body.lite .ts-expert-card{position:relative;}
     </div>
     <div class="ditem" id="di-train" onclick="openTraining()">
       <div class="ditem-ico">🎯</div>
-      <div class="ditem-txt"><div class="ditem-label">Mode Entraînement</div><div class="ditem-sub">Stratégie & simulation réaliste</div></div>
+      <div class="ditem-txt"><div class="ditem-label">Mode Entraînement</div><div class="ditem-sub">Mains aléatoires avec corrections</div></div>
       <div style="font-size:0.7rem;color:rgba(240,236,224,0.3)">›</div>
     </div>
     <div class="ditem" id="di-strat" onclick="openStrategy()">
@@ -781,7 +783,7 @@ body.lite .ts-expert-card{position:relative;}
     </div>
     <div class="ditem" id="di-tuto" onclick="reopenTutorial()">
       <div class="ditem-ico">👋</div>
-      <div class="ditem-txt"><div class="ditem-label">Tutoriel de l'application</div><div class="ditem-sub">Gestes et commandes</div></div>
+      <div class="ditem-txt"><div class="ditem-label">Tutoriel de l'app</div><div class="ditem-sub">Revoir les gestes et commandes</div></div>
       <div style="font-size:0.7rem;color:rgba(240,236,224,0.3)">›</div>
     </div>
   </div>
@@ -1260,12 +1262,12 @@ const LANGS={
     drawerDiscrete:"Mode discret", drawerDiscreteSub:"Écran sombre et discret",
     drawerFont:"Grande police", drawerFontSub:"Texte et cartes plus grands",
     drawerMic:"Commande vocale", drawerMicSub:"Entrée des cartes à la voix",
-    drawerCam:"Scan caméra", drawerCamSub:"Détecte les cartes par photo",
+    drawerCam:"Scan caméra", drawerCamSub:"Détection auto des cartes par photo",
     camRowOpen:"Ouvrir ›",
     drawerSpeak:"Annonce vocale", drawerSpeakSub:"L'app lit la décision à voix haute",
     drawerSettings:"Paramètres", drawerSettingsSub:"Affichage, son, langue",
     drawerLangLabel:"Langue de l'interface",
-    sub:"Tableau de base standard",
+    sub:"Tableau standard",
     tutTitle:"👋 Bienvenue sur BJ Genius !",
     tutSwipeT:"Swipe gauche", tutSwipeD:"Nouvelle main — réinitialise tout",
     tutVoiceT:"Commande vocale", tutVoiceD:"Active le micro et dis les cartes dans l'ordre : « As trois dix »",
@@ -1274,15 +1276,15 @@ const LANGS={
     tutSettingsT:"Paramètres", tutSettingsD:"Mode casino, grande police, entraînement…",
     tutCta:"C'est parti ! 🃏",
     easterMode:"⚡ MODE SUPER-HÉROS ⚡", easterRole:"Créateur de BJ Genius • Super-héros du Blackjack", easterClose:"Fermer ✓",
-    voiceErrChrome:"❌ Utilise Chrome", voiceLabelOn:"Vocal<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Vocal<br>OFF",
+    voiceErrChrome:"❌ Utilise Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ Nouvelle main !", voiceSplit:"✂️ Split !", voiceNoSplit:"❌ Pas de split possible",
     voiceHand1:"→ Main 1", voiceHand2:"→ Main 2",
     camStarting:"📷 Démarrage caméra...", camAnalyzing:"🔍 Analyse...", camErrPerm:"Caméra refusée",
     camLoadingLib:"⚙️ Chargement…", camDownloading:"📥 Modèle", camInitializing:"⚙️ Initialisation…",
     camReady:"✓ Prêt", camLoadFail:"Modèle inaccessible — vérifie la connexion",
-    camInferErr:"Erreur de détection", camNoCard:"Aucune carte détectée — meilleure lumière ?",
+    camInferErr:"Erreur de détection", camNoCard:"Aucune carte — re-cadre la table",
     camDealer:"Croupier", camPlayer:"Toi", camResultsTitle:"Cartes détectées",
-    camFrameHint:"Cadre la main + carte du croupier",
+    camFrameHint:"Croupier en haut · Ta main en bas",
     camRetry:"↺ Re-scan", camConfirm:"✓ Valider",
     explainH:"Votre total est trop bas pour rester. Tirer une bonne carte est plus probable que de perdre.",
     explainS:"Votre main est assez forte. Le croupier a plus de chances de bust que de vous battre.",
@@ -1336,7 +1338,6 @@ const LANGS={
     pwFCam:"Scan caméra des cartes",
     pwFHilo:"Compteur Hi-Lo en temps réel",
     pwFExpert:"Mode Expert — simulation casino",
-    pwFDiscrete:"Mode discret",
     pwCtaTxt:"Débloquer pour",
     pwCtaPrice:"4,99 €",
     pwMeta:"Achat unique • À vie • Sans abonnement",
@@ -1495,7 +1496,7 @@ const LANGS={
     tutoSpT7:"Commande vocale",
     tutoSpD7:"Annonce les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
     tutoSpTcam:"Scan caméra",
-    tutoSpDcam:"Pointe ta caméra vers la table : l'app détecte ta main et la carte du croupier en une photo, sans saisie. <strong>Disponible avec Pro</strong>.",
+    tutoSpDcam:"Pointe la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>ta main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -1543,12 +1544,12 @@ const LANGS={
     drawerDiscrete:"Discrete mode", drawerDiscreteSub:"Dark and discreet screen",
     drawerFont:"Large font", drawerFontSub:"Bigger text and cards",
     drawerMic:"Voice command", drawerMicSub:"Enter cards by voice",
-    drawerCam:"Camera scan", drawerCamSub:"Detect cards by photo",
+    drawerCam:"Camera scan", drawerCamSub:"Auto card detection by photo",
     camRowOpen:"Open ›",
     drawerSpeak:"Voice announcement", drawerSpeakSub:"App reads decision aloud",
     drawerSettings:"Settings", drawerSettingsSub:"Display, sound, language",
     drawerLangLabel:"Interface language",
-    sub:"Standard basic strategy",
+    sub:"Basic strategy",
     tutTitle:"👋 Welcome to BJ Genius!",
     tutSwipeT:"Swipe left", tutSwipeD:"New hand — resets everything",
     tutVoiceT:"Voice command", tutVoiceD:"Turn on the mic and say the cards in order: \"Ace three ten\"",
@@ -1557,15 +1558,15 @@ const LANGS={
     tutSettingsT:"Settings", tutSettingsD:"Casino mode, large font, training…",
     tutCta:"Let's go! 🃏",
     easterMode:"⚡ SUPER-HERO MODE ⚡", easterRole:"Creator of BJ Genius • Blackjack super-hero", easterClose:"Close ✓",
-    voiceErrChrome:"❌ Use Chrome", voiceLabelOn:"Voice<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Voice<br>OFF",
+    voiceErrChrome:"❌ Use Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ New hand!", voiceSplit:"✂️ Split!", voiceNoSplit:"❌ Split not available",
     voiceHand1:"→ Hand 1", voiceHand2:"→ Hand 2",
     camStarting:"📷 Starting camera...", camAnalyzing:"🔍 Analyzing...", camErrPerm:"Camera denied",
     camLoadingLib:"⚙️ Loading…", camDownloading:"📥 Model", camInitializing:"⚙️ Initializing…",
     camReady:"✓ Ready", camLoadFail:"Model unreachable — check connection",
-    camInferErr:"Detection error", camNoCard:"No card detected — better light?",
+    camInferErr:"Detection error", camNoCard:"No card — re-frame the table",
     camDealer:"Dealer", camPlayer:"You", camResultsTitle:"Detected cards",
-    camFrameHint:"Frame your hand + dealer card",
+    camFrameHint:"Dealer on top · Your hand on bottom",
     camRetry:"↺ Re-scan", camConfirm:"✓ Confirm",
     explainH:"Your total is too low to stand. Drawing a good card is more likely than losing.",
     explainS:"Your hand is strong enough. The dealer is more likely to bust than to beat you.",
@@ -1619,7 +1620,6 @@ const LANGS={
     pwFCam:"Camera card scan",
     pwFHilo:"Real-time Hi-Lo counter",
     pwFExpert:"Expert Mode — casino simulation",
-    pwFDiscrete:"Discrete mode",
     pwCtaTxt:"Unlock for",
     pwCtaPrice:"$4.99",
     pwMeta:"One-time purchase • Lifetime • No subscription",
@@ -1778,7 +1778,7 @@ const LANGS={
     tutoSpT7:"Voice command",
     tutoSpD7:"Speak the cards out loud, the app recognizes them and computes the decision. <strong>Available with Pro</strong>.",
     tutoSpTcam:"Camera scan",
-    tutoSpDcam:"Point your camera at the table: the app detects your hand and the dealer's card in one photo, no input. <strong>Available with Pro</strong>.",
+    tutoSpDcam:"Point your camera at the table with the <strong>dealer on top</strong> and <strong>your hand on bottom</strong>. One photo, the app detects cards and applies automatically. Re-scan after each hit. <strong>Available with Pro</strong>.",
     tutoSpT8:"Ready to level up?",
     tutoSpD8:"Unlock all Pro features for <strong>$4.99</strong> for life. One-time purchase, no subscription.",
     tutoSpFinal1:"5 Pro features for life",
@@ -1826,12 +1826,12 @@ const LANGS={
     drawerDiscrete:"Modo discreto", drawerDiscreteSub:"Pantalla oscura y discreta",
     drawerFont:"Letra grande", drawerFontSub:"Texto y cartas más grandes",
     drawerMic:"Comando de voz", drawerMicSub:"Entrada de cartas por voz",
-    drawerCam:"Escaneo cámara", drawerCamSub:"Detecta cartas por foto",
+    drawerCam:"Escaneo cámara", drawerCamSub:"Detección auto de cartas por foto",
     camRowOpen:"Abrir ›",
     drawerSpeak:"Anuncio de voz", drawerSpeakSub:"La app lee la decisión en voz alta",
     drawerSettings:"Ajustes", drawerSettingsSub:"Pantalla, sonido, idioma",
     drawerLangLabel:"Idioma de la interfaz",
-    sub:"Estrategia básica estándar",
+    sub:"Estrategia básica",
     tutTitle:"👋 ¡Bienvenido a BJ Genius!",
     tutSwipeT:"Deslizar a la izquierda", tutSwipeD:"Nueva mano — reinicia todo",
     tutVoiceT:"Comando de voz", tutVoiceD:"Activa el micrófono y di las cartas en orden: \"As tres diez\"",
@@ -1840,15 +1840,15 @@ const LANGS={
     tutSettingsT:"Ajustes", tutSettingsD:"Modo casino, letra grande, entrenamiento…",
     tutCta:"¡Vamos! 🃏",
     easterMode:"⚡ MODO SÚPER-HÉROE ⚡", easterRole:"Creador de BJ Genius • Súper-héroe del Blackjack", easterClose:"Cerrar ✓",
-    voiceErrChrome:"❌ Usa Chrome", voiceLabelOn:"Voz<br><span style=\"color:#ef4444\">ON</span>", voiceLabelOff:"Voz<br>OFF",
+    voiceErrChrome:"❌ Usa Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ ¡Nueva mano!", voiceSplit:"✂️ ¡Dividir!", voiceNoSplit:"❌ No se puede dividir",
     voiceHand1:"→ Mano 1", voiceHand2:"→ Mano 2",
     camStarting:"📷 Iniciando cámara...", camAnalyzing:"🔍 Analizando...", camErrPerm:"Cámara denegada",
     camLoadingLib:"⚙️ Cargando…", camDownloading:"📥 Modelo", camInitializing:"⚙️ Inicializando…",
     camReady:"✓ Listo", camLoadFail:"Modelo inaccesible — verifica conexión",
-    camInferErr:"Error de detección", camNoCard:"Ninguna carta detectada — ¿mejor luz?",
+    camInferErr:"Error de detección", camNoCard:"Sin carta — re-encuadra la mesa",
     camDealer:"Crupier", camPlayer:"Tú", camResultsTitle:"Cartas detectadas",
-    camFrameHint:"Encuadra tu mano + carta del crupier",
+    camFrameHint:"Crupier arriba · Tu mano abajo",
     camRetry:"↺ Re-scan", camConfirm:"✓ Confirmar",
     explainH:"Tu total es demasiado bajo para plantarte. Sacar una buena carta es más probable que perder.",
     explainS:"Tu mano es lo suficientemente fuerte. El crupier tiene más probabilidades de pasarse que de ganarte.",
@@ -1902,7 +1902,6 @@ const LANGS={
     pwFCam:"Escaneo cámara de cartas",
     pwFHilo:"Contador Hi-Lo en tiempo real",
     pwFExpert:"Modo Experto — simulación casino",
-    pwFDiscrete:"Modo discreto",
     pwCtaTxt:"Desbloquear por",
     pwCtaPrice:"4,99 €",
     pwMeta:"Compra única • De por vida • Sin suscripción",
@@ -2061,7 +2060,7 @@ const LANGS={
     tutoSpT7:"Comando de voz",
     tutoSpD7:"Di las cartas en voz alta, la app las reconoce y calcula la decisión. <strong>Disponible con Pro</strong>.",
     tutoSpTcam:"Escaneo cámara",
-    tutoSpDcam:"Apunta la cámara a la mesa: la app detecta tu mano y la carta del crupier en una foto, sin escribir. <strong>Disponible con Pro</strong>.",
+    tutoSpDcam:"Apunta la cámara a la mesa con el <strong>crupier arriba</strong> y <strong>tu mano abajo</strong>. Una foto, la app detecta las cartas y aplica automáticamente. Re-escan después de cada robo. <strong>Disponible con Pro</strong>.",
     tutoSpT8:"¿Listo para subir de nivel?",
     tutoSpD8:"Desbloquea todas las funciones Pro por <strong>4,99 €</strong> de por vida. Compra única, sin suscripción.",
     tutoSpFinal1:"5 funciones Pro de por vida",
@@ -4316,7 +4315,7 @@ async function camOpen(){
   const tr=LANGS[currentLang]||LANGS.fr;
   document.getElementById("cam-modal").classList.add("show");
   document.getElementById("cam-status").textContent=tr.camStarting||"📷 Caméra...";
-  document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Cadre la main + carte du croupier";
+  document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Croupier en haut · Ta main en bas";
   document.getElementById("cam-results-title").textContent=tr.camResultsTitle||"Cartes détectées";
   document.getElementById("cam-btn-retry").textContent=tr.camRetry||"↺ Re-scan";
   document.getElementById("cam-btn-confirm").textContent=tr.camConfirm||"✓ Valider";
@@ -4485,9 +4484,25 @@ function camShowResults(detections){
     seen.push({rank,score:d.score,cx:d.cx,cy:d.cy});
   });
   console.log("[BJG cam] Détections brutes:",detections.length,"→ après dédup:",seen.length);
-  // Tri spatial gauche→droite après dédoublonnage
-  seen.sort((a,b)=>a.cx-b.cx);
-  const filteredFinal=seen.map(s=>({rank:s.rank,score:s.score,cx:s.cx}));
+  // Convention table BJ vue de dessus: croupier EN HAUT, joueur EN BAS.
+  // Donc carte avec plus petit cy = croupier, reste = main triée gauche→droite.
+  let filteredFinal;
+  if(seen.length>=2){
+    const sortedY=[...seen].sort((a,b)=>a.cy-b.cy);
+    const dealerCard=sortedY[0];
+    const playerCards=sortedY.slice(1).sort((a,b)=>a.cx-b.cx);
+    // Sécurité : si la "carte la plus haute" est en fait à la même hauteur que les autres
+    // (ex. toutes alignées horizontalement), on retombe sur un tri purement gauche-droite.
+    const yGap=sortedY[1].cy-dealerCard.cy;
+    if(yGap<80){
+      // Toutes les cartes sont à peu près au même niveau → tri cx classique
+      filteredFinal=[...seen].sort((a,b)=>a.cx-b.cx).map(s=>({rank:s.rank,score:s.score,cx:s.cx,cy:s.cy}));
+    } else {
+      filteredFinal=[dealerCard,...playerCards].map(s=>({rank:s.rank,score:s.score,cx:s.cx,cy:s.cy}));
+    }
+  } else {
+    filteredFinal=seen.map(s=>({rank:s.rank,score:s.score,cx:s.cx,cy:s.cy}));
+  }
 
   if(filteredFinal.length===0){
     camSetStatus("❌ "+(tr.camNoCard||"Aucune carte"));
@@ -4496,19 +4511,11 @@ function camShowResults(detections){
   }
 
   camLastDetections=filteredFinal;
-  const list=document.getElementById("cam-results-list");
-  list.innerHTML="";
-  filteredFinal.forEach((f,i)=>{
-    const chip=document.createElement("div");
-    const isDealer=(!DC&&i===0);
-    chip.className="cam-result-chip "+(isDealer?"dealer":"player");
-    chip.textContent=f.rank+"  "+Math.round(f.score*100)+"%";
-    list.appendChild(chip);
-  });
-  camSetStatus("");
-  document.getElementById("cam-snap-btn").style.display="none";
-  document.getElementById("cam-snap-btn").disabled=false;
-  document.getElementById("cam-results").style.display="";
+  // AUTO-VALIDATION : feedback visuel rapide puis applique + ferme
+  const summary=filteredFinal.map(f=>f.rank).join(" + ");
+  camSetStatus("✓ "+summary);
+  if(navigator.vibrate)navigator.vibrate(40);
+  setTimeout(camConfirm,500);
 }
 
 function camRetry(){
