@@ -532,7 +532,7 @@ body.lite .ts-expert-card{position:relative;}
       </div>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.5</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.7</span></div>
       <div class="hdr-sub">Tableau de base standard</div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
@@ -4434,7 +4434,7 @@ function camPostprocess(data,dims){
       x1:cx-w/2,y1:cy-h/2,x2:cx+w/2,y2:cy+h/2,
       score:bestS,classId:bestC,
       label:CAM_CLASSES[bestC]||("?"+bestC),
-      cx:cx
+      cx:cx,cy:cy
     });
   }
   // NMS
@@ -4467,35 +4467,45 @@ function camLabelToRank(lbl){
 
 function camShowResults(detections){
   const tr=LANGS[currentLang]||LANGS.fr;
-  // Dédoublonnage : si 2 détections quasi-superposées avec même rang → garder la mieux scorée
+  // Dédoublonnage : YOLOv8 détecte le rang aux 2 coins de chaque carte (haut-gauche + bas-droite).
+  // À 640px d'entrée, une carte fait ~150-220 px de large × 220-320 de haut.
+  // On fusionne deux détections du même rang si elles sont dans cette enveloppe spatiale.
   const seen=[];
   const filtered=[];
   detections.forEach(d=>{
     const rank=camLabelToRank(d.label);
-    const dup=seen.find(s=>s.rank===rank&&Math.abs(s.cx-d.cx)<60);
-    if(dup)return;
-    seen.push({rank,cx:d.cx});
-    filtered.push({rank,score:d.score,cx:d.cx});
+    const dup=seen.find(s=>s.rank===rank
+      && Math.abs(s.cx-d.cx)<220
+      && Math.abs(s.cy-d.cy)<340);
+    if(dup){
+      // Si la nouvelle détection a un meilleur score, on remplace
+      if(d.score>dup.score){dup.score=d.score;dup.cx=d.cx;dup.cy=d.cy;}
+      return;
+    }
+    seen.push({rank,score:d.score,cx:d.cx,cy:d.cy});
   });
+  console.log("[BJG cam] Détections brutes:",detections.length,"→ après dédup:",seen.length);
+  // Tri spatial gauche→droite après dédoublonnage
+  seen.sort((a,b)=>a.cx-b.cx);
+  const filteredFinal=seen.map(s=>({rank:s.rank,score:s.score,cx:s.cx}));
 
-  if(filtered.length===0){
-    document.getElementById("cam-status").textContent="❌ "+(tr.camNoCard||"Aucune carte");
+  if(filteredFinal.length===0){
+    camSetStatus("❌ "+(tr.camNoCard||"Aucune carte"));
     document.getElementById("cam-snap-btn").disabled=false;
     return;
   }
 
-  camLastDetections=filtered;
+  camLastDetections=filteredFinal;
   const list=document.getElementById("cam-results-list");
   list.innerHTML="";
-  // 1ère carte = croupier (si vide), reste = main — mirroring applyVoiceCards CASE 2
-  filtered.forEach((f,i)=>{
+  filteredFinal.forEach((f,i)=>{
     const chip=document.createElement("div");
-    const isDealer=(!DC&&i===0); // premier rang assigné au croupier seulement si pas déjà choisi
+    const isDealer=(!DC&&i===0);
     chip.className="cam-result-chip "+(isDealer?"dealer":"player");
     chip.textContent=f.rank+"  "+Math.round(f.score*100)+"%";
     list.appendChild(chip);
   });
-  document.getElementById("cam-status").textContent="";
+  camSetStatus("");
   document.getElementById("cam-snap-btn").style.display="none";
   document.getElementById("cam-snap-btn").disabled=false;
   document.getElementById("cam-results").style.display="";
@@ -4512,8 +4522,42 @@ function camRetry(){
 function camConfirm(){
   if(camLastDetections.length===0){camClose();return;}
   const ranks=camLastDetections.map(d=>d.rank);
-  // Réutilise la logique vocale : 1ère carte → croupier si vide, reste → main active
-  applyVoiceCards(ranks);
+  // Le scan = snapshot complet de la table. On remplace l'état (croupier + main active)
+  // par ce que la caméra voit. Permet de re-scanner après chaque tirage sans dupliquer.
+
+  // 1) Annuler l'impact Hi-Lo des cartes actuellement dans le croupier + la main active
+  if(isPremium){
+    const oldCards=[];
+    if(DC)oldCards.push(DC);
+    if(hands[activeHand])oldCards.push(...hands[activeHand]);
+    for(const c of oldCards)hiloCount-=hiloValue(c);
+  }
+
+  // 2) Reset croupier + main active
+  DC=null;
+  setDealer(null);
+  document.querySelectorAll("#dg .cv").forEach(x=>x.classList.remove("on"));
+  hands[activeHand]=[];
+
+  // 3) Appliquer les cartes détectées : la plus à gauche → croupier, le reste → main
+  if(ranks.length>=1){
+    DC=ranks[0];
+    setDealer(DC);
+    const dealerBtn=document.querySelector("#dg [data-c=\""+DC+"\"]");
+    if(dealerBtn)dealerBtn.classList.add("on");
+  }
+  if(ranks.length>=2){
+    hands[activeHand]=ranks.slice(1);
+  }
+
+  // 4) Re-comptabiliser Hi-Lo pour l'état final
+  if(isPremium){
+    for(const c of ranks)hiloCount+=hiloValue(c);
+    renderHilo();
+  }
+
+  renderHand();
+  updateAll();
   camClose();
 }
 
