@@ -517,7 +517,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4472,23 +4472,36 @@ function camLabelToRank(lbl){
 function camShowResults(detections){
   const tr=LANGS[currentLang]||LANGS.fr;
   // Dédoublonnage : YOLOv8 détecte le rang aux 2 coins de chaque carte (haut-gauche + bas-droite).
-  // À 640px d'entrée, une carte fait ~150-220 px de large × 220-320 de haut.
-  // On fusionne deux détections du même rang si elles sont dans cette enveloppe spatiale.
+  // Seuil ADAPTATIF basé sur la taille de la bbox du rang : les 2 coins d'une même carte sont
+  // séparés d'environ 5-7× la taille de la bbox (le rang fait ~15% de la carte).
+  // Ça évite de fusionner 2 cartes différentes du même rang qui seraient proches l'une de l'autre.
+  if(detections.length>0){
+    console.log("[BJG cam] Détections brutes:",detections.map(d=>({
+      r:camLabelToRank(d.label),s:d.score.toFixed(2),
+      cx:Math.round(d.cx),cy:Math.round(d.cy),
+      w:Math.round(d.x2-d.x1),h:Math.round(d.y2-d.y1)
+    })));
+  }
   const seen=[];
-  const filtered=[];
   detections.forEach(d=>{
     const rank=camLabelToRank(d.label);
-    const dup=seen.find(s=>s.rank===rank
-      && Math.abs(s.cx-d.cx)<220
-      && Math.abs(s.cy-d.cy)<340);
+    const w=d.x2-d.x1, h=d.y2-d.y1;
+    const dup=seen.find(s=>{
+      if(s.rank!==rank)return false;
+      // Seuils adaptatifs : ~5× la taille moyenne des deux bboxes
+      const avgW=(w+(s.x2-s.x1))/2, avgH=(h+(s.y2-s.y1))/2;
+      return Math.abs(s.cx-d.cx)<avgW*5 && Math.abs(s.cy-d.cy)<avgH*5;
+    });
     if(dup){
-      // Si la nouvelle détection a un meilleur score, on remplace
-      if(d.score>dup.score){dup.score=d.score;dup.cx=d.cx;dup.cy=d.cy;}
+      if(d.score>dup.score){
+        dup.score=d.score;dup.cx=d.cx;dup.cy=d.cy;
+        dup.x1=d.x1;dup.y1=d.y1;dup.x2=d.x2;dup.y2=d.y2;
+      }
       return;
     }
-    seen.push({rank,score:d.score,cx:d.cx,cy:d.cy});
+    seen.push({rank,score:d.score,cx:d.cx,cy:d.cy,x1:d.x1,y1:d.y1,x2:d.x2,y2:d.y2});
   });
-  console.log("[BJG cam] Détections brutes:",detections.length,"→ après dédup:",seen.length);
+  console.log("[BJG cam] Après dédup:",seen.length,"cartes:",seen.map(s=>s.rank+"@"+Math.round(s.cx)+","+Math.round(s.cy)));
   // Convention table BJ vue de dessus: croupier EN HAUT, joueur EN BAS.
   // Donc carte avec plus petit cy = croupier, reste = main triée gauche→droite.
   let filteredFinal;
