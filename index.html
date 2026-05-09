@@ -532,7 +532,7 @@ body.lite .ts-expert-card{position:relative;}
       </div>
     </div>
     <div class="hdr-center">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.2</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.3</span></div>
       <div class="hdr-sub">Tableau de base standard</div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
@@ -4223,8 +4223,11 @@ function hideVoiceToast(){document.getElementById("voice-toast").classList.remov
 // Aucun appel réseau après le 1er chargement (lib + modèle mis en cache navigateur).
 
 let camStream=null,camOnnxSession=null,camOnnxLoading=false,camLastDetections=[];
-// Modèle servi à la racine du repo via GitHub Pages → même origine que l'app, pas de problème CORS.
-const CAM_MODEL_URL="./bjg-cards.onnx";
+// Modèle hébergé sur HuggingFace Hub (plateforme dédiée à l'hébergement de modèles ML).
+// Sert avec headers CORS, durable depuis 2017, gratuit pour les modèles publics.
+// Pour mettre à jour : push une nouvelle version sur huggingface.co/Deponchy/bjg-cards
+// et bump le query param ?v=N ci-dessous pour forcer le re-fetch.
+const CAM_MODEL_URL="https://huggingface.co/Deponchy/bjg-cards/resolve/main/bjg-cards.onnx?v=1";
 const CAM_INPUT_SIZE=640;
 const CAM_CONF=0.45;
 const CAM_IOU=0.45;
