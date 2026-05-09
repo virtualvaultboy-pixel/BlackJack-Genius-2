@@ -517,7 +517,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.4</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -1278,6 +1278,7 @@ const LANGS={
     easterMode:"⚡ MODE SUPER-HÉROS ⚡", easterRole:"Créateur de BJ Genius • Super-héros du Blackjack", easterClose:"Fermer ✓",
     voiceErrChrome:"❌ Utilise Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ Nouvelle main !", voiceSplit:"✂️ Split !", voiceNoSplit:"❌ Pas de split possible",
+    voiceMute:"🔇 Vocal désactivé",
     voiceHand1:"→ Main 1", voiceHand2:"→ Main 2",
     camStarting:"📷 Démarrage caméra...", camAnalyzing:"🔍 Analyse...", camErrPerm:"Caméra refusée",
     camLoadingLib:"⚙️ Chargement…", camDownloading:"📥 Modèle", camInitializing:"⚙️ Initialisation…",
@@ -1560,6 +1561,7 @@ const LANGS={
     easterMode:"⚡ SUPER-HERO MODE ⚡", easterRole:"Creator of BJ Genius • Blackjack super-hero", easterClose:"Close ✓",
     voiceErrChrome:"❌ Use Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ New hand!", voiceSplit:"✂️ Split!", voiceNoSplit:"❌ Split not available",
+    voiceMute:"🔇 Voice off",
     voiceHand1:"→ Hand 1", voiceHand2:"→ Hand 2",
     camStarting:"📷 Starting camera...", camAnalyzing:"🔍 Analyzing...", camErrPerm:"Camera denied",
     camLoadingLib:"⚙️ Loading…", camDownloading:"📥 Model", camInitializing:"⚙️ Initializing…",
@@ -1842,6 +1844,7 @@ const LANGS={
     easterMode:"⚡ MODO SÚPER-HÉROE ⚡", easterRole:"Creador de BJ Genius • Súper-héroe del Blackjack", easterClose:"Cerrar ✓",
     voiceErrChrome:"❌ Usa Chrome", voiceLabelOn:"ON", voiceLabelOff:"OFF",
     voiceReset:"↺ ¡Nueva mano!", voiceSplit:"✂️ ¡Dividir!", voiceNoSplit:"❌ No se puede dividir",
+    voiceMute:"🔇 Voz desactivada",
     voiceHand1:"→ Mano 1", voiceHand2:"→ Mano 2",
     camStarting:"📷 Iniciando cámara...", camAnalyzing:"🔍 Analizando...", camErrPerm:"Cámara denegada",
     camLoadingLib:"⚙️ Cargando…", camDownloading:"📥 Modelo", camInitializing:"⚙️ Inicializando…",
@@ -3827,8 +3830,8 @@ const VC={
   "at":"A","att":"A","hat":"A","hah":"A","ahs":"A","ahn":"A","han":"A",
   "a1":"A","ace1":"A","ais":"A","aix":"A","ait":"A","ais":"A",
   "hasse":"A","hase":"A","ase":"A","aze":"A","acé":"A","asé":"A",
-  // Deux — variantes étendues
-  "deux":"2","deu":"2","deuh":"2","de":"2","des":"2","deus":"2",
+  // Deux — variantes étendues (sans "de" tout seul, trop ambigu avec la préposition française)
+  "deux":"2","deu":"2","deuh":"2","des":"2","deus":"2",
   "doe":"2","deuze":"2","duex":"2","due":"2","deuxe":"2","deusse":"2",
   "trois":"3","troi":"3","twa":"3","troie":"3","trwa":"3",
   "quatre":"4","katr":"4","kat":"4","cat":"4","catre":"4",
@@ -3840,9 +3843,10 @@ const VC={
   "neuf":"9","neu":"9","nef":"9","noeuf":"9",
   "dix":"10","dis":"10","diss":"10","dice":"10",
   "valet":"J","vale":"J","wallet":"J","ballet":"J","balet":"J","valais":"J","galet":"J","valait":"J","valer":"J",
+  "volet":"J","velet":"J","vellet":"J","velay":"J","palet":"J","calais":"J","mallet":"J","valets":"J","volets":"J",
   // Jack (anglais) et Jacques — alternatives courantes au valet
   "jack":"J","jacques":"J","jak":"J","djak":"J","djack":"J","jaque":"J",
-  "dame":"Q","dam":"Q","dames":"Q",
+  "dame":"Q","dam":"Q","dames":"Q","tame":"Q","lame":"Q","damne":"Q","damme":"Q","dem":"Q","dame.":"Q","damed":"Q",
   // Reine + variantes phonétiques (synonyme français le plus courant pour Queen)
   "reine":"Q","reines":"Q","rene":"Q","renes":"Q","raine":"Q","raines":"Q","renne":"Q","rennes":"Q","rein":"Q","reins":"Q",
   // Queen (anglais)
@@ -3897,9 +3901,9 @@ function bestMatch(w){
   if(w.startsWith("tr")) return "3";        // trois, tro, trwa...
   if(w.startsWith("ro")) return "K";        // roi, roua, rois...
   if(w.startsWith("kin")) return "K";       // king, kin, kingue...
-  if(w.startsWith("val")||w.startsWith("bal")||w.startsWith("gal")) return "J"; // valet, ballet...
+  if(w.startsWith("val")||w.startsWith("bal")||w.startsWith("gal")||w.startsWith("vol")||w.startsWith("vel")||w.startsWith("pal")||w.startsWith("mal")) return "J"; // valet, ballet, volet, velé, palais, mallet...
   if(w.startsWith("jac")||w.startsWith("jak")||w.startsWith("jaq")) return "J"; // jack, jaque, jacques...
-  if(w.startsWith("da")) return "Q";        // dame, dam...
+  if(w.startsWith("da")||w.startsWith("dam")||w.startsWith("dem")) return "Q";  // dame, dam, dem...
   if(w.startsWith("rei")||w.startsWith("rai")||w.startsWith("ren")) return "Q"; // reine, raine, renne...
   if(w.startsWith("kou")||w.startsWith("kwi")||w.startsWith("que")) return "Q"; // queen, kouine, kwin...
   if(w.startsWith("ka")||w.startsWith("ca")) return "4"; // quatre, cat...
@@ -3954,12 +3958,16 @@ function _splitBest(word,depth){
   if(depth>4||!word)return null;
 
   // Cas spécial nombres 12-19 (Android fusionne "dix-neuf" en "19")
-  if(/^1[2-9]$/.test(word))return {cards:["10",word[1]],score:word.length};
+  // Boost score +10 car "10" est très commun en BJ et doit gagner contre "1" → "A"
+  if(/^1[2-9]$/.test(word))return {cards:["10",word[1]],score:word.length+10};
 
   let best=null;
   const direct=bestMatch(word);
   if(isRealCard(direct)){
-    const sc=VC[word]?word.length:0; // VC exact = bon, startsWith = score 0
+    // VC exact = bon score (longueur), avec boost pour "10" (cas BJ très commun, à prioriser
+    // sur "A 0..." quand Android fusionne "10 X Y" en "10XY")
+    let sc=VC[word]?word.length:0;
+    if(VC[word]==="10")sc+=10;
     best={cards:[direct],score:sc};
   }
 
@@ -4054,6 +4062,14 @@ function processBuffer(){
   if(n.includes("quentin")&&(n.includes("beau")||n.includes("gosse")||n.includes("beaugosse"))){
     playTaDa();
     setTimeout(()=>document.getElementById("popup-easter").classList.add("show"),300);
+    return;
+  }
+
+  // Stop / Mute / Silence : désactive le mode vocal (FR/EN/ES + variantes naturelles)
+  if(/\b(stop|silence|mute|muet|tais\s?toi|ferme\s?la|chut|arr[eê]te?|fin|para|c[aá]llate|silencio|termina|shut\s?up|be\s?quiet|quiet|end|finish)\b/.test(n)){
+    const tr=LANGS[currentLang]||LANGS.fr;
+    showVoiceToast(tr.voiceMute||"🔇 Mic OFF");
+    setTimeout(()=>{hideVoiceToast();toggleMic();},900);
     return;
   }
 
@@ -4488,9 +4504,13 @@ function camShowResults(detections){
     const w=d.x2-d.x1, h=d.y2-d.y1;
     const dup=seen.find(s=>{
       if(s.rank!==rank)return false;
-      // Seuils adaptatifs : ~5× la taille moyenne des deux bboxes
+      // Seuils adaptatifs : ~5× la taille moyenne des bboxes, bornés par un minimum absolu.
+      // Le minimum (180×260) garantit que les 2 coins d'une carte fusionnent même si le modèle
+      // détecte de petites bboxes (carte vue de loin).
       const avgW=(w+(s.x2-s.x1))/2, avgH=(h+(s.y2-s.y1))/2;
-      return Math.abs(s.cx-d.cx)<avgW*5 && Math.abs(s.cy-d.cy)<avgH*5;
+      const tolX=Math.max(avgW*5, 180);
+      const tolY=Math.max(avgH*5, 260);
+      return Math.abs(s.cx-d.cx)<tolX && Math.abs(s.cy-d.cy)<tolY;
     });
     if(dup){
       if(d.score>dup.score){
