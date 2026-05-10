@@ -539,6 +539,10 @@ body.lite .ts-expert-card{position:relative;}
 .cam-debug-row.role-h{border-left:3px solid #56b074;}
 .cam-debug-summary{font-size:0.7rem;color:#f0ece0;text-align:center;line-height:1.5;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 10px;margin-bottom:6px;}
 .cam-debug-summary strong{color:#c9a84c;font-weight:800;letter-spacing:1px;}
+/* v1.7 — Variante "scan ambigu" : avertissement rouge quand carte croupier probablement ratée */
+.cam-debug-summary.warn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;}
+.cam-debug-summary.warn strong{color:#ef4444;}
+.cam-results-title.warn{color:#ef4444;}
 .cam-btn-act{flex:1;padding:10px;border-radius:8px;font-size:0.68rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;border:none;cursor:pointer;}
 .cam-btn-act:active{transform:scale(0.96);}
 .cam-btn-retry{background:rgba(240,236,224,0.1);color:#f0ece0;border:1px solid rgba(240,236,224,0.2);}
@@ -549,7 +553,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.6</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.7</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -647,7 +651,7 @@ body.lite .ts-expert-card{position:relative;}
     <div class="cam-close-btn" onclick="camClose()">✕</div>
   </div>
   <div class="cam-frame">
-    <div class="cam-frame-hint" id="cam-frame-hint">Croupier en haut · Ta main en bas</div>
+    <div class="cam-frame-hint" id="cam-frame-hint">Tel à plat au-dessus · Croupier en haut, main en bas</div>
   </div>
   <div class="cam-bottombar">
     <div class="cam-snap-btn" id="cam-snap-btn" onclick="camSnap()">
@@ -1333,7 +1337,7 @@ const LANGS={
     camReady:"✓ Prêt", camLoadFail:"Modèle inaccessible — vérifie la connexion",
     camInferErr:"Erreur de détection", camNoCard:"Aucune carte — re-cadre la table",
     camDealer:"Croupier", camPlayer:"Toi", camResultsTitle:"Cartes détectées",
-    camFrameHint:"Croupier en haut · Ta main en bas",
+    camFrameHint:"Tel à plat au-dessus · Croupier en haut, main en bas",
     camRetry:"↺ Re-scan", camConfirm:"✓ Valider",
     explainH:"Votre total est trop bas pour rester. Tirer une bonne carte est plus probable que de perdre.",
     explainS:"Votre main est assez forte. Le croupier a plus de chances de bust que de vous battre.",
@@ -1576,6 +1580,12 @@ const LANGS={
     camDebugOnlyOne:"une seule carte",
     camDebugOn:"🐞 Debug scan ACTIVÉ",
     camDebugOff:"🐞 Debug scan désactivé",
+    // ── v1.7 — Multi-frame snap + scan ambigu ──
+    camAnalyzing1:"🔍 Analyse 1/2...",
+    camAnalyzing2:"🔍 Analyse 2/2...",
+    camAmbigTitle:"Scan ambigu",
+    camAmbigMsgT:"Carte croupier non détectée",
+    camAmbigMsg:"Repositionne le téléphone bien à plat au-dessus de la table, ou valide quand même.",
   },
   en:{
     dealer:"Dealer's card", hand:"My hand", hand1:"Hand 1", hand2:"Hand 2",
@@ -1632,7 +1642,7 @@ const LANGS={
     camReady:"✓ Ready", camLoadFail:"Model unreachable — check connection",
     camInferErr:"Detection error", camNoCard:"No card — re-frame the table",
     camDealer:"Dealer", camPlayer:"You", camResultsTitle:"Detected cards",
-    camFrameHint:"Dealer on top · Your hand on bottom",
+    camFrameHint:"Phone flat overhead · Dealer top, hand bottom",
     camRetry:"↺ Re-scan", camConfirm:"✓ Confirm",
     explainH:"Your total is too low to stand. Drawing a good card is more likely than losing.",
     explainS:"Your hand is strong enough. The dealer is more likely to bust than to beat you.",
@@ -1875,6 +1885,12 @@ const LANGS={
     camDebugOnlyOne:"only one card",
     camDebugOn:"🐞 Scan debug ON",
     camDebugOff:"🐞 Scan debug OFF",
+    // ── v1.7 — Multi-frame snap + ambiguous scan ──
+    camAnalyzing1:"🔍 Analyzing 1/2...",
+    camAnalyzing2:"🔍 Analyzing 2/2...",
+    camAmbigTitle:"Ambiguous scan",
+    camAmbigMsgT:"Dealer card not detected",
+    camAmbigMsg:"Hold the phone flat above the table, or validate anyway.",
   },
   es:{
     dealer:"Carta del crupier", hand:"Mi mano", hand1:"Mano 1", hand2:"Mano 2",
@@ -1931,7 +1947,7 @@ const LANGS={
     camReady:"✓ Listo", camLoadFail:"Modelo inaccesible — verifica conexión",
     camInferErr:"Error de detección", camNoCard:"Sin carta — re-encuadra la mesa",
     camDealer:"Crupier", camPlayer:"Tú", camResultsTitle:"Cartas detectadas",
-    camFrameHint:"Crupier arriba · Tu mano abajo",
+    camFrameHint:"Móvil plano arriba · Crupier arriba, mano abajo",
     camRetry:"↺ Re-scan", camConfirm:"✓ Confirmar",
     explainH:"Tu total es demasiado bajo para plantarte. Sacar una buena carta es más probable que perder.",
     explainS:"Tu mano es lo suficientemente fuerte. El crupier tiene más probabilidades de pasarse que de ganarte.",
@@ -2174,6 +2190,12 @@ const LANGS={
     camDebugOnlyOne:"una sola carta",
     camDebugOn:"🐞 Debug escaneo ACTIVADO",
     camDebugOff:"🐞 Debug escaneo desactivado",
+    // ── v1.7 — Multi-frame snap + escaneo ambiguo ──
+    camAnalyzing1:"🔍 Analizando 1/2...",
+    camAnalyzing2:"🔍 Analizando 2/2...",
+    camAmbigTitle:"Escaneo ambiguo",
+    camAmbigMsgT:"Carta del crupier no detectada",
+    camAmbigMsg:"Coloca el teléfono plano sobre la mesa, o valida de todos modos.",
   }
 };
 
@@ -4379,8 +4401,15 @@ let camStream=null,camOnnxSession=null,camOnnxLoading=false,camLastDetections=[]
 // et bump le query param ?v=N ci-dessous pour forcer le re-fetch.
 const CAM_MODEL_URL="https://huggingface.co/Deponchy/bjg-cards/resolve/main/bjg-cards.onnx?v=2";
 const CAM_INPUT_SIZE=640;
-const CAM_CONF=0.45;
+// v1.7 — CAM_CONF abaissé de 0.45 → 0.30 pour capter les cartes faiblement visibles
+// (carte croupier en perspective, flou léger). Le filtre de cohérence par ratio bbox
+// + le dédup adaptatif éliminent les faux positifs introduits par ce seuil plus bas.
+const CAM_CONF=0.30;
 const CAM_IOU=0.45;
+// v1.7 — Plage de ratio (H/W) acceptée pour une vraie détection de coin de carte.
+// Une carte de poker a un coin ~rectangulaire avec ratio ~1.2 ; on tolère perspective + bruit.
+const CAM_RATIO_MIN=0.55;
+const CAM_RATIO_MAX=2.6;
 const CAM_ORT_URL="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js";
 // Ordre des 52 classes du modèle BJ Genius v2 (yolov8n, source mustafakemal0146/playing-cards-yolov8).
 // Suffixes en MAJUSCULES (C/D/H/S). La regex camLabelToRank est insensible à la casse.
@@ -4469,7 +4498,7 @@ async function camOpen(){
   const dbgTag=document.getElementById("cam-debug-tag");
   if(dbgTag)dbgTag.style.display=camDebugMode?"":"none";
   document.getElementById("cam-status").textContent=tr.camStarting||"📷 Caméra...";
-  document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Croupier en haut · Ta main en bas";
+  document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Tel à plat au-dessus · Croupier en haut, main en bas";
   document.getElementById("cam-results-title").textContent=tr.camResultsTitle||"Cartes détectées";
   document.getElementById("cam-btn-retry").textContent=tr.camRetry||"↺ Re-scan";
   document.getElementById("cam-btn-confirm").textContent=tr.camConfirm||"✓ Valider";
@@ -4504,22 +4533,12 @@ function camClose(){
   camLastDetections=[];
 }
 
-async function camSnap(){
-  if(!camStream)return;
+// v1.7 — Helper : capture une frame du flux vidéo + inférence YOLOv8 + post-process.
+// Extrait de camSnap pour permettre le multi-frame (plusieurs captures fusionnées).
+async function camCaptureAndInfer(){
   const v=document.getElementById("cam-video");
-  if(!v.videoWidth)return;
-  const tr=LANGS[currentLang]||LANGS.fr;
-  if(!camOnnxSession){
-    // Sécurité : ne devrait pas arriver car bouton désactivé, mais au cas où
-    camSetStatus("⏳ "+(tr.camDownloading||"📥 Modèle…"));
-    return;
-  }
-
-  camSetStatus(tr.camAnalyzing||"🔍 Analyse...");
-  document.getElementById("cam-snap-btn").disabled=true;
-
+  if(!v||!v.videoWidth)return [];
   // Capture en letterbox 640x640 : conserve TOUTE la vidéo (pas de carte coupée).
-  // Convention YOLOv8 standard avec padding gris.
   const canvas=document.createElement("canvas");
   canvas.width=CAM_INPUT_SIZE;canvas.height=CAM_INPUT_SIZE;
   const ctx=canvas.getContext("2d");
@@ -4527,45 +4546,63 @@ async function camSnap(){
   const scale=CAM_INPUT_SIZE/Math.max(vw,vh);
   const dw=vw*scale,dh=vh*scale;
   const dx=(CAM_INPUT_SIZE-dw)/2,dy=(CAM_INPUT_SIZE-dh)/2;
-  ctx.fillStyle="#727272"; // gris neutre standard YOLO
+  ctx.fillStyle="#727272";
   ctx.fillRect(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
   ctx.drawImage(v,0,0,vw,vh,dx,dy,dw,dh);
+  const imgData=ctx.getImageData(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
+  const data=imgData.data,n=CAM_INPUT_SIZE*CAM_INPUT_SIZE;
+  // Auto-stretch contraste (percentiles 2/98% par canal)
+  const sample=new Uint8Array(3000);
+  for(let i=0,j=0;i<3000;i+=3,j+=Math.floor(n/1000)*4){
+    sample[i]=data[j];sample[i+1]=data[j+1];sample[i+2]=data[j+2];
+  }
+  function pctl(arr,off,p){
+    const a=[];for(let i=off;i<arr.length;i+=3)a.push(arr[i]);
+    a.sort((x,y)=>x-y);return a[Math.floor(a.length*p)];
+  }
+  const lo=[pctl(sample,0,0.02),pctl(sample,1,0.02),pctl(sample,2,0.02)];
+  const hi=[pctl(sample,0,0.98),pctl(sample,1,0.98),pctl(sample,2,0.98)];
+  const sc=[255/Math.max(1,hi[0]-lo[0]),255/Math.max(1,hi[1]-lo[1]),255/Math.max(1,hi[2]-lo[2])];
+  const tensor=new Float32Array(3*n);
+  for(let i=0;i<n;i++){
+    const r=Math.min(255,Math.max(0,(data[i*4]-lo[0])*sc[0]));
+    const g=Math.min(255,Math.max(0,(data[i*4+1]-lo[1])*sc[1]));
+    const b=Math.min(255,Math.max(0,(data[i*4+2]-lo[2])*sc[2]));
+    tensor[i]=r/255;tensor[n+i]=g/255;tensor[2*n+i]=b/255;
+  }
+  const input=new window.ort.Tensor("float32",tensor,[1,3,CAM_INPUT_SIZE,CAM_INPUT_SIZE]);
+  const inputName=camOnnxSession.inputNames[0];
+  const outputName=camOnnxSession.outputNames[0];
+  const tInfer=performance.now();
+  const results=await camOnnxSession.run({[inputName]:input});
+  console.log("[BJG cam] Inférence",(performance.now()-tInfer).toFixed(0),"ms");
+  const output=results[outputName];
+  return camPostprocess(output.data,output.dims);
+}
+
+async function camSnap(){
+  if(!camStream)return;
+  const v=document.getElementById("cam-video");
+  if(!v.videoWidth)return;
+  const tr=LANGS[currentLang]||LANGS.fr;
+  if(!camOnnxSession){
+    camSetStatus("⏳ "+(tr.camDownloading||"📥 Modèle…"));
+    return;
+  }
+  document.getElementById("cam-snap-btn").disabled=true;
 
   try{
-    const imgData=ctx.getImageData(0,0,CAM_INPUT_SIZE,CAM_INPUT_SIZE);
-    const data=imgData.data,n=CAM_INPUT_SIZE*CAM_INPUT_SIZE;
-    // Auto-stretch contraste : trouve les percentiles 1% et 99% par canal pour étirer la dynamique.
-    // Aide significativement en faible lumière sans introduire d'artefacts comme le ferait CLAHE.
-    const sample=new Uint8Array(3000);
-    for(let i=0,j=0;i<3000;i+=3,j+=Math.floor(n/1000)*4){
-      sample[i]=data[j];sample[i+1]=data[j+1];sample[i+2]=data[j+2];
-    }
-    function pctl(arr,off,p){
-      const a=[];for(let i=off;i<arr.length;i+=3)a.push(arr[i]);
-      a.sort((x,y)=>x-y);return a[Math.floor(a.length*p)];
-    }
-    const lo=[pctl(sample,0,0.02),pctl(sample,1,0.02),pctl(sample,2,0.02)];
-    const hi=[pctl(sample,0,0.98),pctl(sample,1,0.98),pctl(sample,2,0.98)];
-    const sc=[255/Math.max(1,hi[0]-lo[0]),255/Math.max(1,hi[1]-lo[1]),255/Math.max(1,hi[2]-lo[2])];
-    // Format CHW float32 normalisé [0,1] avec contrast stretch
-    const tensor=new Float32Array(3*n);
-    for(let i=0;i<n;i++){
-      const r=Math.min(255,Math.max(0,(data[i*4]-lo[0])*sc[0]));
-      const g=Math.min(255,Math.max(0,(data[i*4+1]-lo[1])*sc[1]));
-      const b=Math.min(255,Math.max(0,(data[i*4+2]-lo[2])*sc[2]));
-      tensor[i]=r/255;
-      tensor[n+i]=g/255;
-      tensor[2*n+i]=b/255;
-    }
-    const input=new window.ort.Tensor("float32",tensor,[1,3,CAM_INPUT_SIZE,CAM_INPUT_SIZE]);
-    const inputName=camOnnxSession.inputNames[0];
-    const outputName=camOnnxSession.outputNames[0];
-    const tInfer=performance.now();
-    const results=await camOnnxSession.run({[inputName]:input});
-    console.log("[BJG cam] Inférence",(performance.now()-tInfer).toFixed(0),"ms");
-    const output=results[outputName];
-    const detections=camPostprocess(output.data,output.dims);
-    camShowResults(detections);
+    // v1.7 — Multi-frame snap : 2 inférences à 250 ms d'écart, fusionnées par dédup
+    // spatial. Capte les cartes intermittentes (perspective, léger tremblement, flou).
+    // Coût : ~2× temps d'inférence (≈2-6 s sur Samsung moyen-haut), acceptable.
+    camSetStatus(tr.camAnalyzing1||"🔍 Analyse 1/2...");
+    const dets1=await camCaptureAndInfer();
+    camSetStatus(tr.camAnalyzing2||"🔍 Analyse 2/2...");
+    await new Promise(r=>setTimeout(r,250));
+    const dets2=await camCaptureAndInfer();
+    const merged=[...dets1,...dets2];
+    console.log("[BJG cam] Multi-frame:",dets1.length,"+",dets2.length,"=",merged.length,"détections brutes");
+    camShowResults(merged);
   } catch(e){
     console.warn("[BJG cam] Inférence échouée:",e);
     camSetStatus("❌ "+(tr.camInferErr||"Erreur de détection"));
@@ -4588,6 +4625,12 @@ function camPostprocess(data,dims){
     if(bestS<CAM_CONF)continue;
     const cx=data[0*nAnchors+i],cy=data[1*nAnchors+i];
     const w=data[2*nAnchors+i],h=data[3*nAnchors+i];
+    // v1.7 — Filtre de cohérence : un coin de carte a un ratio H/W ~1.2.
+    // Hors plage (CAM_RATIO_MIN..MAX), on rejette comme faux positif.
+    // Compense le seuil de confiance abaissé (0.30) qui laisse passer plus de bruit.
+    if(w<=0||h<=0)continue;
+    const ratio=h/w;
+    if(ratio<CAM_RATIO_MIN||ratio>CAM_RATIO_MAX)continue;
     boxes.push({
       x1:cx-w/2,y1:cy-h/2,x2:cx+w/2,y2:cy+h/2,
       score:bestS,classId:bestC,
@@ -4695,6 +4738,23 @@ function camShowResults(detections){
     if(navigator.vibrate)navigator.vibrate(40);
     return;
   }
+  // v1.7 — Détection scan ambigu : si 1 carte seule, ou 2 cartes alignées horizontalement
+  // (yGap < 80), c'est le pattern typique du scan en biais où la carte croupier a été ratée.
+  // Au lieu d'auto-valider une mauvaise interprétation, on bascule sur un panneau de
+  // confirmation avec un message d'avertissement clair.
+  let ambiguous=false;
+  if(seen.length===1){
+    ambiguous=true;
+  } else if(seen.length===2){
+    const sortedY=[...seen].sort((a,b)=>a.cy-b.cy);
+    const yGap=sortedY[1].cy-sortedY[0].cy;
+    if(yGap<80)ambiguous=true;
+  }
+  if(ambiguous){
+    showCamAmbiguousPanel(filteredFinal);
+    if(navigator.vibrate)navigator.vibrate([30,40,30]);
+    return;
+  }
   // Mode normal : résumé structuré "Croupier: X | Main: Y, Z" + délai 1500 ms
   // (au lieu de 500 ms) pour permettre à l'user d'annuler avec ✕ si scan KO.
   let summary;
@@ -4753,13 +4813,47 @@ function showCamDebugPanel(detections){
   document.getElementById("cam-snap-btn").style.display="none";
 }
 
+// v1.7 — Affiche le panneau "scan ambigu" : message d'avertissement rouge + chips
+// des cartes détectées + boutons Re-scan / Valider quand même. Pas d'auto-validate.
+function showCamAmbiguousPanel(detections){
+  const tr=LANGS[currentLang]||LANGS.fr;
+  const panel=document.getElementById("cam-results");
+  const list=document.getElementById("cam-results-list");
+  const summary=document.getElementById("cam-debug-summary");
+  const title=document.getElementById("cam-results-title");
+  if(!panel||!list)return;
+  if(title){
+    title.textContent="⚠️ "+(tr.camAmbigTitle||"Scan ambigu");
+    title.classList.add("warn");
+  }
+  if(summary){
+    summary.style.display="";
+    summary.classList.add("warn");
+    summary.innerHTML="<strong>"+(tr.camAmbigMsgT||"Carte croupier non détectée")+"</strong><br>"+(tr.camAmbigMsg||"Repositionne le téléphone bien à plat au-dessus de la table, ou valide quand même.");
+  }
+  // Chips simples (réutilise le rendu des résultats normaux)
+  list.style.flexDirection="";
+  list.innerHTML="";
+  detections.forEach(d=>{
+    const chip=document.createElement("div");
+    chip.style.cssText="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:8px;padding:6px 12px;font-size:0.9rem;font-weight:900;color:#f0ece0;letter-spacing:1px;";
+    chip.textContent=d.rank;
+    list.appendChild(chip);
+  });
+  panel.style.display="";
+  document.getElementById("cam-snap-btn").style.display="none";
+}
+
 function camRetry(){
   document.getElementById("cam-results").style.display="none";
   // v1.6 — restore liste en mode normal (flex-wrap horizontal)
   const list=document.getElementById("cam-results-list");
   if(list)list.style.flexDirection="";
   const summary=document.getElementById("cam-debug-summary");
-  if(summary)summary.style.display="none";
+  if(summary){summary.style.display="none";summary.classList.remove("warn");}
+  // v1.7 — restore titre normal (retire warn)
+  const title=document.getElementById("cam-results-title");
+  if(title)title.classList.remove("warn");
   document.getElementById("cam-snap-btn").style.display="";
   document.getElementById("cam-snap-btn").disabled=false;
   document.getElementById("cam-status").textContent="";
