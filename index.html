@@ -529,6 +529,16 @@ body.lite .ts-expert-card{position:relative;}
 .cam-result-chip.player{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;}
 .cam-result-chip.player::before{content:"♠ ";font-size:0.6rem;}
 .cam-results-actions{display:flex;gap:8px;justify-content:center;}
+/* v1.6 — Mode debug scan caméra : liste détaillée des détections (rang | score | y%). Toggle via long-press sur version-badge. */
+.cam-debug-tag{position:absolute;top:6px;left:6px;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.45);color:#ef4444;font-size:0.5rem;font-weight:900;letter-spacing:1.5px;padding:3px 7px;border-radius:6px;text-transform:uppercase;z-index:10;}
+.cam-debug-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.35);border-radius:7px;padding:6px 10px;font-size:0.6rem;color:#f0ece0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.5px;}
+.cam-debug-row .rk{font-size:0.85rem;font-weight:900;color:#c9a84c;min-width:32px;}
+.cam-debug-row .pos{color:rgba(240,236,224,0.7);}
+.cam-debug-row .sc{color:rgba(34,197,94,0.85);font-weight:700;}
+.cam-debug-row.role-d{border-left:3px solid #c9a84c;}
+.cam-debug-row.role-h{border-left:3px solid #56b074;}
+.cam-debug-summary{font-size:0.7rem;color:#f0ece0;text-align:center;line-height:1.5;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 10px;margin-bottom:6px;}
+.cam-debug-summary strong{color:#c9a84c;font-weight:800;letter-spacing:1px;}
 .cam-btn-act{flex:1;padding:10px;border-radius:8px;font-size:0.68rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;border:none;cursor:pointer;}
 .cam-btn-act:active{transform:scale(0.96);}
 .cam-btn-retry{background:rgba(240,236,224,0.1);color:#f0ece0;border:1px solid rgba(240,236,224,0.2);}
@@ -539,7 +549,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.5</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.6</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -630,6 +640,8 @@ body.lite .ts-expert-card{position:relative;}
 <!-- CAMERA MODAL (PRO) -->
 <div class="cam-modal" id="cam-modal">
   <video class="cam-video" id="cam-video" playsinline muted></video>
+  <!-- v1.6 — Tag visible quand le debug scan est actif (toggle via long-press version-badge) -->
+  <div class="cam-debug-tag" id="cam-debug-tag" style="display:none;">🐞 DEBUG</div>
   <div class="cam-topbar">
     <div class="cam-status" id="cam-status"></div>
     <div class="cam-close-btn" onclick="camClose()">✕</div>
@@ -643,6 +655,8 @@ body.lite .ts-expert-card{position:relative;}
     </div>
     <div class="cam-results" id="cam-results" style="display:none">
       <div class="cam-results-title" id="cam-results-title">Cartes détectées</div>
+      <!-- v1.6 — Résumé debug (caché en mode normal) -->
+      <div class="cam-debug-summary" id="cam-debug-summary" style="display:none;"></div>
       <div class="cam-results-list" id="cam-results-list"></div>
       <div class="cam-results-actions">
         <button class="cam-btn-act cam-btn-retry" onclick="camRetry()" id="cam-btn-retry">↺ Re-scan</button>
@@ -1553,6 +1567,15 @@ const LANGS={
     smtP2:"Chaque <strong>couleur</strong> indique l'action optimale. La légende est en bas du tableau.",
     smtP3:"Bascule entre <strong>Hard / Soft / Paires</strong> selon ta main.",
     smtCta:"OK, j'ai compris",
+    // ── v1.6 — Résumé scan amélioré + mode debug ──
+    camSumDealer:"Croupier",
+    camSumHand:"Main",
+    camDebugTitle:"Debug scan caméra",
+    camDebugDealer:"D",
+    camDebugHand:"H",
+    camDebugOnlyOne:"une seule carte",
+    camDebugOn:"🐞 Debug scan ACTIVÉ",
+    camDebugOff:"🐞 Debug scan désactivé",
   },
   en:{
     dealer:"Dealer's card", hand:"My hand", hand1:"Hand 1", hand2:"Hand 2",
@@ -1843,6 +1866,15 @@ const LANGS={
     smtP2:"Each <strong>color</strong> shows the optimal action. Legend is at the bottom.",
     smtP3:"Switch between <strong>Hard / Soft / Pairs</strong> depending on your hand.",
     smtCta:"Got it",
+    // ── v1.6 — Improved scan summary + debug mode ──
+    camSumDealer:"Dealer",
+    camSumHand:"Hand",
+    camDebugTitle:"Camera scan debug",
+    camDebugDealer:"D",
+    camDebugHand:"H",
+    camDebugOnlyOne:"only one card",
+    camDebugOn:"🐞 Scan debug ON",
+    camDebugOff:"🐞 Scan debug OFF",
   },
   es:{
     dealer:"Carta del crupier", hand:"Mi mano", hand1:"Mano 1", hand2:"Mano 2",
@@ -2133,6 +2165,15 @@ const LANGS={
     smtP2:"Cada <strong>color</strong> indica la acción óptima. La leyenda está en la parte inferior.",
     smtP3:"Cambia entre <strong>Hard / Soft / Pares</strong> según tu mano.",
     smtCta:"Entendido",
+    // ── v1.6 — Resumen escaneo mejorado + modo debug ──
+    camSumDealer:"Crupier",
+    camSumHand:"Mano",
+    camDebugTitle:"Debug escaneo cámara",
+    camDebugDealer:"D",
+    camDebugHand:"H",
+    camDebugOnlyOne:"una sola carta",
+    camDebugOn:"🐞 Debug escaneo ACTIVADO",
+    camDebugOff:"🐞 Debug escaneo desactivado",
   }
 };
 
@@ -4424,6 +4465,9 @@ async function camOpen(){
   if(!isPremium){openPaywall("camera");return;}
   const tr=LANGS[currentLang]||LANGS.fr;
   document.getElementById("cam-modal").classList.add("show");
+  // v1.6 — sync du tag debug à l'ouverture (si toggle activé via long-press)
+  const dbgTag=document.getElementById("cam-debug-tag");
+  if(dbgTag)dbgTag.style.display=camDebugMode?"":"none";
   document.getElementById("cam-status").textContent=tr.camStarting||"📷 Caméra...";
   document.getElementById("cam-frame-hint").textContent=tr.camFrameHint||"Croupier en haut · Ta main en bas";
   document.getElementById("cam-results-title").textContent=tr.camResultsTitle||"Cartes détectées";
@@ -4643,15 +4687,79 @@ function camShowResults(detections){
   }
 
   camLastDetections=filteredFinal;
-  // AUTO-VALIDATION : feedback visuel rapide puis applique + ferme
-  const summary=filteredFinal.map(f=>f.rank).join(" + ");
-  camSetStatus("✓ "+summary);
+  // v1.6 — En mode debug (toggle via long-press version-badge), on désactive l'auto-validate
+  // et on affiche le panneau cam-results avec les détails (rang, score, position y%).
+  // Permet à Aurélien de diagnostiquer les cas KO sans accès à la console (pas de PC).
+  if(camDebugMode){
+    showCamDebugPanel(filteredFinal);
+    if(navigator.vibrate)navigator.vibrate(40);
+    return;
+  }
+  // Mode normal : résumé structuré "Croupier: X | Main: Y, Z" + délai 1500 ms
+  // (au lieu de 500 ms) pour permettre à l'user d'annuler avec ✕ si scan KO.
+  let summary;
+  if(filteredFinal.length>=2){
+    const dealerR=filteredFinal[0].rank;
+    const handR=filteredFinal.slice(1).map(f=>f.rank).join(", ");
+    summary="✓ "+(tr.camSumDealer||"Croupier")+": "+dealerR+" │ "+(tr.camSumHand||"Main")+": "+handR;
+  } else {
+    summary="✓ "+filteredFinal[0].rank;
+  }
+  camSetStatus(summary);
   if(navigator.vibrate)navigator.vibrate(40);
-  setTimeout(camConfirm,500);
+  setTimeout(camConfirm,1500);
+}
+
+// v1.6 — Affiche le panneau debug avec liste détaillée des détections
+function showCamDebugPanel(detections){
+  const tr=LANGS[currentLang]||LANGS.fr;
+  const panel=document.getElementById("cam-results");
+  const list=document.getElementById("cam-results-list");
+  const summary=document.getElementById("cam-debug-summary");
+  const title=document.getElementById("cam-results-title");
+  if(!panel||!list)return;
+  // Titre
+  if(title)title.textContent="🐞 "+(tr.camDebugTitle||"Debug scan caméra");
+  // Résumé : interprétation actuelle (croupier + main)
+  if(summary){
+    summary.style.display="";
+    if(detections.length>=2){
+      const dealerR=detections[0].rank;
+      const handR=detections.slice(1).map(d=>d.rank).join(", ");
+      summary.innerHTML="<strong>"+(tr.camSumDealer||"Croupier")+":</strong> "+dealerR+" &nbsp;│&nbsp; <strong>"+(tr.camSumHand||"Main")+":</strong> "+handR;
+    } else if(detections.length===1){
+      summary.innerHTML="<strong>"+detections[0].rank+"</strong> ("+(tr.camDebugOnlyOne||"une seule carte")+")";
+    } else {
+      summary.textContent=tr.camNoCard||"Aucune carte";
+    }
+  }
+  // Liste détaillée : pour chaque détection, on affiche rang, position y% (haut=0, bas=100), score
+  // Le 1er = croupier (border-left doré), les suivants = main (border-left vert).
+  list.style.flexDirection="column";
+  list.innerHTML="";
+  detections.forEach((d,i)=>{
+    const role=i===0?"d":"h";
+    const yPct=Math.round((d.cy/640)*100);  // 640 = taille letterbox
+    const xPct=Math.round((d.cx/640)*100);
+    const roleLbl=i===0?(tr.camDebugDealer||"D"):(tr.camDebugHand||"H");
+    const row=document.createElement("div");
+    row.className="cam-debug-row role-"+role;
+    row.innerHTML='<span class="rk">'+roleLbl+" · "+d.rank+'</span>'+
+                  '<span class="pos">y='+yPct+"% x="+xPct+'%</span>'+
+                  '<span class="sc">'+Math.round(d.score*100)+'%</span>';
+    list.appendChild(row);
+  });
+  panel.style.display="";
+  document.getElementById("cam-snap-btn").style.display="none";
 }
 
 function camRetry(){
   document.getElementById("cam-results").style.display="none";
+  // v1.6 — restore liste en mode normal (flex-wrap horizontal)
+  const list=document.getElementById("cam-results-list");
+  if(list)list.style.flexDirection="";
+  const summary=document.getElementById("cam-debug-summary");
+  if(summary)summary.style.display="none";
   document.getElementById("cam-snap-btn").style.display="";
   document.getElementById("cam-snap-btn").disabled=false;
   document.getElementById("cam-status").textContent="";
@@ -5339,6 +5447,8 @@ function onMicRowTap(e){
 // ── Tap caché : 5 taps sur "v54" → toggle Pro (mode test / debug) ──
 let versionTapCount=0,versionTapTimer=null;
 function onVersionTap(){
+  // v1.6 — Si on vient de déclencher un long-press, on ignore le clic court qui suit
+  if(versionLongPressFired){versionLongPressFired=false;return;}
   versionTapCount++;
   if(versionTapTimer)clearTimeout(versionTapTimer);
   versionTapTimer=setTimeout(()=>{versionTapCount=0;},1500);
@@ -5351,6 +5461,34 @@ function onVersionTap(){
     showVoiceToast(msg);
     setTimeout(hideVoiceToast,1800);
   }
+}
+
+// v1.6 — Long-press sur version-badge (≥700 ms) → toggle mode debug scan caméra
+let camDebugMode=false;
+try{camDebugMode=localStorage.getItem('bjgenius_cam_debug')==='1';}catch(e){}
+let versionLongPressTimer=null,versionLongPressFired=false;
+function onVersionLongPressStart(ev){
+  versionLongPressFired=false;
+  if(versionLongPressTimer)clearTimeout(versionLongPressTimer);
+  versionLongPressTimer=setTimeout(()=>{
+    versionLongPressFired=true;
+    toggleCamDebug();
+  },700);
+}
+function onVersionLongPressEnd(){
+  if(versionLongPressTimer){clearTimeout(versionLongPressTimer);versionLongPressTimer=null;}
+}
+function toggleCamDebug(){
+  camDebugMode=!camDebugMode;
+  try{localStorage.setItem('bjgenius_cam_debug',camDebugMode?'1':'0');}catch(e){}
+  if(navigator.vibrate)navigator.vibrate([30,40,30]);
+  // Met à jour le tag affiché dans le modal cam (visible si scan ouvert)
+  const tag=document.getElementById('cam-debug-tag');
+  if(tag)tag.style.display=camDebugMode?'':'none';
+  const tr=LANGS[currentLang]||LANGS.fr;
+  const msg=camDebugMode?(tr.camDebugOn||"🐞 Debug scan ACTIVÉ"):(tr.camDebugOff||"🐞 Debug scan désactivé");
+  showVoiceToast(msg);
+  setTimeout(hideVoiceToast,2000);
 }
 
 renderHand();updateAll();applyLang();applyPremiumState();
