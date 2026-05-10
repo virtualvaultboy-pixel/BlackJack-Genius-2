@@ -230,6 +230,28 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
 .train-hint-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(15px);background:rgba(0,0,0,0.94);border:1.5px solid rgba(201,168,76,0.45);color:#f0ece0;padding:11px 16px;border-radius:13px;font-size:0.7rem;max-width:85vw;text-align:center;line-height:1.5;opacity:0;pointer-events:none;transition:opacity 0.3s ease,transform 0.3s ease;z-index:99999;box-shadow:0 8px 22px rgba(0,0,0,0.6);}
 .train-hint-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #train-hint-btn:active{transform:scale(0.92);}
+/* v1.5 — Bouton "Indice" agrandi et placé sous les boutons d'action (mode entraînement). Plus visible que la mini icône en header. */
+.train-hint-btn-bottom{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;border-radius:11px;background:rgba(201,168,76,0.1);border:1.5px solid rgba(201,168,76,0.32);cursor:pointer;margin-bottom:10px;transition:all 0.18s;animation:hintBottomPulse 2s ease-in-out infinite;}
+.train-hint-btn-bottom:active{transform:scale(0.97);background:rgba(201,168,76,0.18);}
+.train-hint-btn-bottom.disabled{opacity:0.35;pointer-events:none;animation:none;}
+.train-hint-btn-bottom .ico{font-size:1.05rem;}
+.train-hint-btn-bottom .lbl{font-size:0.66rem;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#c9a84c;}
+@keyframes hintBottomPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.0);}50%{box-shadow:0 0 14px rgba(201,168,76,0.28);}}
+/* v1.5 — Glow sur le burger lui-même quand défi du jour pas fait (pousse la découverte) */
+.burger-btn.daily-pulse{animation:burgerDailyPulse 1.6s ease-in-out infinite;border:1.5px solid rgba(201,168,76,0.55);}
+@keyframes burgerDailyPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.0),0 0 0 0 rgba(201,168,76,0);}50%{box-shadow:0 0 16px rgba(201,168,76,0.55),0 0 0 2px rgba(201,168,76,0.2);}}
+/* v1.5 — Mini-tuto à la 1ère ouverture du tableau de stratégie */
+.strat-mini-tuto{position:absolute;inset:0;background:rgba(10,15,8,0.96);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:18px 18px 0 0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:20px;z-index:50;animation:stratMiniFadeIn 0.3s ease;}
+.strat-mini-tuto.show{display:flex;}
+@keyframes stratMiniFadeIn{from{opacity:0}to{opacity:1}}
+.strat-mini-ico{font-size:2rem;margin-bottom:8px;filter:drop-shadow(0 2px 6px rgba(201,168,76,0.4));}
+.strat-mini-title{font-size:0.95rem;font-weight:900;color:#c9a84c;letter-spacing:1.2px;text-align:center;margin-bottom:14px;text-transform:uppercase;}
+.strat-mini-row{display:flex;align-items:flex-start;gap:10px;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 12px;margin-bottom:8px;width:100%;max-width:340px;}
+.strat-mini-row .num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.65rem;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.strat-mini-row .txt{font-size:0.68rem;color:rgba(240,236,224,0.88);line-height:1.45;}
+.strat-mini-row .txt strong{color:#f0ece0;font-weight:700;}
+.strat-mini-cta{margin-top:14px;padding:12px 28px;border-radius:12px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.78rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 12px rgba(201,168,76,0.3);}
+.strat-mini-cta:active{transform:scale(0.97);}
 /* Animation d'entrée du bouton "Question suivante" du quiz pour attirer l'œil */
 @keyframes quizNextPulse{0%{transform:translateY(8px) scale(0.95);opacity:0;}100%{transform:translateY(0) scale(1);opacity:1;}}
 /* Animations pour la simulation pédagogique */
@@ -517,7 +539,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.5</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -843,7 +865,6 @@ body.lite .ts-expert-card{position:relative;}
       <div class="popup-title" style="margin-bottom:0;font-size:0.75rem;">🎯 Entraînement</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div id="train-score" style="font-size:0.8rem;font-weight:800;color:#c9a84c;letter-spacing:1px;">0 / 0</div>
-        <div onclick="showTrainHint()" id="train-hint-btn" title="Indice" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:8px;cursor:pointer;font-size:0.85rem;">💡</div>
         <div onclick="resetTrainScore()" style="font-size:0.55rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;border-radius:6px;padding:3px 7px;cursor:pointer;font-weight:700;">↺</div>
         <div onclick="hideTrainHintToast();closePopup('popup-training')" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;font-size:0.95rem;font-weight:700;color:rgba(240,236,224,0.7);">✕</div>
       </div>
@@ -861,6 +882,10 @@ body.lite .ts-expert-card{position:relative;}
       </div>
     </div>
     <div class="train-choices" id="train-choices" style="margin-bottom:8px;"></div>
+    <!-- v1.5 — Bouton "Indice" en bas, plus visible que la mini icône précédemment dans le header -->
+    <div onclick="showTrainHint()" id="train-hint-btn" class="train-hint-btn-bottom" title="Indice">
+      <span class="ico">💡</span><span class="lbl" id="train-hint-label">Indice</span>
+    </div>
     <div class="train-bottom">
       <div class="train-feedback" id="train-feedback"></div>
       <div class="train-next" id="train-next" onclick="nextTraining()">Suivant →</div>
@@ -987,7 +1012,16 @@ body.lite .ts-expert-card{position:relative;}
   </div>
 </div>
 <div class="popup-overlay" id="popup-strategy" onclick="closePopup('popup-strategy')">
-  <div class="strat-popup" onclick="event.stopPropagation()">
+  <div class="strat-popup" onclick="event.stopPropagation()" style="position:relative;">
+    <!-- v1.5 — Mini-tuto à la 1ère ouverture (flag bjgenius_strat_tuto_seen). Reset via 5-tap version-badge. -->
+    <div class="strat-mini-tuto" id="strat-mini-tuto" onclick="event.stopPropagation()">
+      <div class="strat-mini-ico">📋</div>
+      <div class="strat-mini-title" id="smt-title">Comment lire le tableau</div>
+      <div class="strat-mini-row"><div class="num">1</div><div class="txt" id="smt-p1"><strong>Lignes</strong> = ta main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.</div></div>
+      <div class="strat-mini-row"><div class="num">2</div><div class="txt" id="smt-p2">Chaque <strong>couleur</strong> indique l'action optimale. La légende est en bas du tableau.</div></div>
+      <div class="strat-mini-row"><div class="num">3</div><div class="txt" id="smt-p3">Bascule entre <strong>Hard / Soft / Paires</strong> selon ta main.</div></div>
+      <div class="strat-mini-cta" id="smt-cta" onclick="dismissStratMiniTuto()">OK, j'ai compris</div>
+    </div>
     <div class="popup-handle"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;">
       <div class="popup-title" id="strat-title" style="margin-bottom:0">📋 Tableau de stratégie</div>
@@ -1512,6 +1546,13 @@ const LANGS={
     tutB2:"Apprends les règles et la stratégie",
     tutB3:"Hors-ligne, sans pub, sans tracking",
     tutCta:"C'est parti ! 🃏",
+    // ── v1.5 — Bouton indice + mini-tuto stratégie ──
+    hintBtn:"Indice",
+    smtTitle:"Comment lire le tableau",
+    smtP1:"<strong>Lignes</strong> = ta main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.",
+    smtP2:"Chaque <strong>couleur</strong> indique l'action optimale. La légende est en bas du tableau.",
+    smtP3:"Bascule entre <strong>Hard / Soft / Paires</strong> selon ta main.",
+    smtCta:"OK, j'ai compris",
   },
   en:{
     dealer:"Dealer's card", hand:"My hand", hand1:"Hand 1", hand2:"Hand 2",
@@ -1795,6 +1836,13 @@ const LANGS={
     tutB2:"100% offline, ad-free",
     tutB3:"Mathematically validated strategy",
     tutCta:"Let's go ! 🃏",
+    // ── v1.5 — Hint button + strategy mini-tuto ──
+    hintBtn:"Hint",
+    smtTitle:"How to read this chart",
+    smtP1:"<strong>Rows</strong> = your hand (total or pair). <strong>Columns</strong> = dealer's visible card.",
+    smtP2:"Each <strong>color</strong> shows the optimal action. Legend is at the bottom.",
+    smtP3:"Switch between <strong>Hard / Soft / Pairs</strong> depending on your hand.",
+    smtCta:"Got it",
   },
   es:{
     dealer:"Carta del crupier", hand:"Mi mano", hand1:"Mano 1", hand2:"Mano 2",
@@ -2078,6 +2126,13 @@ const LANGS={
     tutB2:"100 % sin conexión, sin anuncios",
     tutB3:"Estrategia validada matemáticamente",
     tutCta:"¡Empezamos! 🃏",
+    // ── v1.5 — Botón pista + mini-tutorial tabla de estrategia ──
+    hintBtn:"Pista",
+    smtTitle:"Cómo leer la tabla",
+    smtP1:"<strong>Filas</strong> = tu mano (total o par). <strong>Columnas</strong> = la carta visible del crupier.",
+    smtP2:"Cada <strong>color</strong> indica la acción óptima. La leyenda está en la parte inferior.",
+    smtP3:"Cambia entre <strong>Hard / Soft / Pares</strong> según tu mano.",
+    smtCta:"Entendido",
   }
 };
 
@@ -2242,6 +2297,14 @@ function applyLang(){
   }
   // ── Tableau de stratégie ──
   tut("strat-title","stratTitle");
+  // v1.5 — mini-tuto stratégie
+  tut("smt-title","smtTitle");
+  const smtP1=document.getElementById("smt-p1"); if(smtP1&&t.smtP1)smtP1.innerHTML=t.smtP1;
+  const smtP2=document.getElementById("smt-p2"); if(smtP2&&t.smtP2)smtP2.innerHTML=t.smtP2;
+  const smtP3=document.getElementById("smt-p3"); if(smtP3&&t.smtP3)smtP3.innerHTML=t.smtP3;
+  tut("smt-cta","smtCta");
+  // v1.5 — bouton "Indice" (mode entraînement)
+  tut("train-hint-label","hintBtn");
   const sh=document.getElementById("stab-hard"); if(sh)sh.textContent=t.stratHard;
   const ss=document.getElementById("stab-soft"); if(ss)ss.textContent=t.stratSoft;
   const sp=document.getElementById("stab-pairs"); if(sp)sp.textContent=t.stratPairs;
@@ -2360,6 +2423,18 @@ document.addEventListener("touchend",e=>{
   // Bloque le swipe seulement pendant ~1.5s après la dernière parole détectée
   // (en pratique : quand on parle activement, pas quand le micro est juste ouvert)
   if(micOn && Date.now()-lastSpeechAt<1500) return;
+  // v1.5 — bloque le swipe ← pendant les étapes 0-2 du tuto spotlight
+  // (sélection croupier, sélection main, affichage stats). La step 3 est justement
+  // l'explication du swipe ← reset, donc à partir de là on laisse passer.
+  const ov=document.getElementById('tuto-spotlight-overlay');
+  if(ov && ov.classList.contains('show') && tutoCurrentStep<3){
+    if(swipeStartX-e.changedTouches[0].clientX>80){
+      // Petit shake sur la bulle pour signaler que le swipe est bloqué pour l'instant
+      const nx=document.getElementById('tuto-bubble-next');
+      if(nx){nx.classList.add('tuto-shake');setTimeout(()=>nx.classList.remove('tuto-shake'),500);}
+    }
+    return;
+  }
   if(swipeStartX-e.changedTouches[0].clientX>80) resetAll();
 });
 
@@ -2839,6 +2914,19 @@ function openStrategy(){
   closeDrawer();
   document.getElementById('popup-strategy').classList.add('show');
   buildStratGrid(currentStratTab);
+  // v1.5 — mini-tuto à la 1ère ouverture (flag localStorage). Reset via 5-tap version-badge.
+  try{
+    if(!localStorage.getItem('bjgenius_strat_tuto_seen')){
+      const o=document.getElementById('strat-mini-tuto');
+      if(o)o.classList.add('show');
+    }
+  }catch(e){}
+}
+// v1.5 — Ferme le mini-tuto et marque comme vu
+function dismissStratMiniTuto(){
+  const o=document.getElementById('strat-mini-tuto');
+  if(o)o.classList.remove('show');
+  try{localStorage.setItem('bjgenius_strat_tuto_seen','1');}catch(e){}
 }
 
 // ══ ANIMATED RESET ══
@@ -3239,6 +3327,9 @@ function nextTraining(){
   const tr=LANGS[currentLang]||LANGS.fr;
   hideTrainHintToast();
   trainAnswered=false;
+  // v1.5 — réactive le bouton "Indice" (visuellement) à chaque nouvelle question
+  const hintBtnTop=document.getElementById("train-hint-btn");
+  if(hintBtnTop)hintBtnTop.classList.remove("disabled");
   document.getElementById("train-feedback").className="train-feedback";
   document.getElementById("train-next").classList.remove("show");
   const allC=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -3264,6 +3355,9 @@ function nextTraining(){
     btn.onclick=()=>{
       if(trainAnswered)return;trainAnswered=true;trainScore.total++;
       hideTrainHintToast();
+      // v1.5 — grise le bouton "Indice" après la réponse (plus pertinent)
+      const hb=document.getElementById("train-hint-btn");
+      if(hb)hb.classList.add("disabled");
       const ok=(opt.code===correctSimple)||(opt.code==="H"&&["R","Rs"].includes(correctCode))||(opt.code==="S"&&correctCode==="Rs")||(opt.code==="D"&&correctCode==="Ds");
       const fb=document.getElementById("train-feedback");
       const explainText=tr["explain"+correctCode]||tr.explainDefault;
@@ -5097,11 +5191,14 @@ function renderDailyCalendar(){
 // Indicateur sur le burger
 function updateDailyBurgerDot(){
   const dot=document.getElementById('daily-burger-dot');
-  if(!dot)return;
   const today=todayKey();
   const state=getDailyState();
   const done=!!state.history[today];
-  dot.classList.toggle('show',!done);
+  if(dot)dot.classList.toggle('show',!done);
+  // v1.5 — glow doré pulsant sur le burger lui-même (visible même drawer fermé,
+  // pour pousser l'utilisateur à aller voir le défi)
+  const bb=document.getElementById('burger-btn');
+  if(bb)bb.classList.toggle('daily-pulse',!done);
 }
 // Appel initial
 setTimeout(updateDailyBurgerDot,100);
@@ -5248,6 +5345,8 @@ function onVersionTap(){
   if(versionTapCount>=5){
     versionTapCount=0;
     setPremium(!isPremium);
+    // v1.5 — reset aussi le flag du mini-tuto stratégie pour pouvoir le retester
+    try{localStorage.removeItem('bjgenius_strat_tuto_seen');}catch(e){}
     const msg=isPremium?"🔓 Mode Pro activé (test)":"🔒 Mode Lite activé (test)";
     showVoiceToast(msg);
     setTimeout(hideVoiceToast,1800);
