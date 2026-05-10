@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BJ Genius — Politique de confidentialité / Privacy Policy</title>
+<style>
+:root{
+  --bg:#0a1f10;
+  --panel:#0f2920;
+  --gold:#c9a84c;
+  --text:#f0ece0;
+  --muted:rgba(240,236,224,0.55);
+  --border:rgba(201,168,76,0.2);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.6;}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 4px),
+    repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 4px);
+}
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:32px 22px 60px;}
+header{text-align:center;margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(--border);}
+h1{font-size:1.6rem;font-weight:900;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin:0 0 6px;}
+.sub{font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.lang-bar{display:flex;justify-content:center;gap:8px;margin:18px 0 0;}
+.lang-bar a{padding:6px 14px;border-radius:8px;background:rgba(255,255,255,0.04);color:var(--muted);text-decoration:none;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1px solid transparent;}
+.lang-bar a.on{background:rgba(201,168,76,0.15);color:var(--gold);border-color:rgba(201,168,76,0.35);}
+section{display:none;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:18px;}
+section.on{display:block;}
+h2{font-size:1.05rem;font-weight:800;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin:22px 0 8px;}
+h2:first-child{margin-top:0;}
+p{font-size:0.92rem;color:var(--text);margin:8px 0;}
+strong{color:var(--gold);}
+ul{padding-left:22px;margin:8px 0;}
+li{margin:5px 0;font-size:0.92rem;}
+a{color:var(--gold);}
+.meta{font-size:0.72rem;color:var(--muted);text-align:center;margin-top:24px;letter-spacing:1px;}
+.contact-box{background:rgba(0,0,0,0.25);border-radius:10px;padding:14px 16px;margin-top:14px;border:1px solid rgba(255,255,255,0.04);}
+.contact-box a{font-weight:700;}
+@media (max-width:520px){
+  h1{font-size:1.3rem;letter-spacing:2px;}
+  section{padding:18px 18px;}
+  .wrap{padding:22px 14px 40px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>♠ BJ Genius ♥</h1>
+    <div class="sub">Politique de confidentialité · Privacy Policy</div>
+    <div class="lang-bar">
+      <a href="#" data-lang="fr" class="on">FR</a>
+      <a href="#" data-lang="en">EN</a>
+      <a href="#" data-lang="es">ES</a>
+    </div>
+  </header>
+
+  <!-- ═══════ FRANÇAIS ═══════ -->
+  <section id="lang-fr" class="on">
+    <h2>Politique de confidentialité</h2>
+    <p>La présente politique explique comment l'application <strong>BJ Genius</strong> traite les données des utilisateurs. Elle s'applique à la version Android distribuée sur Google Play et à la version web.</p>
+
+    <h2>1. Aucune collecte de données personnelles</h2>
+    <p>BJ Genius est une application de calcul de stratégie de blackjack qui fonctionne <strong>entièrement sur l'appareil de l'utilisateur</strong>. Nous ne collectons, ne stockons et ne transmettons aucune donnée personnelle vers nos serveurs. Aucun compte utilisateur n'est requis.</p>
+
+    <h2>2. Données stockées localement</h2>
+    <p>L'application enregistre certaines préférences et un état d'usage <strong>uniquement sur votre appareil</strong>, via le stockage local du navigateur ou de l'application :</p>
+    <ul>
+      <li>Vos préférences (langue, mode discret, grande police, annonce vocale)</li>
+      <li>L'état de votre achat « Pro » (si applicable)</li>
+      <li>Votre score d'entraînement</li>
+    </ul>
+    <p>Ces données ne quittent jamais votre appareil. Elles sont supprimées automatiquement si vous désinstallez l'application ou effacez ses données.</p>
+
+    <h2>3. Permissions requises</h2>
+    <p>L'application peut demander, de manière facultative :</p>
+    <ul>
+      <li>L'accès au <strong>microphone</strong>, uniquement lorsque vous activez la fonction « Commande vocale ». L'audio est traité localement via l'API de reconnaissance vocale du navigateur ou du système ; aucun enregistrement n'est conservé ni envoyé.</li>
+      <li>L'accès à la <strong>caméra</strong>, uniquement lorsque vous activez la fonction « Scan caméra » des cartes (version Pro). Les images sont analysées localement par un modèle d'intelligence artificielle embarqué ; aucune image ni flux vidéo n'est conservé, transmis ou stocké.</li>
+    </ul>
+
+    <h2>4. Téléchargement initial du modèle d'analyse</h2>
+    <p>Lors de la <strong>première activation</strong> de la fonction « Scan caméra », l'application télécharge un modèle d'intelligence artificielle (≈ 3 Mo) depuis <a href="https://huggingface.co" target="_blank" rel="noopener">huggingface.co</a> (hébergeur tiers). Ce téléchargement est unique et le modèle est ensuite conservé en cache local. Aucune information personnelle ni image n'est envoyée ; seule la requête de téléchargement du fichier est effectuée. Après ce téléchargement, le scan caméra fonctionne <strong>entièrement hors ligne</strong>.</p>
+
+    <h2>5. Achats intégrés</h2>
+    <p>L'achat de la version « Pro » est traité par <strong>Google Play Billing</strong>. Nous ne collectons ni ne stockons aucune information de paiement. Consultez la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">politique de confidentialité de Google</a> pour plus d'informations.</p>
+
+    <h2>6. Aucune publicité, aucun tracking</h2>
+    <p>BJ Genius ne contient <strong>aucune publicité</strong>, aucun outil d'analyse, aucun pixel de suivi, aucun SDK tiers de monétisation. Aucune donnée d'usage n'est collectée à des fins publicitaires ou statistiques.</p>
+
+    <h2>7. Enfants</h2>
+    <p>L'application n'est pas destinée aux enfants de moins de 12 ans. Elle ne collecte sciemment aucune donnée d'enfants.</p>
+
+    <h2>8. Modifications</h2>
+    <p>Cette politique peut être mise à jour. Les changements significatifs seront annoncés via les notes de mise à jour de l'application sur Google Play.</p>
+
+    <h2>9. Contact</h2>
+    <div class="contact-box">
+      Pour toute question : <a href="mailto:bjgenius.contact@gmail.com">bjgenius.contact@gmail.com</a>
+    </div>
+
+    <div class="meta">Dernière mise à jour : 10 mai 2026</div>
+  </section>
+
+  <!-- ═══════ ENGLISH ═══════ -->
+  <section id="lang-en">
+    <h2>Privacy Policy</h2>
+    <p>This policy explains how the <strong>BJ Genius</strong> application handles user data. It applies to the Android version distributed on Google Play and to the web version.</p>
+
+    <h2>1. No collection of personal data</h2>
+    <p>BJ Genius is a blackjack strategy calculator that runs <strong>entirely on the user's device</strong>. We do not collect, store, or transmit any personal data to our servers. No user account is required.</p>
+
+    <h2>2. Data stored locally</h2>
+    <p>The app saves some preferences and usage state <strong>only on your device</strong>, via the browser's or app's local storage:</p>
+    <ul>
+      <li>Your preferences (language, discrete mode, large font, voice announcement)</li>
+      <li>Your "Pro" purchase status (if applicable)</li>
+      <li>Your training score</li>
+    </ul>
+    <p>This data never leaves your device. It is automatically removed if you uninstall the app or clear its data.</p>
+
+    <h2>3. Required permissions</h2>
+    <p>The app may request, optionally:</p>
+    <ul>
+      <li>Access to the <strong>microphone</strong>, only when you enable the "Voice command" feature. Audio is processed locally via the browser or system speech-recognition API; no recording is kept or sent.</li>
+      <li>Access to the <strong>camera</strong>, only when you enable the "Camera scan" feature (Pro version). Images are analyzed locally by an embedded AI model; no image or video stream is kept, transmitted, or stored.</li>
+    </ul>
+
+    <h2>4. Initial AI model download</h2>
+    <p>On <strong>first activation</strong> of the "Camera scan" feature, the app downloads an AI model (≈ 3 MB) from <a href="https://huggingface.co" target="_blank" rel="noopener">huggingface.co</a> (third-party host). This is a one-time download; the model is then cached locally. No personal information or image is sent — only the file download request. After this download, camera scan works <strong>entirely offline</strong>.</p>
+
+    <h2>5. In-app purchases</h2>
+    <p>The "Pro" purchase is handled by <strong>Google Play Billing</strong>. We do not collect or store any payment information. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a> for more information.</p>
+
+    <h2>6. No ads, no tracking</h2>
+    <p>BJ Genius contains <strong>no advertising</strong>, no analytics tools, no tracking pixels, no third-party monetization SDKs. No usage data is collected for advertising or statistical purposes.</p>
+
+    <h2>7. Children</h2>
+    <p>The app is not intended for children under 12. It does not knowingly collect any data from children.</p>
+
+    <h2>8. Changes</h2>
+    <p>This policy may be updated. Significant changes will be announced in the app's release notes on Google Play.</p>
+
+    <h2>9. Contact</h2>
+    <div class="contact-box">
+      Any questions? <a href="mailto:bjgenius.contact@gmail.com">bjgenius.contact@gmail.com</a>
+    </div>
+
+    <div class="meta">Last updated: May 10, 2026</div>
+  </section>
+
+  <!-- ═══════ ESPAÑOL ═══════ -->
+  <section id="lang-es">
+    <h2>Política de privacidad</h2>
+    <p>Esta política explica cómo la aplicación <strong>BJ Genius</strong> trata los datos de los usuarios. Se aplica a la versión Android distribuida en Google Play y a la versión web.</p>
+
+    <h2>1. Ninguna recopilación de datos personales</h2>
+    <p>BJ Genius es una calculadora de estrategia de blackjack que funciona <strong>íntegramente en el dispositivo del usuario</strong>. No recopilamos, almacenamos ni transmitimos ningún dato personal a nuestros servidores. No se requiere cuenta de usuario.</p>
+
+    <h2>2. Datos almacenados localmente</h2>
+    <p>La aplicación guarda algunas preferencias y un estado de uso <strong>únicamente en su dispositivo</strong>, mediante el almacenamiento local del navegador o de la aplicación:</p>
+    <ul>
+      <li>Sus preferencias (idioma, modo discreto, letra grande, anuncio de voz)</li>
+      <li>El estado de su compra «Pro» (si corresponde)</li>
+      <li>Su puntuación de entrenamiento</li>
+    </ul>
+    <p>Estos datos nunca salen de su dispositivo. Se eliminan automáticamente si desinstala la aplicación o borra sus datos.</p>
+
+    <h2>3. Permisos requeridos</h2>
+    <p>La aplicación puede solicitar, de forma opcional:</p>
+    <ul>
+      <li>Acceso al <strong>micrófono</strong>, únicamente cuando active la función «Comando de voz». El audio se procesa localmente mediante la API de reconocimiento de voz del navegador o del sistema; no se conserva ni se envía ninguna grabación.</li>
+      <li>Acceso a la <strong>cámara</strong>, únicamente cuando active la función «Escaneo de cámara» de las cartas (versión Pro). Las imágenes se analizan localmente mediante un modelo de inteligencia artificial integrado; ninguna imagen ni flujo de vídeo se conserva, transmite ni almacena.</li>
+    </ul>
+
+    <h2>4. Descarga inicial del modelo de IA</h2>
+    <p>En la <strong>primera activación</strong> de la función «Escaneo de cámara», la aplicación descarga un modelo de inteligencia artificial (≈ 3 MB) desde <a href="https://huggingface.co" target="_blank" rel="noopener">huggingface.co</a> (alojamiento de terceros). Esta descarga es única y el modelo se almacena luego en caché local. No se envía ninguna información personal ni imagen; solo se realiza la solicitud de descarga del archivo. Tras esta descarga, el escaneo por cámara funciona <strong>completamente sin conexión</strong>.</p>
+
+    <h2>5. Compras integradas</h2>
+    <p>La compra de la versión «Pro» la gestiona <strong>Google Play Billing</strong>. No recopilamos ni almacenamos ninguna información de pago. Consulte la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">política de privacidad de Google</a> para más información.</p>
+
+    <h2>6. Sin publicidad, sin seguimiento</h2>
+    <p>BJ Genius no contiene <strong>ninguna publicidad</strong>, ninguna herramienta de análisis, ningún píxel de seguimiento, ningún SDK de monetización de terceros. No se recopila ningún dato de uso con fines publicitarios o estadísticos.</p>
+
+    <h2>7. Niños</h2>
+    <p>La aplicación no está destinada a niños menores de 12 años. No recopila a sabiendas datos de niños.</p>
+
+    <h2>8. Modificaciones</h2>
+    <p>Esta política puede actualizarse. Los cambios significativos se anunciarán en las notas de actualización de la aplicación en Google Play.</p>
+
+    <h2>9. Contacto</h2>
+    <div class="contact-box">
+      Para cualquier pregunta: <a href="mailto:bjgenius.contact@gmail.com">bjgenius.contact@gmail.com</a>
+    </div>
+
+    <div class="meta">Última actualización: 10 de mayo de 2026</div>
+  </section>
+</div>
+
+<script>
+// Switcher de langue
+document.querySelectorAll('.lang-bar a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const lang=a.dataset.lang;
+    document.querySelectorAll('.lang-bar a').forEach(x=>x.classList.toggle('on',x===a));
+    document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='lang-'+lang));
+    document.documentElement.lang=lang;
+    window.scrollTo(0,0);
+  });
+});
+// Auto-détection de langue au chargement
+const userLang=(navigator.language||'fr').slice(0,2);
+if(['fr','en','es'].includes(userLang)){
+  const link=document.querySelector('.lang-bar a[data-lang="'+userLang+'"]');
+  if(link)link.click();
+}
+</script>
+</body>
+</html>
