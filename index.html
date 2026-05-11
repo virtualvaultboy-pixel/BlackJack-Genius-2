@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.1 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.2.1 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -628,7 +628,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.1</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4873,6 +4873,9 @@ function toggleMic(){
     startActiveRecognition();
     // v1.20 — Intro contextuel a la 1ere activation du micro
     showIntroOnce('mic');
+    // v1.2 — Active la bulle flottante BJ Genius Live (Android natif)
+    // Si la permission overlay n'est pas accordee, on l'a demande.
+    maybeEnableBubble();
   } else {
     btn.classList.remove("on","listening");
     document.getElementById("mic-label").innerHTML=tr.voiceLabelOff;
@@ -4883,7 +4886,114 @@ function toggleMic(){
     voiceBuffer=[];
     if(voiceTimer)clearTimeout(voiceTimer);
     hideVoiceToast();
+    // v1.2 — Coupe la bulle quand on coupe le mic
+    maybeDisableBubble();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ══ v1.2 — BULLE FLOTTANTE BJ GENIUS LIVE (plugin Capacitor natif) ══
+// ═══════════════════════════════════════════════════════════════════
+// Remplace progressivement le PiP par une vraie bulle systeme draggable,
+// visible par-dessus toutes les autres apps (casinos en ligne, etc.).
+// La bulle ne fonctionne que sur Android Capacitor. Sur web, no-op silencieux.
+async function maybeEnableBubble(){
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin){
+    // Web ou ancien build : on tombe dans le fallback PiP existant via onUserLeaveHint
+    return;
+  }
+  try {
+    const check=await plugin.checkOverlayPermission();
+    if(!check.granted){
+      // Premier usage : demander la permission via popup explicatif
+      showBubblePermissionPopup();
+      return;
+    }
+    // Permission OK, on lance la bulle
+    await plugin.start();
+    console.log('[BJG] Bulle flottante demarree');
+  } catch(e){
+    console.warn('[BJG] Bubble start failed, fallback PiP:',e);
+  }
+}
+
+async function maybeDisableBubble(){
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin)return;
+  try {
+    await plugin.stop();
+    console.log('[BJG] Bulle flottante arretee');
+  } catch(e){
+    console.warn('[BJG] Bubble stop failed:',e);
+  }
+}
+
+// Popup pour expliquer et demander la permission "Display over other apps"
+function showBubblePermissionPopup(){
+  const lang=currentLang;
+  const titles={fr:"Bulle BJ Genius Live",en:"BJ Genius Live Bubble",es:"Burbuja BJ Genius Live"};
+  const descs={
+    fr:"Pour rester visible pendant que vous jouez sur votre casino, BJ Genius a besoin de votre autorisation pour <strong>afficher une bulle par-dessus les autres apps</strong>.<br><br>Cette bulle suit le doigt, peut être fermée à tout moment, et ne capture rien sans votre accord.",
+    en:"To stay visible while you play on your casino, BJ Genius needs your permission to <strong>display a bubble over other apps</strong>.<br><br>This bubble follows your finger, can be closed anytime, and captures nothing without your consent.",
+    es:"Para permanecer visible mientras juega en su casino, BJ Genius necesita su permiso para <strong>mostrar una burbuja sobre otras apps</strong>.<br><br>Esta burbuja sigue su dedo, puede cerrarse en cualquier momento y no captura nada sin su consentimiento."
+  };
+  const ctas={fr:"Autoriser ›",en:"Allow ›",es:"Permitir ›"};
+  const cancels={fr:"Plus tard",en:"Later",es:"Más tarde"};
+  // Reutilise une structure de popup existante : on cree un overlay dynamiquement
+  let ovl=document.getElementById('popup-bubble-perm');
+  if(!ovl){
+    ovl=document.createElement('div');
+    ovl.id='popup-bubble-perm';
+    ovl.className='popup-overlay';
+    ovl.onclick=function(e){if(e.target===ovl)ovl.classList.remove('show');};
+    ovl.innerHTML=`
+      <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+        <div class="popup-handle"></div>
+        <div style="font-size:2.6rem;margin-bottom:8px;">🫧</div>
+        <div id="bperm-title" style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;"></div>
+        <div id="bperm-desc" style="font-size:0.72rem;color:rgba(240,236,224,0.78);line-height:1.55;margin-bottom:16px;text-align:left;"></div>
+        <div style="display:flex;gap:8px;">
+          <div id="bperm-cancel" onclick="closePopup('popup-bubble-perm')" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px;color:rgba(240,236,224,0.6);font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-align:center;"></div>
+          <div id="bperm-ok" onclick="onBubblePermAccept()" style="flex:1;background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(ovl);
+  }
+  document.getElementById('bperm-title').textContent=titles[lang]||titles.fr;
+  document.getElementById('bperm-desc').innerHTML=descs[lang]||descs.fr;
+  document.getElementById('bperm-ok').textContent=ctas[lang]||ctas.fr;
+  document.getElementById('bperm-cancel').textContent=cancels[lang]||cancels.fr;
+  ovl.classList.add('show');
+}
+
+async function onBubblePermAccept(){
+  closePopup('popup-bubble-perm');
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin)return;
+  try {
+    await plugin.requestOverlayPermission();
+    // L'user va vers les params Android, on l'attend au retour pour re-check
+    // (pas de callback fiable, donc on re-check au resume de l'app)
+    document.addEventListener('visibilitychange', recheckBubblePermOnResume, {once:false});
+  } catch(e){
+    console.error('[BJG] requestOverlayPermission failed:',e);
+  }
+}
+
+async function recheckBubblePermOnResume(){
+  if(document.visibilityState!=='visible')return;
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin)return;
+  try {
+    const check=await plugin.checkOverlayPermission();
+    if(check.granted&&micOn){
+      // L'user a accorde la permission et le mic est toujours ON, on lance la bulle
+      await plugin.start();
+      console.log('[BJG] Bulle demarree apres autorisation');
+      document.removeEventListener('visibilitychange',recheckBubblePermOnResume);
+    }
+  } catch(e){}
 }
 
 function startRecognition(){
