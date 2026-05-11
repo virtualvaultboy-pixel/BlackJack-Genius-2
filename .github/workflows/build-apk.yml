@@ -62,13 +62,14 @@ jobs:
             npx cap sync android
           fi
 
-      - name: Patch AndroidManifest.xml (add camera + mic permissions)
+      - name: Patch AndroidManifest.xml (permissions + portrait lock)
         run: |
           python3 << 'PYEOF'
-          import os
+          import os, re
           path = "android/app/src/main/AndroidManifest.xml"
           with open(path, "r", encoding="utf-8") as f:
               content = f.read()
+          # 1) Permissions camera + micro
           new_perms = (
               '    <uses-permission android:name="android.permission.CAMERA" />\n'
               '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
@@ -78,11 +79,24 @@ jobs:
           )
           if "android.permission.CAMERA" not in content:
               content = content.replace("</manifest>", new_perms + "</manifest>")
-              with open(path, "w", encoding="utf-8") as f:
-                  f.write(content)
               print("Permissions injected")
           else:
-              print("Permissions already present, skipping")
+              print("Permissions already present")
+          # 2) v1.14 - Force orientation portrait au niveau natif Android.
+          # Ajoute android:screenOrientation="portrait" sur la balise <activity>
+          # si pas deja present. Bloque la rotation cote APK.
+          if 'android:screenOrientation' not in content:
+              content = re.sub(
+                  r'(<activity\b)',
+                  r'\1 android:screenOrientation="portrait"',
+                  content,
+                  count=1
+              )
+              print("Portrait orientation lock injected")
+          else:
+              print("screenOrientation already present")
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(content)
           print("=== Final AndroidManifest.xml ===")
           print(content)
           PYEOF
