@@ -101,6 +101,76 @@ jobs:
             npx cap sync android
           fi
 
+      - name: Enable Kotlin in Android Gradle build
+        # v1.2 — La bulle flottante est implementee en Kotlin. Le projet Capacitor
+        # initial ne configure pas Kotlin par defaut. On l'ajoute idempotemment.
+        run: |
+          python3 << 'PYEOF'
+          import re
+          # 1) Top-level build.gradle : ajouter le classpath kotlin
+          path_top = "android/build.gradle"
+          with open(path_top, "r", encoding="utf-8") as f:
+              c = f.read()
+          if "kotlin-gradle-plugin" not in c:
+              # Inserer dans dependencies du buildscript
+              c = re.sub(
+                  r'(buildscript\s*\{[^}]*dependencies\s*\{)',
+                  r'\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"',
+                  c, count=1, flags=re.DOTALL
+              )
+              # Ajouter ext.kotlin_version si absent
+              if "kotlin_version" not in c:
+                  c = re.sub(
+                      r'(buildscript\s*\{)',
+                      r'\1\n    ext.kotlin_version = "1.9.22"',
+                      c, count=1
+                  )
+              with open(path_top, "w", encoding="utf-8") as f:
+                  f.write(c)
+              print("✓ Kotlin classpath added to top-level build.gradle")
+          else:
+              print("  Kotlin classpath already present")
+
+          # 2) Module build.gradle : appliquer le plugin kotlin-android
+          path_mod = "android/app/build.gradle"
+          with open(path_mod, "r", encoding="utf-8") as f:
+              c = f.read()
+          if "kotlin-android" not in c:
+              # Ajouter apply plugin: 'kotlin-android' juste apres apply plugin: 'com.android.application'
+              c = re.sub(
+                  r"(apply plugin:\s*['\"]com\.android\.application['\"])",
+                  r"\1\napply plugin: 'kotlin-android'",
+                  c, count=1
+              )
+              with open(path_mod, "w", encoding="utf-8") as f:
+                  f.write(c)
+              print("✓ kotlin-android plugin applied to app/build.gradle")
+          else:
+              print("  kotlin-android plugin already applied")
+          PYEOF
+
+      - name: Copy native Android sources (BJGeniusBubble v1.2)
+        # v1.2 — Copie les fichiers Kotlin et Java de la bulle flottante depuis
+        # android-native/ vers le projet Android. Le package est studio.deponchy.bjgenius.
+        run: |
+          set -e
+          SRC_DIR="android-native"
+          DEST_PKG="studio/deponchy/bjgenius"
+          DEST_DIR="android/app/src/main/java/${DEST_PKG}"
+          if [ ! -d "$SRC_DIR" ]; then
+            echo "WARN: $SRC_DIR not found. Bubble feature won't be built."
+            exit 0
+          fi
+          mkdir -p "$DEST_DIR"
+          for f in "$SRC_DIR"/*.kt "$SRC_DIR"/*.java; do
+            if [ -f "$f" ]; then
+              cp "$f" "$DEST_DIR/"
+              echo "  ✓ Copied $(basename $f) → $DEST_DIR/"
+            fi
+          done
+          echo "=== Native files in place ==="
+          ls -la "$DEST_DIR/"
+
       - name: Patch AndroidManifest.xml (idempotent)
         run: |
           python3 << 'PYEOF'
@@ -126,6 +196,41 @@ jobs:
               print("Permissions injected")
           else:
               print("Permissions already present")
+
+          # 1b) v1.2 — Permissions pour la bulle flottante BJ Genius Live :
+          #     SYSTEM_ALERT_WINDOW = afficher par-dessus les autres apps
+          #     FOREGROUND_SERVICE  = maintenir le service en background
+          #     POST_NOTIFICATIONS  = notification permanente (Android 13+)
+          bubble_perms = (
+              '    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n'
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n'
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />\n'
+              '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
+          )
+          if "SYSTEM_ALERT_WINDOW" not in content:
+              content = content.replace("</manifest>", bubble_perms + "</manifest>")
+              print("v1.2 Bubble permissions injected")
+          else:
+              print("v1.2 Bubble permissions already present")
+
+          # 1c) v1.2 — Declaration du service BJGeniusBubbleService dans <application>.
+          #     foregroundServiceType="specialUse" est obligatoire depuis Android 14.
+          service_decl = (
+              '        <service\n'
+              '            android:name="studio.deponchy.bjgenius.BJGeniusBubbleService"\n'
+              '            android:exported="false"\n'
+              '            android:foregroundServiceType="specialUse">\n'
+              '            <property\n'
+              '                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"\n'
+              '                android:value="floating_assistant_bubble" />\n'
+              '        </service>\n'
+          )
+          if "BJGeniusBubbleService" not in content:
+              # Inserer juste avant </application>
+              content = content.replace("</application>", service_decl + "    </application>")
+              print("v1.2 Bubble service declared")
+          else:
+              print("v1.2 Bubble service already declared")
 
           # 2) Attributs sur <activity> ajoutes idempotemment, un par un.
           # Pour chaque attr : on cherche s'il est deja present dans la balise
@@ -169,15 +274,17 @@ jobs:
           print("=== End Final ===")
           PYEOF
 
-      - name: Patch MainActivity.java (auto-enter PiP on Home)
+      - name: Patch MainActivity.java (auto-enter PiP on Home + register Bubble plugin)
         run: |
           python3 << 'PYEOF'
           import os, glob, re, textwrap
           # v1.17 - Patch de MainActivity.java pour declencher PiP automatiquement
           # quand l'user appuie Home (onUserLeaveHint). Faisable sur Android 8+.
+          # v1.2 - Enregistre aussi le plugin BJGeniusBubble pour exposer la bulle
+          # flottante au JS.
           matches = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
           if not matches:
-              print("WARN: MainActivity.java not found, skipping PiP patch")
+              print("WARN: MainActivity.java not found, skipping patch")
           else:
               path = matches[0]
               print(f"Patching {path}")
@@ -188,8 +295,8 @@ jobs:
               m = re.match(r'package\s+([^;]+);', content)
               if not m:
                   print("WARN: package declaration not found, skipping")
-              elif 'enterPictureInPictureMode' in content:
-                  print("PiP already patched, skipping")
+              elif 'enterPictureInPictureMode' in content and 'BJGeniusBubblePlugin' in content:
+                  print("Already fully patched, skipping")
               else:
                   package = m.group(1)
                   # textwrap.dedent retire l'indentation commune pour produire
@@ -200,10 +307,20 @@ jobs:
                       import android.app.PictureInPictureParams;
                       import android.content.res.Configuration;
                       import android.os.Build;
+                      import android.os.Bundle;
                       import android.util.Rational;
                       import com.getcapacitor.BridgeActivity;
+                      import studio.deponchy.bjgenius.BJGeniusBubblePlugin;
 
                       public class MainActivity extends BridgeActivity {{
+                          @Override
+                          public void onCreate(Bundle savedInstanceState) {{
+                              // v1.2 — Enregistre le plugin BJGeniusBubble AVANT super.onCreate
+                              // pour que Capacitor le decouvre au demarrage.
+                              registerPlugin(BJGeniusBubblePlugin.class);
+                              super.onCreate(savedInstanceState);
+                          }}
+
                           @Override
                           public void onUserLeaveHint() {{
                               super.onUserLeaveHint();
@@ -233,7 +350,7 @@ jobs:
                       """)
                   with open(path, "w", encoding="utf-8") as f:
                       f.write(new_content)
-                  print("MainActivity.java patched with PiP support")
+                  print("MainActivity.java patched (PiP + Bubble plugin registered)")
                   print("=== New MainActivity.java ===")
                   print(new_content)
           PYEOF
