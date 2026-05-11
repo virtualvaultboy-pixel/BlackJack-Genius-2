@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.4 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.6 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -559,7 +559,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.6</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -852,6 +852,8 @@ body.lite .ts-expert-card{position:relative;}
     <div class="setting-row" id="si-discrete"><div class="setting-label">🌑 Mode discret</div><div class="toggle" id="toggle-discrete" onclick="toggleDiscrete()"></div></div>
     <div class="setting-row" id="si-font"><div class="setting-label">🔤 Grande police</div><div class="toggle" id="toggle-font" onclick="toggleFont()"></div></div>
     <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
+    <!-- v1.6 — Toggle anti-hallucination "as/ace" post-figure (Chrome LM ajoute systématiquement "as" après dame/valet/roi). ON par défaut depuis v1.6 (refonte). Désactivable si l'user veut retrouver l'ancien comportement. Compromis Q+A blackjack : touche tactile. -->
+    <div class="setting-row" id="si-voicefilter"><div class="setting-label">✂️ Filtre 'as' parasite (vocal)</div><div class="toggle on" id="dt-voicefilter" onclick="toggleVoiceFilter()"></div></div>
     <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
     <div class="setting-row">
@@ -1329,6 +1331,17 @@ function toggleSpeak(){
   speakOn=!speakOn;
   const ts=document.getElementById("dt-speak2");
   if(ts)ts.classList.toggle("on",speakOn);
+}
+// v1.6 — Toggle filtre anti-hallucination "as/ace" post-figure. Persiste en localStorage.
+// Convention : null ou '1' = filtre actif (défaut), '0' = explicitement désactivé.
+// ON par défaut depuis v1.6 (refonte). Désactivable pour récupérer l'ancien comportement
+// si l'user veut tester ou si le LM Chrome cesse d'halluciner sur certains téls.
+function toggleVoiceFilter(){
+  const cur=localStorage.getItem('bjg_voice_filter_face_as')!=='0'; // null = on
+  const next=!cur;
+  localStorage.setItem('bjg_voice_filter_face_as',next?'1':'0');
+  const t=document.getElementById('dt-voicefilter');
+  if(t)t.classList.toggle('on',next);
 }
 
 // ══ LANGUE ══
@@ -2560,6 +2573,9 @@ function openSettingsPopup(){
   document.getElementById('toggle-font').classList.toggle('on',largeFont);
   document.getElementById('dt-mic2').classList.toggle('on',micOn);
   document.getElementById('dt-speak2').classList.toggle('on',speakOn);
+  // v1.6 — Init du toggle filtre vocal : null/'1' = ON (défaut), '0' = OFF
+  const vf=document.getElementById('dt-voicefilter');
+  if(vf)vf.classList.toggle('on',localStorage.getItem('bjg_voice_filter_face_as')!=='0');
   document.getElementById('popup-settings-modal').classList.add('show');
 }
 function openSettings(){toggleDrawer();}
@@ -4270,11 +4286,16 @@ function splitMerged(word){
 function extractCards(transcript){
   let text=norm(transcript);
 
-  // v1.3 — Revert du filtre v1.2 sur "figure + as". Aurélien a confirmé que ce pattern
-  // est ultra fréquent au BJ (Q+A = blackjack, J+A = 21, K+A = 21, hit d'un As après
-  // figure en main 3+ cartes). Le filtre cassait trop de cas légitimes. Pour le bug
-  // "Chrome insère parfois as parasite après figure", l'user corrige manuellement via
-  // le bouton × sur la carte. Pas de discrimination fiable possible côté code.
+  // v1.6 — REFONTE : filtre "as/ace" parasite après figure ACTIVÉ PAR DÉFAUT.
+  // Chrome STT en mode fr-FR insère systématiquement "as" (verbe avoir) après dame/valet/roi
+  // car son modèle de langue auto-corrige les phrases pour qu'elles soient grammaticalement
+  // correctes en français. Bug constant à 100% sur certains téls (Aurélien sur Samsung).
+  // ON par défaut = "dame=dame" fiable. Trade-off Q+A blackjack (~0.6% des mains) : touche
+  // tactile pour ajouter le A. Le toggle dans Paramètres permet de désactiver si besoin.
+  // Convention localStorage : null/'1' = filtre actif, '0' = filtre désactivé.
+  if(localStorage.getItem('bjg_voice_filter_face_as')!=='0'){
+    text=text.replace(/\b(dame|reine|valet|jack|jacques|roi|queen|king)s?\s+(?:as|ace)(\s|$)/g,"$1$2");
+  }
 
   // Helper : check si un mot mappe à une vraie carte (pas une commande)
   const isCardWord=(w)=>isRealCard(bestMatch(w))||splitMerged(w);
@@ -4304,67 +4325,10 @@ function extractCards(transcript){
   return cards;
 }
 
-// v1.4 — Scoring des alternatives Chrome STT par "voting" inter-alternatives au niveau
-// des CODES CARTES (pas des mots bruts).
-//
-// Chrome retourne plusieurs interprétations (r[0]..r[maxAlternatives-1]). r[0] est jugé
-// le meilleur PAR CHROME, mais son scoring inclut un fort biais du modèle de langue qui
-// hallucine parfois des mots de liaison ("as" verbe avoir, "et"...) pour grammaticaliser.
-// Les alternatives 1+ reflètent souvent un décodage plus brut, plus fidèle à l'audio.
-//
-// Algo : on convertit chaque alternative en sa séquence de codes cartes via extractCards.
-// On parcourt r[0]; pour chaque k-ième occurrence d'un code, on compte combien
-// d'alternatives ont AU MOINS k occurrences de ce code. Si ≥ threshold (majorité stricte),
-// on garde ce code. Sinon (le code n'est supporté que par r[0]), il est éliminé.
-//
-// Pourquoi au niveau des codes et pas des mots : "trois" et "3" sont le même code "3",
-// "dame" et "dam" sont le même code "Q". Voter sur les mots bruts casserait les cas où
-// les alternatives utilisent des formes différentes (digit vs mot, variante phonétique).
-//
-// Exemples :
-//  • Hallucination "as" — r[0]="2 dame as 3", r[1]="2 dame 3"
-//    Codes r[0]=[2,Q,A,3], r[1]=[2,Q,3]. "A" supporté par 1/2 < 2 → REMOVE. → [2,Q,3] ✓
-//  • Q+A+3 légitime — r[0]="dame as 3", r[1]="dam as trois", r[2]="dame ace 3"
-//    Tous les codes [Q,A,3] supportés par 3/3 → tout KEEP. → [Q,A,3] ✓
-//
-// Cas dégénérés :
-//  • 1 seule alternative : pas de vote possible, on garde r[0] direct.
-//  • Toutes les alternatives ont la même hallucination : pas de discrimination possible.
-//  • r[k] très différent de r[0] : peut éliminer des codes légitimes (compromis assumé).
-function pickBestAlternative(result){
-  if(!result||!result.length)return "";
-  const transcripts=[];
-  for(let k=0;k<result.length;k++){
-    if(result[k]&&result[k].transcript){
-      const t=result[k].transcript.trim();
-      if(t)transcripts.push(t);
-    }
-  }
-  if(!transcripts.length)return "";
-  if(transcripts.length===1)return transcripts[0];
-  // Convertir chaque alternative en séquence de codes cartes (ordre préservé)
-  const codeSeqs=transcripts.map(t=>extractCards(t));
-  // Threshold : majorité stricte. Min 2 pour qu'avec 2 alts on exige consensus (sinon
-  // ceil(2/2)=1 et tout passe trivialement, ce qui défait le voting).
-  const threshold=Math.max(2,Math.ceil(transcripts.length/2));
-  const robust=[];
-  const occSeen={}; // compteur de la k-ième occurrence par code dans r[0]
-  for(const code of codeSeqs[0]){
-    occSeen[code]=(occSeen[code]||0)+1;
-    const required=occSeen[code];
-    let supporters=0;
-    for(const seq of codeSeqs){
-      let seen=0;
-      for(const c of seq){if(c===code){seen++;if(seen>=required)break;}}
-      if(seen>=required)supporters++;
-    }
-    if(supporters>=threshold)robust.push(code);
-  }
-  if(!robust.length)return transcripts[0]; // fallback pathologique
-  // On renvoie la séquence de codes joinée. extractCards les re-parsera correctement
-  // (A, 2-10, J, Q, K sont tous dans VC, donc directement matchés).
-  return robust.join(" ");
-}
+// v1.5 — Fonction pickBestAlternative v1.4 retirée : le voting inter-alternatives ne
+// discriminait rien dans le cas terrain d'Aurélien (Chrome retournait ses 5 alternatives
+// toutes contaminées par la même hallucination "dame as"). Le LM Chrome est trop confiant
+// sur ce pattern. Solution alternative : toggle dans le drawer pour filtrer manuellement.
 
 // v2.9 — Fonction dedupeVoice() supprimée : elle était définie mais jamais appelée
 // (commentaire prétendait gérer "sept sept" mais le corps retournait juste cards inchangé).
@@ -4528,7 +4492,7 @@ function startRecognition(){
   recognition.lang=currentLang==='en'?'en-US':currentLang==='es'?'es-ES':'fr-FR';
   recognition.continuous=true;
   recognition.interimResults=true;   // partiels actifs : on peut prévisualiser et garder le timer "vivant" pendant que l'user parle
-  recognition.maxAlternatives=5;     // v1.4 — 3 → 5 (plus d'alternatives à scorer pour pickBestAlternative)
+  recognition.maxAlternatives=3;     // v1.5 — revert 5→3 : le voting v1.4 ne discriminait rien dans le cas Aurélien
   recognition.onstart=()=>{document.getElementById("mic-btn").classList.add("listening");};
   recognition.onresult=(e)=>{
     const now=Date.now();
@@ -4536,10 +4500,7 @@ function startRecognition(){
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
       if(r.isFinal){
-        // v1.4 — Au lieu de prendre aveuglément r[0] (qui peut contenir des hallucinations
-        // du modèle de langue Chrome type "dame as 3"), on score toutes les alternatives
-        // et on garde celle au meilleur ratio cardCount/wordCount.
-        const tr=pickBestAlternative(r);
+        const tr=(r[0]&&r[0].transcript||"").trim();
         if(!tr)continue;
         // Anti-cumul : Chrome Android émet parfois plusieurs finals à un même index
         // qui ÉTENDENT le précédent ("huit", puis "huit quatre", puis "huit quatre neuf").
