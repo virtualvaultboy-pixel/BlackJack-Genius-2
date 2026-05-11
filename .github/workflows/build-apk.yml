@@ -62,14 +62,19 @@ jobs:
             npx cap sync android
           fi
 
-      - name: Patch AndroidManifest.xml (permissions + portrait + PiP)
+      - name: Patch AndroidManifest.xml (idempotent)
         run: |
           python3 << 'PYEOF'
-          import os, re
+          import re, sys
+          import xml.etree.ElementTree as ET
           path = "android/app/src/main/AndroidManifest.xml"
           with open(path, "r", encoding="utf-8") as f:
               content = f.read()
-          # 1) Permissions camera + micro
+          print("=== Original AndroidManifest.xml ===")
+          print(content)
+          print("=== End Original ===")
+
+          # 1) Permissions camera + micro (ajoute seulement si absent)
           new_perms = (
               '    <uses-permission android:name="android.permission.CAMERA" />\n'
               '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
@@ -82,43 +87,55 @@ jobs:
               print("Permissions injected")
           else:
               print("Permissions already present")
-          # 2) v1.14 - Force orientation portrait + configChanges (requis pour PiP).
-          # On ajoute screenOrientation + configChanges qui inclut screenSize/screenLayout
-          # /smallestScreenSize/orientation (necessaires Android pour ne pas restart
-          # l'activity en PiP).
-          if 'android:screenOrientation' not in content:
-              content = re.sub(
-                  r'(<activity\b)',
-                  r'\1 android:screenOrientation="portrait" android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" android:supportsPictureInPicture="true"',
-                  content,
-                  count=1
-              )
-              print("Portrait + PiP + configChanges injected")
-          elif 'android:supportsPictureInPicture' not in content:
-              # screenOrientation deja la mais pas le PiP : ajouter PiP + configChanges
-              content = re.sub(
-                  r'(<activity\b[^>]*?)>',
-                  r'\1 android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" android:supportsPictureInPicture="true">',
-                  content,
-                  count=1
-              )
-              print("PiP + configChanges injected (orientation already present)")
-          else:
-              print("All activity attrs already present")
+
+          # 2) Attributs sur <activity> ajoutes idempotemment, un par un.
+          # Pour chaque attr : on cherche s'il est deja present dans la balise
+          # opening <activity ...>, et on ne l'ajoute que si absent.
+          def add_activity_attr(content, attr_name, attr_value):
+              m = re.search(r'<activity\b[^>]*>', content)
+              if not m:
+                  print(f"  WARN: no <activity> tag found, skipping {attr_name}")
+                  return content
+              tag = m.group(0)
+              if f'android:{attr_name}=' in tag:
+                  print(f"  android:{attr_name} already present")
+                  return content
+              new_tag = tag.replace('<activity', f'<activity android:{attr_name}="{attr_value}"', 1)
+              content = content.replace(tag, new_tag, 1)
+              print(f"  Injected android:{attr_name}")
+              return content
+
+          # Portrait lock (v1.14)
+          content = add_activity_attr(content, 'screenOrientation', 'portrait')
+          # configChanges requis pour PiP ET pour eviter restart en rotation
+          content = add_activity_attr(content, 'configChanges',
+              'screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden')
+          # PiP support (v1.17)
+          content = add_activity_attr(content, 'supportsPictureInPicture', 'true')
+
+          # 3) Validation : le manifest doit etre du XML valide avant ecriture
+          try:
+              ET.fromstring(content)
+              print("XML validation: OK")
+          except ET.ParseError as e:
+              print(f"FATAL: XML validation FAILED: {e}")
+              print("=== Broken content ===")
+              print(content)
+              sys.exit(1)
+
           with open(path, "w", encoding="utf-8") as f:
               f.write(content)
           print("=== Final AndroidManifest.xml ===")
           print(content)
+          print("=== End Final ===")
           PYEOF
 
       - name: Patch MainActivity.java (auto-enter PiP on Home)
         run: |
           python3 << 'PYEOF'
-          import os, glob, re
+          import os, glob, re, textwrap
           # v1.17 - Patch de MainActivity.java pour declencher PiP automatiquement
           # quand l'user appuie Home (onUserLeaveHint). Faisable sur Android 8+.
-          # Capacitor genere un MainActivity minimal heritant de BridgeActivity.
-          # On le remplace par une version qui override onUserLeaveHint.
           matches = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
           if not matches:
               print("WARN: MainActivity.java not found, skipping PiP patch")
@@ -127,7 +144,8 @@ jobs:
               print(f"Patching {path}")
               with open(path, "r", encoding="utf-8") as f:
                   content = f.read()
-              # Extract package name from first line
+              print("=== Original MainActivity.java ===")
+              print(content)
               m = re.match(r'package\s+([^;]+);', content)
               if not m:
                   print("WARN: package declaration not found, skipping")
@@ -135,43 +153,45 @@ jobs:
                   print("PiP already patched, skipping")
               else:
                   package = m.group(1)
-                  new_content = f"""package {package};
+                  # textwrap.dedent retire l'indentation commune pour produire
+                  # du Java propre malgre l'indent de notre heredoc YAML.
+                  new_content = textwrap.dedent(f"""\
+                      package {package};
 
-          import android.app.PictureInPictureParams;
-          import android.content.res.Configuration;
-          import android.os.Build;
-          import android.util.Rational;
-          import com.getcapacitor.BridgeActivity;
+                      import android.app.PictureInPictureParams;
+                      import android.content.res.Configuration;
+                      import android.os.Build;
+                      import android.util.Rational;
+                      import com.getcapacitor.BridgeActivity;
 
-          public class MainActivity extends BridgeActivity {{
-              @Override
-              public void onUserLeaveHint() {{
-                  super.onUserLeaveHint();
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {{
-                      try {{
-                          PictureInPictureParams params = new PictureInPictureParams.Builder()
-                              .setAspectRatio(new Rational(9, 16))
-                              .build();
-                          enterPictureInPictureMode(params);
-                      }} catch (Exception e) {{
-                          // PiP not supported on this device or in this state, ignore
+                      public class MainActivity extends BridgeActivity {{
+                          @Override
+                          public void onUserLeaveHint() {{
+                              super.onUserLeaveHint();
+                              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {{
+                                  try {{
+                                      PictureInPictureParams params = new PictureInPictureParams.Builder()
+                                          .setAspectRatio(new Rational(9, 16))
+                                          .build();
+                                      enterPictureInPictureMode(params);
+                                  }} catch (Exception e) {{
+                                      // PiP not supported in this state, ignore
+                                  }}
+                              }}
+                          }}
+
+                          @Override
+                          public void onPictureInPictureModeChanged(boolean isInPip, Configuration newConfig) {{
+                              super.onPictureInPictureModeChanged(isInPip, newConfig);
+                              if (this.bridge != null && this.bridge.getWebView() != null) {{
+                                  final String js = "document.body.classList." + (isInPip ? "add" : "remove") + "('pip-mode');";
+                                  this.bridge.getWebView().post(() ->
+                                      this.bridge.getWebView().evaluateJavascript(js, null)
+                                  );
+                              }}
+                          }}
                       }}
-                  }}
-              }}
-
-              @Override
-              public void onPictureInPictureModeChanged(boolean isInPip, Configuration newConfig) {{
-                  super.onPictureInPictureModeChanged(isInPip, newConfig);
-                  // Notify the WebView so CSS/JS can adapt
-                  if (this.bridge != null && this.bridge.getWebView() != null) {{
-                      String js = "document.body.classList." + (isInPip ? "add" : "remove") + "('pip-mode');";
-                      this.bridge.getWebView().post(() ->
-                          this.bridge.getWebView().evaluateJavascript(js, null)
-                      );
-                  }}
-              }}
-          }}
-          """
+                      """)
                   with open(path, "w", encoding="utf-8") as f:
                       f.write(new_content)
                   print("MainActivity.java patched with PiP support")
