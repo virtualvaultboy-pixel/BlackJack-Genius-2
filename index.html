@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.6 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.9 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -559,7 +559,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.6</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.9</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4180,16 +4180,15 @@ function bestMatch(w){
   // Exact match en priorité absolue
   if(VC[w]) return VC[w];
 
-  // v2.9 — Filtre EARLY des suites de cartes pour éviter qu'elles soient mal interprétées
-  // par les startsWith génériques en aval (ex: "trefle" → "tr" → "3", "carreau" → "ca" → "4").
-  // Au BJ on ne nomme pas les suites mais Chrome peut malentendre n'importe quoi.
-  // "coeur" et "pique" sont déjà OK (aucun startsWith ne les capture), on les ajoute par symétrie.
-  if(w.startsWith("tref")) return "SUIT";  // trefle, trefles, treffl...
-  if(w.startsWith("carr")) return "SUIT";  // carreau, carreaux
-  if(w.startsWith("coeu")) return "SUIT";  // coeur, coeurs
-  if(w.startsWith("piqu")) return "SUIT";  // pique, piques
+  // Filtre EARLY des suites (trefle/carreau/coeur/pique) pour éviter qu'elles soient
+  // mal interprétées par les startsWith génériques en aval (ex: "trefle" → "tr" → "3",
+  // "carreau" → "ca" → "4"). On retourne "SUIT" qui est ensuite ignoré par isRealCard.
+  if(w.startsWith("tref")) return "SUIT";
+  if(w.startsWith("carr")) return "SUIT";
+  if(w.startsWith("coeu")) return "SUIT";
+  if(w.startsWith("piqu")) return "SUIT";
 
-  // startsWith rules — logiques et sans ambiguïté
+  // startsWith rules — logique linguistique, sans ambiguïté
   if(w.startsWith("tr")) return "3";        // trois, tro, trwa...
   if(w.startsWith("ro")) return "K";        // roi, roua, rois...
   if(w.startsWith("kin")) return "K";       // king, kin, kingue...
@@ -4200,13 +4199,11 @@ function bestMatch(w){
   if(w.startsWith("kou")||w.startsWith("kwi")||w.startsWith("que")) return "Q"; // queen, kouine, kwin...
   if(w.startsWith("ka")||w.startsWith("ca")) return "4"; // quatre, cat...
   if(w.startsWith("sa")||w.startsWith("sin")||w.startsWith("san")) return "5"; // cinq, sank...
-  // v2.9 — Retiré le dead code "||w.startsWith('sa')&&w.length<=4" unreachable
-  // (la ligne précédente capture déjà tout "sa..." → 5)
   if(w.startsWith("se")) return "7"; // sept, set...
   if(w.startsWith("hu")||w.startsWith("wi")) return "8"; // huit, wit...
   if(w.startsWith("ne")||w.startsWith("no")) return "9"; // neuf, noeuf...
-  if(w.startsWith("di")) return "10";       // dix, dis...
-  if(w.startsWith("deu")) return "2"; // deux, deu, deuh (le "de" exact est désormais dans VC depuis v1.1)
+  if(w.startsWith("di")) return "10";       // dix, dis, di...
+  if(w.startsWith("deu")) return "2"; // deux, deu, deuh (le "de" exact est dans le dict VC)
   if(w.startsWith("as")&&w.length<=5) return "A"; // as, asse, ass, asss, ases
   if(w.startsWith("ac")&&w.length<=4) return "A"; // ace, aces
   if(w.startsWith("az")&&w.length<=4) return "A"; // az, aze
@@ -4286,107 +4283,88 @@ function splitMerged(word){
 function extractCards(transcript){
   let text=norm(transcript);
 
-  // v1.6 — REFONTE : filtre "as/ace" parasite après figure ACTIVÉ PAR DÉFAUT.
-  // Chrome STT en mode fr-FR insère systématiquement "as" (verbe avoir) après dame/valet/roi
-  // car son modèle de langue auto-corrige les phrases pour qu'elles soient grammaticalement
-  // correctes en français. Bug constant à 100% sur certains téls (Aurélien sur Samsung).
-  // ON par défaut = "dame=dame" fiable. Trade-off Q+A blackjack (~0.6% des mains) : touche
-  // tactile pour ajouter le A. Le toggle dans Paramètres permet de désactiver si besoin.
-  // Convention localStorage : null/'1' = filtre actif, '0' = filtre désactivé.
+  // Filtre "as/ace" parasite post-figure (toggle Paramètres, ON par défaut).
+  // Chrome STT en fr-FR insère systématiquement "as" (verbe avoir) après dame/valet/roi
+  // pour produire une phrase grammaticalement valide. C'est un bug du modèle de langue
+  // de Chrome, contournement ciblé et fiable.
+  // localStorage : null/'1' = filtre actif (défaut), '0' = explicitement désactivé.
   if(localStorage.getItem('bjg_voice_filter_face_as')!=='0'){
     text=text.replace(/\b(dame|reine|valet|jack|jacques|roi|queen|king)s?\s+(?:as|ace)(\s|$)/g,"$1$2");
   }
 
-  // Helper : check si un mot mappe à une vraie carte (pas une commande)
+  // Helper : check si un mot correspond à une vraie carte (pas une commande)
   const isCardWord=(w)=>isRealCard(bestMatch(w))||splitMerged(w);
 
-  // === DÉVELOPPEMENT DES PAIRES ===
-  // "paire de 7" / "paire 7" / "paires de roi" → "7 7" / "roi roi"
+  // Développement des paires / doubles / multiplicateurs
+  //   "paire de 7" / "paire 7" / "paires de roi" → "7 7" / "roi roi"
+  //   "double 7" / "doubles roi"                → "7 7"
+  //   "2 fois 7" / "trois fois 8"               → "7 7" / "8 8 8"
   text=text.replace(/\bpaires?\s+(?:de\s+)?([a-z0-9]+)/g,(m,c)=>isCardWord(c)?c+" "+c:m);
-  // "double 7" / "doubles roi" → "7 7"
   text=text.replace(/\bdoubles?\s+([a-z0-9]+)/g,(m,c)=>isCardWord(c)?c+" "+c:m);
-  // "2 fois 7" / "deux fois 7" / "trois fois 8" → 7 7 / 7 7 / 8 8 8
   text=text.replace(/\b(2|3|4|deux|trois|quatre)\s+fois\s+([a-z0-9]+)/g,(m,n,c)=>{
     if(!isCardWord(c))return m;
     const cnt={"2":2,"3":3,"4":4,"deux":2,"trois":3,"quatre":4}[n];
     return Array(cnt).fill(c).join(" ");
   });
 
+  // Extraction mot à mot : commandes ignorées, le reste passé à splitMerged pour
+  // gérer aussi bien les matches directs que les mots fusionnés ("dixneuf" → "10 9").
   const words=text.split(/\s+/).filter(w=>w.length>=1&&w.length<=16);
   const cards=[];
   for(const w of words){
-    // Si c'est une commande (SPLIT/RESET/etc.), on l'ignore ici (traitée dans processBuffer)
     const m=bestMatch(w);
-    if(m&&!isRealCard(m))continue;
-    // Sinon on délègue à splitMerged qui couvre direct + découpages multi-cartes
+    if(m&&!isRealCard(m))continue; // commande : traitée dans processBuffer
     const result=splitMerged(w);
     if(result)for(const c of result)cards.push(c);
   }
   return cards;
 }
 
-// v1.5 — Fonction pickBestAlternative v1.4 retirée : le voting inter-alternatives ne
-// discriminait rien dans le cas terrain d'Aurélien (Chrome retournait ses 5 alternatives
-// toutes contaminées par la même hallucination "dame as"). Le LM Chrome est trop confiant
-// sur ce pattern. Solution alternative : toggle dans le drawer pour filtrer manuellement.
-
-// v2.9 — Fonction dedupeVoice() supprimée : elle était définie mais jamais appelée
-// (commentaire prétendait gérer "sept sept" mais le corps retournait juste cards inchangé).
-// La vraie dedup des répétitions est gérée par la heuristique uniqueCardWords dans processBuffer.
+// v1.9 — REFONTE VOCALE
+// Architecture épurée du pipeline de reconnaissance vocale.
+// On garde toute l'intelligence linguistique (VC, bestMatch, splitMerged) et on
+// supprime la couche de bricolages accumulés (delta inter-commits, fast-commit
+// hardcodé, lastCommitText). Pipeline désormais linéaire :
+//   onresult → buffer (avec extension cumulative) → timer 400ms → processBuffer
+//   → commandes ou extractCards → applyVoiceCards + toast
+// Mic continu en permanence via onend → setTimeout(startRecognition,80).
 
 let easterBuffer=[];
-let lastCommitText="",lastCommitAt=0;
+const VOICE_COMMIT_DELAY=400; // ms d'inactivité après le dernier final avant traitement
+
 function processBuffer(){
   if(voiceBuffer.length===0)return;
   const fullText=voiceBuffer.join(" ");
   voiceBuffer=[];
 
-  const now=Date.now();
+  const n=norm(fullText);
 
-  // Anti-doublon strict : exactement le même texte < 350ms → on ignore
-  if(fullText===lastCommitText && now-lastCommitAt<350){
-    return;
-  }
-
-  // Continuation : si le dernier commit était récent (<700ms) ET que le nouveau texte
-  // étend exactement le précédent (Android a fragmenté UNE même phrase en 2+ commits),
-  // on n'applique QUE le delta. Ex : commit 1 = "4", commit 2 = "4 3 2" → on ne traite que " 3 2".
-  let textToProcess=fullText;
-  if(lastCommitText && (now-lastCommitAt<700) && fullText.startsWith(lastCommitText+" ")){
-    textToProcess=fullText.slice(lastCommitText.length).trim();
-  }
-
-  lastCommitText=fullText;
-  lastCommitAt=now;
-
-  const n=norm(textToProcess);
-
-  // Easter egg
+  // ── Easter egg ──
   if(n.includes("quentin")&&(n.includes("beau")||n.includes("gosse")||n.includes("beaugosse"))){
     playTaDa();
     setTimeout(()=>document.getElementById("popup-easter").classList.add("show"),300);
     return;
   }
 
-  // Stop / Mute / Silence : désactive le mode vocal (FR/EN/ES + variantes naturelles)
-  // v1.9 — On exige que le transcript soit COURT (≤22 chars OU ≤2 mots) pour éviter
-  // qu'une longue phrase contenant accidentellement "fin", "end", "quiet" mute le mic.
+  // ── Stop / Mute (FR/EN/ES) ──
+  // On exige que le transcript soit court (≤22 chars OU ≤2 mots) pour éviter qu'une
+  // longue phrase contenant accidentellement "fin"/"end"/"quiet" coupe le mic.
   const muteRegex=/\b(stop|silence|mute|muet|tais\s?toi|ferme\s?la|chut|arr[eê]te?|fin|para|c[aá]llate|silencio|termina|shut\s?up|be\s?quiet|quiet|end|finish)\b/;
   const nWords=n.trim().split(/\s+/).filter(Boolean).length;
-  if(muteRegex.test(n) && (n.length<=22 || nWords<=2)){
+  if(muteRegex.test(n)&&(n.length<=22||nWords<=2)){
     const tr=LANGS[currentLang]||LANGS.fr;
     showVoiceToast(tr.voiceMute||"🔇 Mic OFF");
-    setTimeout(()=>{hideVoiceToast();toggleMic();},1800); // v1.9 — 900 → 1800 ms (feedback plus visible)
+    setTimeout(()=>{hideVoiceToast();toggleMic();},1800);
     return;
   }
 
-  // Reset
+  // ── Reset ──
   if(n.includes("reset")||n.includes("nouvelle")||n.includes("recommence")||n.includes("efface")){
     const tr=LANGS[currentLang]||LANGS.fr;
     resetAll();showVoiceToast(tr.voiceReset);setTimeout(hideVoiceToast,1200);return;
   }
 
-  // Split vocal
+  // ── Split ──
   if(n.includes("split")||n.includes("splitte")){
     const tr=LANGS[currentLang]||LANGS.fr;
     if(checkSplitAvailable()){doSplit();showVoiceToast(tr.voiceSplit);setTimeout(hideVoiceToast,1200);}
@@ -4394,28 +4372,23 @@ function processBuffer(){
     return;
   }
 
-  // Changement de main lors du split : "main un" / "main deux"
-  if(isSplit&&(n.includes("main"))){
+  // ── Main 1/2 (en mode split) ──
+  if(isSplit&&n.includes("main")){
     const tr=LANGS[currentLang]||LANGS.fr;
-    // v2.9 — Suppression de n.includes("de") qui matchait dans "dame", "demande", "dedans", etc.
-    // (Aurélien : on ne dit JAMAIS "de" en BJ, donc le check était dangereux pour rien.)
     if(n.includes("un")||n.includes("une")||n.includes("1")){switchSplit(0);showVoiceToast(tr.voiceHand1);setTimeout(hideVoiceToast,1000);return;}
     if(n.includes("deux")||n.includes("2")){switchSplit(1);showVoiceToast(tr.voiceHand2);setTimeout(hideVoiceToast,1000);return;}
   }
 
-  const cards=extractCards(textToProcess);
+  // ── Extraction de cartes ──
+  const cards=extractCards(fullText);
 
-  // Gestion des doublons (7 7, 8 8 8...) 
-  // Android coupe souvent les mots répétés : on regarde si le transcript contient
-  // un motif de répétition comme "sept sept" ou si les mots uniques < cartes attendues
+  // Gestion des répétitions (7 7 7, 8 8...) : si tous les mots du transcript mappent
+  // à la même carte, Android Chrome a probablement coupé en mots dédupliqués → on
+  // retourne autant de copies que de mots prononcés.
   let finalCards=cards;
-  // Heuristique : si un seul mot de carte mais on entend une phrase courte répétitive
-  // v2.9 — Utilisation de NON_CARD_CODES (et isRealCard) au lieu d'une liste hardcodée
-  // pour rester synchro avec l'évolution des codes non-cartes (ex: ajout de SUIT en v2.9).
-  const uniqueCardWords=[...new Set(norm(textToProcess).split(/\s+/).filter(w=>isRealCard(bestMatch(w))))];
-  if(uniqueCardWords.length===1&&norm(textToProcess).trim().split(/\s+/).length>=2){
-    // Probablement une répétition : ajoute autant de fois que les mots détectés
-    const cnt=norm(textToProcess).trim().split(/\s+/).filter(w=>bestMatch(w)===cards[0]).length;
+  const uniqueCardWords=[...new Set(norm(fullText).split(/\s+/).filter(w=>isRealCard(bestMatch(w))))];
+  if(uniqueCardWords.length===1&&norm(fullText).trim().split(/\s+/).length>=2){
+    const cnt=norm(fullText).trim().split(/\s+/).filter(w=>bestMatch(w)===cards[0]).length;
     if(cnt>1)finalCards=Array(cnt).fill(cards[0]);
   }
 
@@ -4423,8 +4396,8 @@ function processBuffer(){
     showVoiceToast("✓ "+finalCards.join(" · "));
     applyVoiceCards(finalCards);
     setTimeout(hideVoiceToast,1600);
-  } else if(textToProcess.trim()){
-    showVoiceToast("❓ \""+textToProcess+"\"");
+  } else if(fullText.trim()){
+    showVoiceToast("❓ \""+fullText.trim().slice(0,60)+"\"");
     setTimeout(hideVoiceToast,1400);
   }
 }
@@ -4487,70 +4460,76 @@ function toggleMic(){
 function startRecognition(){
   if(!micOn)return;
   if(recognition){try{recognition.abort();}catch(e){}}
+
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition=new SR();
   recognition.lang=currentLang==='en'?'en-US':currentLang==='es'?'es-ES':'fr-FR';
-  recognition.continuous=true;
-  recognition.interimResults=true;   // partiels actifs : on peut prévisualiser et garder le timer "vivant" pendant que l'user parle
-  recognition.maxAlternatives=3;     // v1.5 — revert 5→3 : le voting v1.4 ne discriminait rien dans le cas Aurélien
-  recognition.onstart=()=>{document.getElementById("mic-btn").classList.add("listening");};
+  recognition.continuous=true;     // mic continu : Chrome streame en permanence
+  recognition.interimResults=true; // partiels actifs (timing du buffer)
+  recognition.maxAlternatives=1;   // 1 seule alt : le voting inter-alts ne discrimine rien (LM Chrome contamine toutes les alts identiquement)
+
+  recognition.onstart=()=>{
+    document.getElementById("mic-btn").classList.add("listening");
+  };
+
   recognition.onresult=(e)=>{
-    const now=Date.now();
-    lastSpeechAt=now;
+    lastSpeechAt=Date.now();
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
-      if(r.isFinal){
-        const tr=(r[0]&&r[0].transcript||"").trim();
-        if(!tr)continue;
-        // Anti-cumul : Chrome Android émet parfois plusieurs finals à un même index
-        // qui ÉTENDENT le précédent ("huit", puis "huit quatre", puis "huit quatre neuf").
-        // → si le nouveau étend l'ancien, on REMPLACE au lieu d'ajouter.
-        const last=voiceBuffer[voiceBuffer.length-1];
-        if(last===tr)continue;                          // doublon strict
-        if(last&&tr.startsWith(last+" ")){              // extension cumulative
-          // v2.8 — Toutes les extensions sont acceptées sans filtre. Dans le contexte
-          // d'usage BJ Genius (scan oral de cartes), on ne prononce JAMAIS de préposition
-          // entre les rangs (pas de "dame de pique", pas de "as suivi de"). Chaque mot
-          // prononcé est une carte intentionnelle, donc toute extension "X" → "X N" est
-          // par construction une vraie séquence de cartes : X puis N.
-          voiceBuffer[voiceBuffer.length-1]=tr;
-        } else {                                         // nouveau segment
-          voiceBuffer.push(tr);
-        }
-        if(voiceTimer)clearTimeout(voiceTimer);
-        // Fast-commit : si on a déjà 3+ cartes valides dans le buffer, on n'attend pas
-        const totalCards=extractCards(voiceBuffer.join(" ")).length;
-        if(totalCards>=3){processBuffer();voiceTimer=null;}
-        else{voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},420);}
-      } else {
-        // Partiel : on remet juste le timer à zéro pour ne pas commit pendant que l'user parle encore
+
+      if(!r.isFinal){
+        // Partiel : on remet juste le timer à zéro si un buffer est en attente,
+        // pour ne pas commiter pendant que l'user parle encore.
         if(voiceTimer&&voiceBuffer.length>0){
           clearTimeout(voiceTimer);
-          voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},420);
+          voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},VOICE_COMMIT_DELAY);
         }
+        continue;
       }
+
+      // Final : on récupère le transcript propre
+      const tr=(r[0]&&r[0].transcript||"").trim();
+      if(!tr)continue;
+
+      // Anti-doublon strict (Chrome émet parfois plusieurs finals identiques au même index)
+      const last=voiceBuffer[voiceBuffer.length-1];
+      if(last===tr)continue;
+
+      // Extension cumulative : Chrome Android émet souvent une même utterance en plusieurs
+      // finals successifs qui s'étendent ("dame" → "dame trois" → "dame trois cinq").
+      // Dans ce cas on remplace plutôt que d'ajouter, sinon "dame" serait compté deux fois.
+      if(last&&tr.startsWith(last+" ")){
+        voiceBuffer[voiceBuffer.length-1]=tr;
+      } else {
+        voiceBuffer.push(tr);
+      }
+
+      // Timer unique : 400ms d'inactivité après le dernier final → traite le buffer
+      if(voiceTimer)clearTimeout(voiceTimer);
+      voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},VOICE_COMMIT_DELAY);
     }
   };
+
   recognition.onerror=(e)=>{
     document.getElementById("mic-btn").classList.remove("listening");
-    // Erreurs fatales : on n'essaie pas de redémarrer
+    // Erreurs fatales : pas de redémarrage
     if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="aborted")return;
-    // v1.9 — Bloque aussi le redémarrage si TTS actif
-    if(ttsActive)return;
-    if(micOn)setTimeout(startRecognition,150); // 400 → 150 ms
+    if(ttsActive)return; // pendant TTS, c'est speak() qui relance
+    if(micOn)setTimeout(startRecognition,150);
   };
+
   recognition.onend=()=>{
     document.getElementById("mic-btn").classList.remove("listening");
-    // v1.9 — Si le TTS parle, on ne redémarre PAS automatiquement.
-    // C'est speak() qui redémarrera via u.onend quand le TTS aura fini.
-    if(ttsActive)return;
-    // v2.6 — REVERT du reuse SR de v2.5 : sur Android Chrome, recognition.start()
-    // après onend ne throw pas mais capture audio dégradée → 1 mot sur 5 capté.
-    // Retour au comportement v2.4 : recréation systématique (gap audio ~250ms mais
-    // capture fiable). Le reuse SR est incompatible avec Chrome Android, ne pas retenter.
+    if(ttsActive)return; // pendant TTS : speak() relancera via u.onend
+    // Mic continu permanent : on relance immédiatement après chaque onend tant que micOn.
+    // Gap audio ~80ms imperceptible. Recréation systématique d'une nouvelle instance SR :
+    // sur Chrome Android, recognition.start() après onend capture audio dégradée
+    // (1 mot sur 5 capté). Bien re-instancier à chaque cycle.
     if(micOn)setTimeout(startRecognition,80);
   };
-  try{recognition.start();}catch(e){if(micOn)setTimeout(startRecognition,200);} // 500 → 200 ms
+
+  try{recognition.start();}
+  catch(e){if(micOn)setTimeout(startRecognition,200);}
 }
 
 function showVoiceToast(msg){document.getElementById("voice-toast-txt").textContent=msg;document.getElementById("voice-toast").classList.add("show");}
