@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.14 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.17 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -587,6 +587,41 @@ body.lite .ts-expert-card{position:relative;}
 @media (orientation:landscape) and (max-height:500px){
   #rotate-overlay{display:flex;}
 }
+
+/* v1.17 — Vue Picture-in-Picture (mode bulle Android).
+   Caché par défaut. Affiché en grand quand le WebView est en PiP. */
+#pip-display{
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:#0a1f10;color:#c9a84c;
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:8px;text-align:center;
+  font-family:inherit;
+}
+#pip-decision{
+  font-size:14vw;font-weight:900;letter-spacing:2px;
+  line-height:1;text-transform:uppercase;
+  text-shadow:0 0 18px rgba(201,168,76,0.4);
+  margin-bottom:6px;
+}
+#pip-context{
+  font-size:3vw;color:rgba(240,236,224,0.7);letter-spacing:1px;
+  text-transform:uppercase;font-weight:700;
+}
+/* Couleurs de la décision selon le code (mêmes que l'UI principale) */
+#pip-display.pip-hit #pip-decision{color:#22c55e;}
+#pip-display.pip-stand #pip-decision{color:#f97316;}
+#pip-display.pip-double #pip-decision{color:#d4b863;}
+#pip-display.pip-split #pip-decision{color:#7faaff;}
+#pip-display.pip-surrender #pip-decision{color:#ef4444;}
+/* Mode PiP activé : on cache tout sauf #pip-display.
+   La media query (display-mode:picture-in-picture) gère le WebView Capacitor.
+   La classe .pip-mode sur body est un fallback (set depuis le JS si besoin). */
+@media (display-mode:picture-in-picture){
+  body>*:not(#pip-display){display:none!important;}
+  #pip-display{display:flex!important;}
+}
+body.pip-mode>*:not(#pip-display){display:none!important;}
+body.pip-mode #pip-display{display:flex!important;}
 </style>
 </head>
 <body>
@@ -602,10 +637,20 @@ body.lite .ts-expert-card{position:relative;}
     <div class="ro-sub" id="ro-sub">BJ Genius s'utilise en mode portrait.</div>
   </div>
 </div>
+
+<!-- v1.17 — Mode Picture-in-Picture (bulle Android). Quand l'app est en PiP
+     (l'user a appuyé Home pendant que BJ Genius est ouvert), tout est caché
+     sauf cette vue compacte qui affiche en grand la décision actuelle. Le
+     micro continue de capter normalement, l'user voit le résultat en temps
+     réel par-dessus son autre app. -->
+<div id="pip-display">
+  <div id="pip-decision">—</div>
+  <div id="pip-context">En attente...</div>
+</div>
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.14</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.17</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -911,6 +956,10 @@ body.lite .ts-expert-card{position:relative;}
 
     <div class="settings-section-title" id="set-sec-voice">Voix & Caméra</div>
     <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
+    <!-- v1.16 — Toggle moteur Whisper offline. Activé : Whisper transformers.js en WASM
+         local, audio continu sans coupure. Désactivé : Web Speech API natif (par défaut).
+         Premier activation : téléchargement ~40 Mo du modèle (cached ensuite). -->
+    <div class="setting-row" id="si-whisper"><div class="setting-label">🧠 <span id="whisper-label">Moteur Whisper (sans coupure)</span></div><div class="toggle" id="dt-whisper" onclick="toggleVoiceEngine()"></div></div>
     <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
 
@@ -1607,6 +1656,7 @@ const LANGS={
     learnSkipToTuto:"Passer le tuto →",
     setSecDisplay:"Affichage", setSecVoice:"Voix & Caméra", setSecAccount:"Compte & Langue",
     rotateTitle:"Tourne ton téléphone", rotateSub:"BJ Genius s'utilise en mode portrait.",
+    whisperLabel:"Moteur Whisper (sans coupure)",
     tutoSeePro:"Voir l'offre Pro 👑",
     // Étape 1
     tutoS1Title:"Ta décision en 1 seconde ⚡",
@@ -1924,6 +1974,7 @@ const LANGS={
     learnSkipToTuto:"Skip to app tour →",
     setSecDisplay:"Display", setSecVoice:"Voice & Camera", setSecAccount:"Account & Language",
     rotateTitle:"Rotate your phone", rotateSub:"BJ Genius is portrait-only.",
+    whisperLabel:"Whisper engine (no cutoff)",
     tutoSeePro:"See Pro offer 👑",
     // Step 1
     tutoS1Title:"Your decision in 1 second ⚡",
@@ -2241,6 +2292,7 @@ const LANGS={
     learnSkipToTuto:"Saltar al tour →",
     setSecDisplay:"Pantalla", setSecVoice:"Voz y Cámara", setSecAccount:"Cuenta e Idioma",
     rotateTitle:"Gira tu teléfono", rotateSub:"BJ Genius funciona en modo vertical.",
+    whisperLabel:"Motor Whisper (sin cortes)",
     tutoSeePro:"Ver oferta Pro 👑",
     // Paso 1
     tutoS1Title:"Tu decisión en 1 segundo ⚡",
@@ -2453,6 +2505,8 @@ function applyLang(){
   // v1.14 — Overlay rotation paysage
   tut("ro-title","rotateTitle");
   tut("ro-sub","rotateSub");
+  // v1.16 — Toggle Whisper engine
+  tut("whisper-label","whisperLabel");
   // Voice mic label (état courant)
   const ml=document.getElementById("mic-label");
   if(ml)ml.innerHTML=micOn?t.voiceLabelOn:t.voiceLabelOff;
@@ -2651,6 +2705,9 @@ function openSettingsPopup(){
   document.getElementById('dt-speak2').classList.toggle('on',speakOn);
   // v1.12 — Init du toggle filtre vocal retirée : le toggle UI a été supprimé.
   // Le filtre reste actif en permanence côté extractCards.
+  // v1.16 — Init du toggle Whisper depuis localStorage
+  const wt=document.getElementById('dt-whisper');
+  if(wt)wt.classList.toggle('on',voiceEngine==='whisper');
   document.getElementById('popup-settings-modal').classList.add('show');
 }
 function openSettings(){toggleDrawer();}
@@ -2789,6 +2846,46 @@ function updateAll(){
   if(code==="P"&&!isSplit&&hand.length===2){
     splitBtn.classList.add("show");
   }
+  // v1.17 — Sync de la vue Picture-in-Picture (mode bulle Android)
+  syncPipDisplay();
+}
+
+// v1.17 — Synchronise la vue PiP avec l'état courant de la décision.
+// Appelée à chaque updateAll() et sur changement d'état du mic. Lit #adecision
+// (le label de la décision) et la classe de #azone (qui contient le code couleur).
+function syncPipDisplay(){
+  const pipDec=document.getElementById('pip-decision');
+  const pipCtx=document.getElementById('pip-context');
+  const pipDisp=document.getElementById('pip-display');
+  if(!pipDec||!pipCtx||!pipDisp)return;
+  const azone=document.getElementById('azone');
+  const adecision=document.getElementById('adecision');
+  const aph=document.getElementById('aph');
+  // Reset des classes couleur
+  pipDisp.classList.remove('pip-hit','pip-stand','pip-double','pip-split','pip-surrender');
+  // Quand il n'y a pas encore assez de cartes : on affiche le placeholder
+  if(!azone||!adecision||(aph&&aph.style.display!=='none')){
+    pipDec.textContent='—';
+    pipCtx.textContent=aph&&aph.textContent?aph.textContent.slice(0,40):'En attente...';
+    return;
+  }
+  // Décision active : on copie le texte de #adecision
+  pipDec.textContent=(adecision.textContent||'—').slice(0,12);
+  // Contexte : croupier + main joueur (résumé)
+  let ctx='';
+  if(typeof DC!=='undefined'&&DC){ctx='vs '+DC;}
+  if(typeof hands!=='undefined'&&hands&&hands[activeHand]){
+    const h=hands[activeHand];
+    if(h.length>0)ctx=h.join('+')+(ctx?' '+ctx:'');
+  }
+  pipCtx.textContent=ctx||'';
+  // Couleur selon la classe de azone (hit/stand/double/split/surrender)
+  const cls=azone.className||'';
+  if(cls.includes(' hit'))pipDisp.classList.add('pip-hit');
+  else if(cls.includes(' std'))pipDisp.classList.add('pip-stand');
+  else if(cls.includes(' dbl'))pipDisp.classList.add('pip-double');
+  else if(cls.includes(' spl'))pipDisp.classList.add('pip-split');
+  else if(cls.includes(' srr'))pipDisp.classList.add('pip-surrender');
 }
 
 function speak(text){
@@ -4542,7 +4639,9 @@ function applyVoiceCards(cards){
 
 function toggleMic(){
   const tr=LANGS[currentLang]||LANGS.fr;
-  if(!("webkitSpeechRecognition"in window)&&!("SpeechRecognition"in window)){
+  // v1.16 — Le moteur Whisper n'a pas besoin de Web Speech API, donc on saute
+  // ce check si voiceEngine='whisper'. Web Speech requis seulement pour le moteur 'webspeech'.
+  if(voiceEngine==='webspeech'&&!("webkitSpeechRecognition"in window)&&!("SpeechRecognition"in window)){
     showVoiceToast(tr.voiceErrChrome);setTimeout(hideVoiceToast,2000);return;
   }
   micOn=!micOn;
@@ -4552,14 +4651,16 @@ function toggleMic(){
     document.getElementById("mic-label").innerHTML=tr.voiceLabelOn;
     const dm=document.getElementById("dt-mic2");
     if(dm)dm.classList.add("on");
-    startRecognition();
+    // v1.16 — Dispatcher vers le moteur actif (Web Speech ou Whisper)
+    startActiveRecognition();
   } else {
     btn.classList.remove("on","listening");
     document.getElementById("mic-label").innerHTML=tr.voiceLabelOff;
     const dm=document.getElementById("dt-mic2");
     if(dm)dm.classList.remove("on");
-    if(recognition){try{recognition.abort();}catch(e){}}
-    recognition=null;voiceBuffer=[];
+    // v1.16 — Stop sur les deux moteurs
+    stopAllRecognition();
+    voiceBuffer=[];
     if(voiceTimer)clearTimeout(voiceTimer);
     hideVoiceToast();
   }
@@ -4619,21 +4720,41 @@ function startRecognition(){
   };
 
   recognition.onerror=(e)=>{
-    document.getElementById("mic-btn").classList.remove("listening");
-    // Erreurs fatales : pas de redémarrage
-    if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="aborted")return;
-    if(ttsActive)return; // pendant TTS, c'est speak() qui relance
-    if(micOn)setTimeout(startRecognition,150);
+    // Erreurs fatales : pas de redémarrage, on retire la classe listening
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="aborted"){
+      document.getElementById("mic-btn").classList.remove("listening");
+      return;
+    }
+    if(ttsActive){
+      document.getElementById("mic-btn").classList.remove("listening");
+      return;
+    }
+    // Erreur transitoire : on restart sans toucher à l'UI (la classe listening reste)
+    if(micOn)setTimeout(startRecognition,80);
+    else document.getElementById("mic-btn").classList.remove("listening");
   };
 
   recognition.onend=()=>{
-    document.getElementById("mic-btn").classList.remove("listening");
-    if(ttsActive)return; // pendant TTS : speak() relancera via u.onend
-    // Mic continu permanent : on relance immédiatement après chaque onend tant que micOn.
-    // Gap audio ~80ms imperceptible. Recréation systématique d'une nouvelle instance SR :
-    // sur Chrome Android, recognition.start() après onend capture audio dégradée
-    // (1 mot sur 5 capté). Bien re-instancier à chaque cycle.
-    if(micOn)setTimeout(startRecognition,80);
+    // v1.15 — Le STT Android (comme Chrome) termine la session toutes les ~5-6s
+    // pour économiser la batterie. On la relance automatiquement pour un mic continu
+    // perçu. AMÉLIORATION v1.15 : on NE retire PAS la classe "listening" du bouton
+    // mic dans notre UI pendant la transition restart → l'UI reste stable même si
+    // le voyant micro système Android clignote brièvement (ça c'est hors de notre
+    // contrôle, géré par l'OS Android tant qu'on utilise Web Speech API).
+    // Pour supprimer le clignotement système, il faudra Phase 2 : plugin natif
+    // @capacitor-community/speech-recognition avec mode continu vrai.
+    if(ttsActive){
+      document.getElementById("mic-btn").classList.remove("listening");
+      return; // pendant TTS : speak() relancera via u.onend
+    }
+    if(micOn){
+      // Restart rapide (30ms au lieu de 80) pour minimiser le gap audio.
+      // Recréation systématique d'une nouvelle instance SR : sur Chrome Android,
+      // recognition.start() après onend capture audio dégradée (1 mot sur 5 capté).
+      setTimeout(startRecognition,30);
+    } else {
+      document.getElementById("mic-btn").classList.remove("listening");
+    }
   };
 
   try{recognition.start();}
@@ -4642,6 +4763,206 @@ function startRecognition(){
 
 function showVoiceToast(msg){document.getElementById("voice-toast-txt").textContent=msg;document.getElementById("voice-toast").classList.add("show");}
 function hideVoiceToast(){document.getElementById("voice-toast").classList.remove("show");}
+
+// ═══════════════════════════════════════════════════════════════════
+// ══ v1.16 — MOTEUR VOCAL WHISPER (offline, sans coupure) ══
+// ═══════════════════════════════════════════════════════════════════
+// Alternative à Web Speech API qui souffre de coupures toutes les ~5s (limite
+// Android/Chrome). Whisper transformers.js tourne 100% local en WASM, audio
+// capturé en continu via getUserMedia + AudioContext + ScriptProcessor.
+// Premier activation : DL ~40 Mo du modèle quantized 8-bit (cached après).
+// Routage : variable globale voiceEngine ('webspeech' | 'whisper').
+// toggleMic() et l'init du mic appellent startActiveRecognition()/stopAllRecognition()
+// qui dispatchent vers le bon moteur selon voiceEngine.
+
+let voiceEngine=localStorage.getItem('bjg_voice_engine')||'webspeech';
+let whisperPipeline=null,whisperReady=false,whisperLoading=false;
+let whisperStream=null,whisperAudioContext=null,whisperProcessor=null,whisperSource=null;
+let whisperActive=false,whisperAudioBuf=[];
+const WHISPER_CHUNK_SECONDS=2.5;
+const WHISPER_SAMPLE_RATE=16000;
+
+function toggleVoiceEngine(){
+  // PRO check : Whisper réservé aux users PRO (comme la commande vocale)
+  if(typeof isPro==='function'&&!isPro()&&voiceEngine!=='whisper'){
+    showPaywall&&showPaywall();
+    return;
+  }
+  voiceEngine=voiceEngine==='whisper'?'webspeech':'whisper';
+  localStorage.setItem('bjg_voice_engine',voiceEngine);
+  const t=document.getElementById('dt-whisper');
+  if(t)t.classList.toggle('on',voiceEngine==='whisper');
+  // Si le mic est actif, on bascule à chaud
+  if(micOn){
+    stopAllRecognition();
+    setTimeout(startActiveRecognition,200);
+  }
+}
+
+// Dispatcher central : route vers le moteur actif
+function startActiveRecognition(){
+  if(voiceEngine==='whisper')startWhisperRecognition();
+  else startRecognition();
+}
+
+function stopAllRecognition(){
+  // Stop Web Speech
+  if(recognition){try{recognition.abort();}catch(e){}recognition=null;}
+  // Stop Whisper
+  stopWhisperRecognition();
+  document.getElementById("mic-btn").classList.remove("listening");
+}
+
+// Lazy load de transformers.js + du modèle Whisper. Appelé au 1er start.
+async function loadWhisper(){
+  if(whisperReady)return true;
+  if(whisperLoading){
+    while(whisperLoading)await new Promise(r=>setTimeout(r,150));
+    return whisperReady;
+  }
+  whisperLoading=true;
+  showVoiceToast("⏳ Chargement Whisper...");
+  try{
+    // Import dynamique de transformers.js depuis jsDelivr
+    if(!window.__transformers){
+      const mod=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js');
+      window.__transformers=mod;
+      // Config : single-thread WASM sur mobile (plus stable que multi-thread)
+      if(mod.env&&mod.env.backends&&mod.env.backends.onnx&&mod.env.backends.onnx.wasm){
+        mod.env.backends.onnx.wasm.numThreads=1;
+      }
+    }
+    // Pipeline ASR avec modèle quantized 8-bit (~40 Mo au lieu de ~75)
+    whisperPipeline=await window.__transformers.pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{
+      quantized:true,
+      progress_callback:(p)=>{
+        if(p.status==='progress'&&typeof p.progress==='number'){
+          showVoiceToast("⏳ Whisper "+Math.round(p.progress)+"%");
+        } else if(p.status==='downloading'){
+          showVoiceToast("⏳ Téléchargement...");
+        } else if(p.status==='loading'){
+          showVoiceToast("⏳ Initialisation...");
+        }
+      }
+    });
+    whisperReady=true;
+    whisperLoading=false;
+    showVoiceToast("✓ Whisper prêt");
+    setTimeout(hideVoiceToast,1200);
+    return true;
+  } catch(err){
+    console.error('Whisper load failed:',err);
+    whisperLoading=false;
+    whisperReady=false;
+    showVoiceToast("⚠ Whisper indisponible — mode classique");
+    setTimeout(hideVoiceToast,2200);
+    // Auto-revert au Web Speech pour ne pas bloquer l'user
+    voiceEngine='webspeech';
+    localStorage.setItem('bjg_voice_engine','webspeech');
+    const t=document.getElementById('dt-whisper');
+    if(t)t.classList.remove('on');
+    return false;
+  }
+}
+
+async function startWhisperRecognition(){
+  if(whisperActive)return;
+  if(!whisperReady){
+    const ok=await loadWhisper();
+    if(!ok){
+      // Fallback Web Speech si Whisper échoue
+      if(micOn)startRecognition();
+      return;
+    }
+  }
+  if(!micOn)return; // user a peut-être désactivé pendant le chargement
+
+  try{
+    whisperStream=await navigator.mediaDevices.getUserMedia({
+      audio:{sampleRate:WHISPER_SAMPLE_RATE,channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}
+    });
+    // AudioContext à 16 kHz (resampling auto par le browser si le mic sort à 48 kHz)
+    whisperAudioContext=new (window.AudioContext||window.webkitAudioContext)({sampleRate:WHISPER_SAMPLE_RATE});
+    whisperSource=whisperAudioContext.createMediaStreamSource(whisperStream);
+    // ScriptProcessor : deprecated mais widely supported, donne Float32Array brut
+    whisperProcessor=whisperAudioContext.createScriptProcessor(4096,1,1);
+
+    const CHUNK_SAMPLES=Math.floor(WHISPER_SAMPLE_RATE*WHISPER_CHUNK_SECONDS);
+    whisperAudioBuf=[];
+
+    whisperProcessor.onaudioprocess=(e)=>{
+      if(!whisperActive)return;
+      const input=e.inputBuffer.getChannelData(0);
+      // Append au buffer global
+      for(let i=0;i<input.length;i++)whisperAudioBuf.push(input[i]);
+      // Si buffer atteint la taille d'un chunk, on l'envoie à Whisper
+      if(whisperAudioBuf.length>=CHUNK_SAMPLES){
+        const chunk=new Float32Array(whisperAudioBuf.slice(0,CHUNK_SAMPLES));
+        whisperAudioBuf=whisperAudioBuf.slice(CHUNK_SAMPLES);
+        // Async, ne bloque pas la capture
+        processWhisperChunk(chunk);
+      }
+    };
+
+    whisperSource.connect(whisperProcessor);
+    whisperProcessor.connect(whisperAudioContext.destination);
+    whisperActive=true;
+    document.getElementById("mic-btn").classList.add("listening");
+  } catch(err){
+    console.error('Whisper start failed:',err);
+    showVoiceToast("⚠ Micro inaccessible");
+    setTimeout(hideVoiceToast,2000);
+    document.getElementById("mic-btn").classList.remove("listening");
+  }
+}
+
+function stopWhisperRecognition(){
+  whisperActive=false;
+  whisperAudioBuf=[];
+  if(whisperProcessor){try{whisperProcessor.disconnect();}catch(e){}whisperProcessor=null;}
+  if(whisperSource){try{whisperSource.disconnect();}catch(e){}whisperSource=null;}
+  if(whisperAudioContext&&whisperAudioContext.state!=='closed'){
+    try{whisperAudioContext.close();}catch(e){}
+  }
+  whisperAudioContext=null;
+  if(whisperStream){
+    whisperStream.getTracks().forEach(t=>t.stop());
+    whisperStream=null;
+  }
+}
+
+async function processWhisperChunk(audioData){
+  if(!whisperActive||!whisperPipeline)return;
+
+  // VAD simple : skip si quasi-silence (économise CPU)
+  let maxAmp=0;
+  for(let i=0;i<audioData.length;i+=200){
+    const a=Math.abs(audioData[i]);
+    if(a>maxAmp)maxAmp=a;
+  }
+  if(maxAmp<0.015)return; // seuil bas mais évite le bruit ambiant
+
+  try{
+    const lang=currentLang==='en'?'english':currentLang==='es'?'spanish':'french';
+    const result=await whisperPipeline(audioData,{
+      language:lang,
+      task:'transcribe',
+      // Désactive timestamps (gain perf, pas besoin pour notre usage)
+      return_timestamps:false,
+    });
+    const text=((result&&result.text)||'').trim();
+    if(!text||text.length<1)return;
+    // Anti-doublon basique (Whisper peut hallucine des "Sous-titres faits par..." sur silence)
+    if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text))return;
+
+    // Injection dans le buffer comme Web Speech
+    voiceBuffer.push(text);
+    if(voiceTimer)clearTimeout(voiceTimer);
+    voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},VOICE_COMMIT_DELAY);
+  } catch(err){
+    console.error('Whisper transcribe error:',err);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // ══ CAMERA SCAN (PRO) ══
