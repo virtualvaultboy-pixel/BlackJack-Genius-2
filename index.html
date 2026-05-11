@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.21 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.22 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -654,7 +654,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.21</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.22</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -1230,47 +1230,128 @@ body.pip-mode #pip-display{display:flex!important;}
      en localStorage (bjg_intro_<name>_seen=1). L'user peut les revoir
      manuellement via Paramètres → Rejouer les explications (futur). -->
 
-<!-- INTRO MICRO : 1ère activation du micro -->
+<!-- INTRO MICRO : 1ère activation du micro. v1.22 — Refonte visuelle avec
+     cartes graphiques au lieu de monospace, succincte, et un bouton qui ouvre
+     la liste complete des commandes. -->
 <div class="popup-overlay" id="popup-intro-mic" onclick="closePopup('popup-intro-mic')">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
     <div class="popup-handle"></div>
-    <div style="font-size:2.6rem;margin-bottom:6px;">🎤</div>
-    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-mic-title">Commande vocale activée</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-mic-sub">Annonce les cartes à voix haute, BJ Genius reconnaît et calcule la décision en direct.</div>
-    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:11px;padding:10px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:0.52rem;letter-spacing:2px;color:#22c55e;text-transform:uppercase;font-weight:800;margin-bottom:6px;" id="intro-mic-exh">Exemples</div>
-      <div style="font-size:0.72rem;color:#f0ecdf;line-height:1.7;font-family:monospace;">
-        <div>"<strong>as quatre cinq</strong>" → A · 4 · 5</div>
-        <div>"<strong>valet sept</strong>" → J · 7</div>
-        <div>"<strong>dame cinq</strong>" → Q · 5</div>
-        <div>"<strong>double trois</strong>" → 3+3 (paire)</div>
+    <div style="font-size:2.6rem;margin-bottom:4px;">🎤</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;" id="intro-mic-title">Commande vocale</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-mic-sub">Annonce les cartes à voix haute, BJ Genius calcule la décision en direct.</div>
+
+    <!-- Démo visuelle : "as quatre cinq" → 3 cartes affichées -->
+    <div style="background:rgba(0,0,0,0.28);border:1px solid rgba(212,184,99,0.18);border-radius:12px;padding:13px 10px;margin-bottom:10px;">
+      <div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:9px;" id="intro-mic-sayh">Dis</div>
+      <div style="font-size:0.88rem;font-weight:800;color:#f0ecdf;margin-bottom:11px;font-style:italic;letter-spacing:0.5px;" id="intro-mic-saytx">« as quatre cinq »</div>
+      <div style="font-size:0.5rem;color:rgba(240,236,224,0.4);letter-spacing:1.5px;margin-bottom:9px;">▼</div>
+      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;">
+        <div style="background:#f0ecdf;color:#c00;font-weight:900;font-size:1.05rem;padding:8px 12px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-width:32px;">A</div>
+        <div style="background:#f0ecdf;color:#1a1a1a;font-weight:900;font-size:1.05rem;padding:8px 12px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-width:32px;">4</div>
+        <div style="background:#f0ecdf;color:#c00;font-weight:900;font-size:1.05rem;padding:8px 12px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,0.35);min-width:32px;">5</div>
       </div>
     </div>
-    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-mic-tip">💡 <strong>Astuce :</strong> tu peux dire les chiffres en français, anglais ou espagnol indifféremment. Pause entre les cartes : 500 ms.</div>
+
+    <!-- Commandes spéciales rapides -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:9px;padding:8px 6px;text-align:center;">
+        <div style="font-size:0.55rem;color:#ef4444;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:3px;" id="intro-mic-cmd1h">Nouvelle main</div>
+        <div style="font-size:0.62rem;color:rgba(240,236,224,0.8);font-style:italic;" id="intro-mic-cmd1ex">« nouvelle » · « reset »</div>
+      </div>
+      <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:9px;padding:8px 6px;text-align:center;">
+        <div style="font-size:0.55rem;color:#38bdf8;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:3px;" id="intro-mic-cmd2h">Split</div>
+        <div style="font-size:0.62rem;color:rgba(240,236,224,0.8);font-style:italic;" id="intro-mic-cmd2ex">« split »</div>
+      </div>
+    </div>
+
+    <!-- Bouton détails -->
+    <div onclick="showIntro('mic-detail')" style="background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);border-radius:11px;padding:9px;color:#c9a84c;font-size:0.66rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;" id="intro-mic-more">📖 Toutes les commandes</div>
+
     <div onclick="closePopup('popup-intro-mic')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-mic-ok">Compris ✓</div>
   </div>
 </div>
 
-<!-- INTRO CAMÉRA : 1ère ouverture du scan -->
+<!-- v1.22 — INTRO MICRO DÉTAIL : liste complète des commandes vocales reconnues
+     dans la langue courante. Ouvrable depuis le popup-intro-mic via le bouton
+     "Toutes les commandes", ou via le ℹ depuis le burger après. -->
+<div class="popup-overlay" id="popup-intro-mic-detail" onclick="closePopup('popup-intro-mic-detail')">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-handle"></div>
+    <div style="text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:4px;">📖</div>
+      <div style="font-size:0.95rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;" id="intro-micD-title">Commandes vocales</div>
+    </div>
+
+    <!-- Section CARTES -->
+    <div style="font-size:0.55rem;letter-spacing:2px;color:rgba(201,168,76,0.65);font-weight:800;text-transform:uppercase;margin-bottom:7px;border-bottom:1px solid rgba(201,168,76,0.18);padding-bottom:4px;" id="intro-micD-cardsH">Cartes</div>
+    <div id="intro-micD-cards" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">
+      <!-- Rempli par JS selon currentLang -->
+    </div>
+
+    <!-- Section COMBINAISONS -->
+    <div style="font-size:0.55rem;letter-spacing:2px;color:rgba(201,168,76,0.65);font-weight:800;text-transform:uppercase;margin-bottom:7px;border-bottom:1px solid rgba(201,168,76,0.18);padding-bottom:4px;" id="intro-micD-comboH">Combinaisons</div>
+    <div id="intro-micD-combo" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+      <!-- Rempli par JS -->
+    </div>
+
+    <!-- Section ACTIONS -->
+    <div style="font-size:0.55rem;letter-spacing:2px;color:rgba(201,168,76,0.65);font-weight:800;text-transform:uppercase;margin-bottom:7px;border-bottom:1px solid rgba(201,168,76,0.18);padding-bottom:4px;" id="intro-micD-actH">Actions</div>
+    <div id="intro-micD-act" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+      <!-- Rempli par JS -->
+    </div>
+
+    <div onclick="closePopup('popup-intro-mic-detail')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;" id="intro-micD-ok">Fermer ✓</div>
+  </div>
+</div>
+
+<!-- INTRO CAMÉRA : 1ère ouverture du scan. v1.22 — Refonte visuelle. -->
 <div class="popup-overlay" id="popup-intro-cam" onclick="closePopup('popup-intro-cam')">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
     <div class="popup-handle"></div>
-    <div style="font-size:2.6rem;margin-bottom:6px;">📷</div>
-    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-cam-title">Scan caméra</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-cam-sub">Une photo de la table, l'app détecte automatiquement toutes les cartes.</div>
-    <!-- Schéma visuel : croupier en haut / main en bas -->
-    <div style="background:rgba(212,184,99,0.06);border:1.5px solid rgba(212,184,99,0.25);border-radius:11px;padding:10px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;margin-bottom:6px;border:1px dashed rgba(212,184,99,0.4);">
-        <div style="font-size:1rem;">🃏</div>
-        <div style="font-size:0.66rem;font-weight:800;color:#c9a84c;letter-spacing:1px;" id="intro-cam-top">CROUPIER EN HAUT</div>
+    <div style="font-size:2.6rem;margin-bottom:4px;">📷</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;" id="intro-cam-title">Scan caméra</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-cam-sub">Une photo de la table, l'app détecte automatiquement toutes les cartes.</div>
+
+    <!-- Schéma visuel : mock-up de la table vue de dessus, avec cartes -->
+    <div style="background:linear-gradient(180deg,#0a3d1f 0%,#0a2515 100%);border:1.5px solid rgba(212,184,99,0.3);border-radius:14px;padding:14px 12px;margin-bottom:11px;position:relative;">
+      <!-- Zone croupier (haut) -->
+      <div style="background:rgba(0,0,0,0.32);border:1px dashed rgba(212,184,99,0.45);border-radius:9px;padding:9px;margin-bottom:6px;">
+        <div style="font-size:0.5rem;letter-spacing:2px;color:rgba(212,184,99,0.85);font-weight:800;text-transform:uppercase;margin-bottom:6px;" id="intro-cam-topL">🃏 Croupier</div>
+        <div style="display:flex;justify-content:center;gap:4px;">
+          <div style="background:#f0ecdf;color:#1a1a1a;font-weight:900;font-size:0.78rem;padding:6px 9px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.4);">7</div>
+          <div style="background:linear-gradient(135deg,#7a1d1d,#5a1010);width:30px;height:32px;border-radius:5px;border:1.5px solid rgba(212,184,99,0.4);"></div>
+        </div>
       </div>
-      <div style="font-size:0.5rem;color:rgba(240,236,224,0.4);margin:3px 0;" id="intro-cam-sep">⋮</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;border:1px dashed rgba(212,184,99,0.4);">
-        <div style="font-size:1rem;">✋</div>
-        <div style="font-size:0.66rem;font-weight:800;color:#c9a84c;letter-spacing:1px;" id="intro-cam-bot">TA MAIN EN BAS</div>
+      <!-- Séparateur flèche -->
+      <div style="font-size:0.7rem;color:rgba(240,236,224,0.4);margin:2px 0;">⋮</div>
+      <!-- Zone joueur (bas) -->
+      <div style="background:rgba(0,0,0,0.32);border:1px dashed rgba(212,184,99,0.45);border-radius:9px;padding:9px;">
+        <div style="font-size:0.5rem;letter-spacing:2px;color:rgba(212,184,99,0.85);font-weight:800;text-transform:uppercase;margin-bottom:6px;" id="intro-cam-botL">✋ Ta main</div>
+        <div style="display:flex;justify-content:center;gap:4px;">
+          <div style="background:#f0ecdf;color:#c00;font-weight:900;font-size:0.78rem;padding:6px 9px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.4);">A</div>
+          <div style="background:#f0ecdf;color:#1a1a1a;font-weight:900;font-size:0.78rem;padding:6px 9px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.4);">6</div>
+        </div>
+      </div>
+      <!-- Icône caméra qui survole -->
+      <div style="position:absolute;top:-10px;right:-6px;background:#c9a84c;color:#1a1000;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;box-shadow:0 2px 8px rgba(0,0,0,0.5);">📷</div>
+    </div>
+
+    <!-- 3 conseils -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:11px;">
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:8px;padding:8px 4px;">
+        <div style="font-size:1rem;">📱</div>
+        <div style="font-size:0.55rem;color:rgba(240,236,224,0.85);line-height:1.3;margin-top:3px;" id="intro-cam-tip1">Tel à plat</div>
+      </div>
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:8px;padding:8px 4px;">
+        <div style="font-size:1rem;">💡</div>
+        <div style="font-size:0.55rem;color:rgba(240,236,224,0.85);line-height:1.3;margin-top:3px;" id="intro-cam-tip2">Bonne lumière</div>
+      </div>
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:8px;padding:8px 4px;">
+        <div style="font-size:1rem;">↺</div>
+        <div style="font-size:0.55rem;color:rgba(240,236,224,0.85);line-height:1.3;margin-top:3px;" id="intro-cam-tip3">Re-scan après tirage</div>
       </div>
     </div>
-    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-cam-tip">💡 Tel à plat au-dessus, bonne lumière. <strong>Re-scan après chaque carte tirée</strong> pour mettre à jour la main.</div>
+
     <div onclick="closePopup('popup-intro-cam')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-cam-ok">Compris ✓</div>
   </div>
 </div>
@@ -4963,8 +5044,125 @@ function showIntroOnce(name){
 // v1.21 — Force l'affichage du popup intro meme si deja vu (bouton "?" dans
 // chaque feature). Pas de delai, pas de check de flag.
 function showIntro(name){
+  // v1.22 — Le popup "mic-detail" doit etre rempli selon la langue courante
+  // avant affichage.
+  if(name==='mic-detail')renderMicCommandsDetail();
   const popup=document.getElementById('popup-intro-'+name);
   if(popup)popup.classList.add('show');
+}
+
+// v1.22 — Remplit dynamiquement le popup-intro-mic-detail avec la liste
+// complete des commandes vocales reconnues, dans la langue courante.
+// La VERITE est dans processBuffer() et extractCards() : on liste ici
+// uniquement ce qui est REELLEMENT detecte par le code, pas inventer.
+function renderMicCommandsDetail(){
+  const lang=currentLang||'fr';
+  // Sections par langue : cartes / combinaisons / actions
+  // Source de verite : processBuffer (l.4694) + dictionnaire de cartes
+  const dict={
+    fr:{
+      cards:[
+        {say:'as',out:'A'},{say:'deux',out:'2'},{say:'trois',out:'3'},
+        {say:'quatre',out:'4'},{say:'cinq',out:'5'},{say:'six',out:'6'},
+        {say:'sept',out:'7'},{say:'huit',out:'8'},{say:'neuf',out:'9'},
+        {say:'dix',out:'10'},{say:'valet',out:'J'},{say:'dame',out:'Q'},{say:'roi',out:'K'}
+      ],
+      combos:[
+        {head:'Paire',examples:'« double trois » · « trois trois »',out:'3 + 3'},
+        {head:'Plusieurs cartes',examples:'« as quatre cinq »',out:'A · 4 · 5'},
+        {head:'Tirage rapide',examples:'« dix sept »',out:'10 · 7'}
+      ],
+      actions:[
+        {head:'Nouvelle main',examples:'« nouvelle » · « reset » · « recommence » · « efface »',color:'#ef4444'},
+        {head:'Splitter',examples:'« split » · « splitte »',color:'#38bdf8'},
+        {head:'Changer de main (en split)',examples:'« main un » · « main deux »',color:'#d4b863'},
+        {head:'Couper le micro',examples:'« stop » · « silence » · « arrête » · « chut »',color:'rgba(240,236,224,0.4)'}
+      ]
+    },
+    en:{
+      cards:[
+        {say:'ace',out:'A'},{say:'two',out:'2'},{say:'three',out:'3'},
+        {say:'four',out:'4'},{say:'five',out:'5'},{say:'six',out:'6'},
+        {say:'seven',out:'7'},{say:'eight',out:'8'},{say:'nine',out:'9'},
+        {say:'ten',out:'10'},{say:'jack',out:'J'},{say:'queen',out:'Q'},{say:'king',out:'K'}
+      ],
+      combos:[
+        {head:'Pair',examples:'"double three" · "three three"',out:'3 + 3'},
+        {head:'Multiple cards',examples:'"ace four five"',out:'A · 4 · 5'},
+        {head:'Quick hit',examples:'"ten seven"',out:'10 · 7'}
+      ],
+      actions:[
+        {head:'New hand',examples:'"new" · "reset" · "restart" · "clear"',color:'#ef4444'},
+        {head:'Split',examples:'"split"',color:'#38bdf8'},
+        {head:'Switch hand (split)',examples:'"hand one" · "hand two"',color:'#d4b863'},
+        {head:'Mute mic',examples:'"stop" · "silence" · "mute" · "quiet" · "shut up"',color:'rgba(240,236,224,0.4)'}
+      ]
+    },
+    es:{
+      cards:[
+        {say:'as',out:'A'},{say:'dos',out:'2'},{say:'tres',out:'3'},
+        {say:'cuatro',out:'4'},{say:'cinco',out:'5'},{say:'seis',out:'6'},
+        {say:'siete',out:'7'},{say:'ocho',out:'8'},{say:'nueve',out:'9'},
+        {say:'diez',out:'10'},{say:'jota',out:'J'},{say:'reina',out:'Q'},{say:'rey',out:'K'}
+      ],
+      combos:[
+        {head:'Par',examples:'"doble tres" · "tres tres"',out:'3 + 3'},
+        {head:'Varias cartas',examples:'"as cuatro cinco"',out:'A · 4 · 5'},
+        {head:'Robo rápido',examples:'"diez siete"',out:'10 · 7'}
+      ],
+      actions:[
+        {head:'Nueva mano',examples:'"nueva" · "reset" · "borra"',color:'#ef4444'},
+        {head:'Dividir',examples:'"split"',color:'#38bdf8'},
+        {head:'Cambiar de mano (split)',examples:'"mano uno" · "mano dos"',color:'#d4b863'},
+        {head:'Silenciar mic',examples:'"stop" · "silencio" · "cállate" · "termina"',color:'rgba(240,236,224,0.4)'}
+      ]
+    }
+  };
+  const data=dict[lang]||dict.fr;
+  const tr=LANGS[lang]||LANGS.fr;
+  // Titres de sections
+  document.getElementById('intro-micD-cardsH').textContent=tr.micDCardsH||(lang==='en'?'Cards':lang==='es'?'Cartas':'Cartes');
+  document.getElementById('intro-micD-comboH').textContent=tr.micDComboH||(lang==='en'?'Combos':lang==='es'?'Combinaciones':'Combinaisons');
+  document.getElementById('intro-micD-actH').textContent=tr.micDActH||(lang==='en'?'Actions':lang==='es'?'Acciones':'Actions');
+  document.getElementById('intro-micD-title').textContent=tr.micDTitle||(lang==='en'?'Voice commands':lang==='es'?'Comandos de voz':'Commandes vocales');
+  // Cartes : badges "say → card"
+  const cardsHost=document.getElementById('intro-micD-cards');
+  cardsHost.innerHTML='';
+  data.cards.forEach(c=>{
+    const isRed=['A','3','Q'].includes(c.out)||c.out==='J'&&false; // approximation visuelle
+    const cardColor=(c.out==='A'||c.out==='Q'||c.out==='3'||c.out==='8'||c.out==='10')?'#c00':'#1a1a1a';
+    cardsHost.insertAdjacentHTML('beforeend',
+      '<div style="display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.22);border:1px solid rgba(212,184,99,0.18);border-radius:8px;padding:5px 8px;">'+
+        '<span style="font-size:0.65rem;color:rgba(240,236,224,0.85);font-style:italic;">"'+c.say+'"</span>'+
+        '<span style="font-size:0.5rem;color:rgba(240,236,224,0.4);">→</span>'+
+        '<span style="background:#f0ecdf;color:'+cardColor+';font-weight:900;font-size:0.7rem;padding:2px 6px;border-radius:4px;min-width:18px;text-align:center;">'+c.out+'</span>'+
+      '</div>'
+    );
+  });
+  // Combinaisons
+  const comboHost=document.getElementById('intro-micD-combo');
+  comboHost.innerHTML='';
+  data.combos.forEach(c=>{
+    comboHost.insertAdjacentHTML('beforeend',
+      '<div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.22);border-radius:8px;padding:8px 10px;">'+
+        '<div style="font-size:0.55rem;letter-spacing:1.5px;color:#22c55e;font-weight:800;text-transform:uppercase;margin-bottom:3px;">'+c.head+'</div>'+
+        '<div style="font-size:0.66rem;color:rgba(240,236,224,0.85);font-style:italic;line-height:1.4;">'+c.examples+(c.out?' <span style="color:rgba(240,236,224,0.4);font-style:normal;">→</span> <strong style="color:#f0ecdf;font-style:normal;">'+c.out+'</strong>':'')+'</div>'+
+      '</div>'
+    );
+  });
+  // Actions
+  const actHost=document.getElementById('intro-micD-act');
+  actHost.innerHTML='';
+  data.actions.forEach(a=>{
+    actHost.insertAdjacentHTML('beforeend',
+      '<div style="background:rgba(0,0,0,0.18);border-left:3px solid '+a.color+';border-radius:6px;padding:7px 9px;">'+
+        '<div style="font-size:0.6rem;letter-spacing:1px;color:'+a.color+';font-weight:800;text-transform:uppercase;margin-bottom:2px;">'+a.head+'</div>'+
+        '<div style="font-size:0.62rem;color:rgba(240,236,224,0.78);font-style:italic;line-height:1.4;">'+a.examples+'</div>'+
+      '</div>'
+    );
+  });
+  // Bouton fermer
+  document.getElementById('intro-micD-ok').textContent=tr.micDOk||(lang==='en'?'Close ✓':lang==='es'?'Cerrar ✓':'Fermer ✓');
 }
 
 // v1.20 — Detection de la sortie du mode PiP via MutationObserver sur body.pip-mode.
