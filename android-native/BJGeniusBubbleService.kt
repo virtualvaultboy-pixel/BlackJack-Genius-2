@@ -38,9 +38,17 @@ class BJGeniusBubbleService : Service() {
         const val NOTIFICATION_ID = 4242
         const val TAG = "BJGeniusBubble"
 
-        /** Indique si le service tourne. Lu par le plugin JS pour eviter
-         *  les double-starts. */
-        var isRunning = false
+        /**
+         * Indique si le service tourne. Lu par le plugin Java pour eviter
+         * les double-starts.
+         *
+         * v1.2 — Annotations Kotlin pour interop Java :
+         *  - @JvmStatic : expose la propriete comme un champ statique
+         *    accessible via BJGeniusBubbleService.isRunning() depuis Java
+         *  - Setter prive : seul le service lui-meme peut modifier l'etat
+         */
+        @JvmStatic
+        var isRunning: Boolean = false
             private set
     }
 

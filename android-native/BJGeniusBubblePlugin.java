@@ -121,11 +121,14 @@ public class BJGeniusBubblePlugin extends Plugin {
 
     /**
      * Renvoie l'etat actuel (bulle active ou non).
+     *
+     * v1.2 — Acces a la propriete Kotlin via le getter genere. Kotlin transforme
+     * `var isRunning: Boolean` (avec @JvmStatic) en `getIsRunning()` cote Java.
      */
     @PluginMethod
     public void isRunning(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("running", BJGeniusBubbleService.isRunning);
+        ret.put("running", BJGeniusBubbleService.getIsRunning());
         call.resolve(ret);
     }
 }
