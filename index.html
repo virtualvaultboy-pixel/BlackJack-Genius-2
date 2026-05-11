@@ -558,7 +558,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.5</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.6</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4471,19 +4471,17 @@ function startRecognition(){
         const last=voiceBuffer[voiceBuffer.length-1];
         if(last===tr)continue;                          // doublon strict
         if(last&&tr.startsWith(last+" ")){              // extension cumulative
-          // v2.5 — Validation interim : on n'accepte l'extension QUE si son suffix
-          // a été vu dans un transcript interim récent (preuve d'audio user réel).
-          // Sinon c'est une hallucination du post-processing Chrome (bug "as 5"/"dame 2").
-          // Durcissement : on exige une trace SUSTAINED (2+ interims OU un interim qui a
-          // tenu ≥150ms) pour distinguer audio user réel vs speculation STT ponctuelle.
+          // v2.6 — Validation interim CIBLÉE : on ne filtre QUE les suffixes qui sont
+          // 1-2 chiffres purs (le pattern exact d'hallucination Chrome : "as 5", "dame 2").
+          // Les vrais mots (valet, dame, "5 valet"...) passent sans validation, sinon on
+          // casse les cas où Chrome accumule en extensions sans émettre d'interim (régression v2.5).
           const suffix=tr.slice(last.length+1).trim().toLowerCase();
-          let seenInInterim=!suffix;
-          if(!seenInInterim){
+          const isShortDigitHallucinationCandidate=/^[0-9]{1,2}$/.test(suffix);
+          if(isShortDigitHallucinationCandidate){
             const matches=interimHistory.filter(h=>h.text.toLowerCase().includes(suffix));
-            if(matches.length>=2)seenInInterim=true;
-            else if(matches.length===1&&now-matches[0].time>=150)seenInInterim=true;
+            const seenInInterim=matches.length>=2||(matches.length>=1&&now-matches[0].time>=150);
+            if(!seenInInterim)continue;                  // extension chiffre fantôme → on garde l'original
           }
-          if(!seenInInterim)continue;                   // extension fantôme → on garde l'original
           voiceBuffer[voiceBuffer.length-1]=tr;
         } else {                                         // nouveau segment
           voiceBuffer.push(tr);
@@ -4518,12 +4516,11 @@ function startRecognition(){
     // v1.9 — Si le TTS parle, on ne redémarre PAS automatiquement.
     // C'est speak() qui redémarrera via u.onend quand le TTS aura fini.
     if(ttsActive)return;
-    if(!micOn)return;
-    // v2.5 — Tentative de réutilisation du même SR (évite la latence de recréation
-    // qui causait des coupures audio de ~250ms entre chaque utterance sur Android).
-    // Si reuse fail (état invalide selon navigateur), fallback sur recreation propre.
-    try{recognition.start();}
-    catch(e){setTimeout(startRecognition,50);}
+    // v2.6 — REVERT du reuse SR de v2.5 : sur Android Chrome, recognition.start()
+    // après onend ne throw pas mais capture audio dégradée → 1 mot sur 5 capté.
+    // Retour au comportement v2.4 : recréation systématique (gap audio ~250ms mais
+    // capture fiable). Le reuse SR est incompatible avec Chrome Android, ne pas retenter.
+    if(micOn)setTimeout(startRecognition,80);
   };
   try{recognition.start();}catch(e){if(micOn)setTimeout(startRecognition,200);} // 500 → 200 ms
 }
