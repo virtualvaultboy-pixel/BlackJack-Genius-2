@@ -558,7 +558,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.5</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4062,6 +4062,12 @@ let micOn=false,recognition=null,voiceBuffer=[],voiceTimer=null,lastSpeechAt=0;
 // v1.9 — Flag pour bloquer le redémarrage auto du STT pendant que le TTS parle
 // (évite le feedback loop "Tirer" → mic réactivé → capte sa propre sortie audio).
 let ttsActive=false;
+// v2.5 — Historique des transcripts interim (2.5s) pour valider les extensions de final.
+// Root cause bug "as"/"dame" + chiffre fantôme : Chrome Android émet "as" en final, puis
+// re-finalise en "as 5" via post-processing du modèle de langue, SANS jamais que "5" ait
+// été présent dans un interim (= sans audio user réel). On ne fait confiance à une extension
+// que si son suffix a été vu en interim récemment.
+let interimHistory=[];
 
 function norm(s){
   return s.toLowerCase()
@@ -4433,7 +4439,7 @@ function toggleMic(){
     const dm=document.getElementById("dt-mic2");
     if(dm)dm.classList.remove("on");
     if(recognition){try{recognition.abort();}catch(e){}}
-    recognition=null;voiceBuffer=[];
+    recognition=null;voiceBuffer=[];interimHistory=[];
     if(voiceTimer)clearTimeout(voiceTimer);
     hideVoiceToast();
   }
@@ -4450,7 +4456,10 @@ function startRecognition(){
   recognition.maxAlternatives=3;     // 5 → 3 (largement suffisant, moins de calculs côté navigateur)
   recognition.onstart=()=>{document.getElementById("mic-btn").classList.add("listening");};
   recognition.onresult=(e)=>{
-    lastSpeechAt=Date.now();
+    const now=Date.now();
+    lastSpeechAt=now;
+    // v2.5 — Purge des interim trop anciens (>2.5s, plus pertinents pour valider une extension)
+    if(interimHistory.length)interimHistory=interimHistory.filter(h=>now-h.time<2500);
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
       if(r.isFinal){
@@ -4462,6 +4471,19 @@ function startRecognition(){
         const last=voiceBuffer[voiceBuffer.length-1];
         if(last===tr)continue;                          // doublon strict
         if(last&&tr.startsWith(last+" ")){              // extension cumulative
+          // v2.5 — Validation interim : on n'accepte l'extension QUE si son suffix
+          // a été vu dans un transcript interim récent (preuve d'audio user réel).
+          // Sinon c'est une hallucination du post-processing Chrome (bug "as 5"/"dame 2").
+          // Durcissement : on exige une trace SUSTAINED (2+ interims OU un interim qui a
+          // tenu ≥150ms) pour distinguer audio user réel vs speculation STT ponctuelle.
+          const suffix=tr.slice(last.length+1).trim().toLowerCase();
+          let seenInInterim=!suffix;
+          if(!seenInInterim){
+            const matches=interimHistory.filter(h=>h.text.toLowerCase().includes(suffix));
+            if(matches.length>=2)seenInInterim=true;
+            else if(matches.length===1&&now-matches[0].time>=150)seenInInterim=true;
+          }
+          if(!seenInInterim)continue;                   // extension fantôme → on garde l'original
           voiceBuffer[voiceBuffer.length-1]=tr;
         } else {                                         // nouveau segment
           voiceBuffer.push(tr);
@@ -4472,7 +4494,10 @@ function startRecognition(){
         if(totalCards>=3){processBuffer();voiceTimer=null;}
         else{voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},420);}
       } else {
-        // Partiel : on remet juste le timer à zéro pour ne pas commit pendant que l'user parle encore
+        // Partiel : on l'enregistre pour validation future des extensions (v2.5),
+        // et on remet le timer à zéro pour ne pas commit pendant que l'user parle encore
+        const tr=(r[0]&&r[0].transcript||"").trim();
+        if(tr)interimHistory.push({text:tr,time:now});
         if(voiceTimer&&voiceBuffer.length>0){
           clearTimeout(voiceTimer);
           voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},420);
@@ -4493,7 +4518,12 @@ function startRecognition(){
     // v1.9 — Si le TTS parle, on ne redémarre PAS automatiquement.
     // C'est speak() qui redémarrera via u.onend quand le TTS aura fini.
     if(ttsActive)return;
-    if(micOn)setTimeout(startRecognition,80);  // 300 → 80 ms (recovery quasi-immédiate)
+    if(!micOn)return;
+    // v2.5 — Tentative de réutilisation du même SR (évite la latence de recréation
+    // qui causait des coupures audio de ~250ms entre chaque utterance sur Android).
+    // Si reuse fail (état invalide selon navigateur), fallback sur recreation propre.
+    try{recognition.start();}
+    catch(e){setTimeout(startRecognition,50);}
   };
   try{recognition.start();}catch(e){if(micOn)setTimeout(startRecognition,200);} // 500 → 200 ms
 }
