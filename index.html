@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.9 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.14 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -205,9 +205,12 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .popup-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:10px;margin:0 auto 14px;}
 .popup-title{font-size:0.85rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:14px;}
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
 .setting-row:last-child{border-bottom:none;}
 .setting-label{font-size:0.72rem;color:rgba(240,236,224,0.7);}
+/* v1.12 — Titres de section discrets pour structurer le menu Paramètres */
+.settings-section-title{font-size:0.5rem;color:rgba(201,168,76,0.55);letter-spacing:2.5px;font-weight:800;text-transform:uppercase;margin-top:14px;margin-bottom:2px;padding-bottom:4px;border-bottom:1px solid rgba(201,168,76,0.12);}
+.settings-section-title:first-of-type{margin-top:6px;}
 .toggle{width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;}
 .toggle.on{background:#22c55e;}
 .toggle::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:white;top:3px;left:3px;transition:transform 0.2s;}
@@ -553,13 +556,56 @@ body.lite .ts-expert-card{position:relative;}
 .cam-btn-act:active{transform:scale(0.96);}
 .cam-btn-retry{background:rgba(240,236,224,0.1);color:#f0ece0;border:1px solid rgba(240,236,224,0.2);}
 .cam-btn-confirm{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;}
+/* v1.14 — Overlay de blocage en mode paysage (mobile uniquement). */
+#rotate-overlay{
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:linear-gradient(135deg,#0a1f10 0%,#0f2920 100%);
+  align-items:center;justify-content:center;
+  padding:20px;text-align:center;
+}
+#rotate-overlay .ro-inner{max-width:400px;}
+#rotate-overlay .ro-icon{
+  font-size:3.5rem;margin-bottom:18px;
+  filter:drop-shadow(0 4px 12px rgba(201,168,76,0.3));
+  animation:roRotate 2.4s ease-in-out infinite;
+}
+@keyframes roRotate{
+  0%,100%{transform:rotate(-15deg);}
+  50%{transform:rotate(75deg);}
+}
+#rotate-overlay .ro-title{
+  font-size:1.1rem;font-weight:900;color:#c9a84c;
+  letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:10px;
+}
+#rotate-overlay .ro-sub{
+  font-size:0.8rem;color:rgba(240,236,224,0.7);
+  line-height:1.5;
+}
+/* On affiche l'overlay en paysage SEULEMENT sur petit écran (téléphones).
+   Sur tablettes ou desktop, on laisse l'UI s'adapter naturellement. */
+@media (orientation:landscape) and (max-height:500px){
+  #rotate-overlay{display:flex;}
+}
 </style>
 </head>
 <body>
+<!-- v1.14 — Overlay de blocage en mode paysage. L'app est conçue pour le portrait
+     uniquement (interface dense, blackjack se joue tel en main). En paysage on
+     affiche un message qui invite à tourner le tel, plutôt que d'afficher une UI
+     cassée. La media query cible orientation:landscape ET hauteur courte (≤500px)
+     pour ne pas s'activer sur tablettes ou écrans larges. -->
+<div id="rotate-overlay">
+  <div class="ro-inner">
+    <div class="ro-icon">📱↻</div>
+    <div class="ro-title" id="ro-title">Tourne ton téléphone</div>
+    <div class="ro-sub" id="ro-sub">BJ Genius s'utilise en mode portrait.</div>
+  </div>
+</div>
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.9</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.14</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -691,7 +737,10 @@ body.lite .ts-expert-card{position:relative;}
 </div>
 
 <!-- TUTORIAL -->
-<div class="popup-overlay centered" id="popup-tutorial" onclick="closeTutorial()">
+<!-- v1.10 — Onclick d'overlay retiré : popup non fermable par click extérieur.
+     Évite que l'user manque le tuto en cliquant accidentellement à côté.
+     Seul le bouton "C'est parti !" permet de continuer. -->
+<div class="popup-overlay centered" id="popup-tutorial">
   <div class="popup" onclick="event.stopPropagation()">
     <div class="popup-handle"></div>
     <div class="welcome-lang-row">
@@ -712,8 +761,11 @@ body.lite .ts-expert-card{position:relative;}
   </div>
 </div>
 
-<!-- NIVEAU DU JOUEUR : popup au 1er lancement pour personnaliser le parcours -->
-<div class="popup-overlay centered" id="popup-level" onclick="event.target===this&&closePopup('popup-level')">
+<!-- NIVEAU DU JOUEUR : popup au 1er lancement pour personnaliser le parcours.
+     v1.10 — Onclick d'overlay retiré : le choix du niveau est une étape clé
+     du onboarding, l'user doit explicitement choisir entre "Je découvre" et
+     "Je connais", pas pouvoir skipper en cliquant à côté. -->
+<div class="popup-overlay centered" id="popup-level">
   <div class="popup">
     <div style="text-align:center;margin-bottom:16px;">
       <div style="font-size:2rem;margin-bottom:6px;">🎯</div>
@@ -849,13 +901,20 @@ body.lite .ts-expert-card{position:relative;}
   <div class="popup" onclick="event.stopPropagation()">
     <div class="popup-handle"></div>
     <div class="popup-title">⚙️ Paramètres</div>
+
+    <!-- v1.12 — Structuration en 3 sections (Affichage / Voix & Caméra / Compte)
+         pour aérer le menu, qui devenait trop chargé. -->
+
+    <div class="settings-section-title" id="set-sec-display">Affichage</div>
     <div class="setting-row" id="si-discrete"><div class="setting-label">🌑 Mode discret</div><div class="toggle" id="toggle-discrete" onclick="toggleDiscrete()"></div></div>
     <div class="setting-row" id="si-font"><div class="setting-label">🔤 Grande police</div><div class="toggle" id="toggle-font" onclick="toggleFont()"></div></div>
+
+    <div class="settings-section-title" id="set-sec-voice">Voix & Caméra</div>
     <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
-    <!-- v1.6 — Toggle anti-hallucination "as/ace" post-figure (Chrome LM ajoute systématiquement "as" après dame/valet/roi). ON par défaut depuis v1.6 (refonte). Désactivable si l'user veut retrouver l'ancien comportement. Compromis Q+A blackjack : touche tactile. -->
-    <div class="setting-row" id="si-voicefilter"><div class="setting-label">✂️ Filtre 'as' parasite (vocal)</div><div class="toggle on" id="dt-voicefilter" onclick="toggleVoiceFilter()"></div></div>
     <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
+
+    <div class="settings-section-title" id="set-sec-account">Compte & Langue</div>
     <div class="setting-row">
       <div class="setting-label">🌍 Langue</div>
       <div class="lang-btns">
@@ -872,6 +931,7 @@ body.lite .ts-expert-card{position:relative;}
       <div class="setting-label">ℹ️ <span id="about-label">À propos</span></div>
       <div style="font-size:0.7rem;color:rgba(240,236,224,0.3)">›</div>
     </div>
+
     <div class="promo-section">
       <div class="promo-label" id="promo-label">🎟️ Code promo</div>
       <div class="promo-row">
@@ -920,7 +980,10 @@ body.lite .ts-expert-card{position:relative;}
 </div>
 
 <!-- LEARN BJ -->
-<div class="popup-overlay" id="popup-learn" onclick="closePopup('popup-learn')">
+<!-- v1.10 — Click extérieur conditionnel : bloqué pendant l'onboarding initial
+     (l'user doit aller au bout d'Apprendre ou utiliser le bouton "Passer →"
+     pour lancer le tuto). En replay depuis le burger, fermable normalement. -->
+<div class="popup-overlay" id="popup-learn" onclick="learnOverlayClick(event)">
   <div class="popup" onclick="event.stopPropagation()" style="max-height:94vh;overflow:hidden;padding-bottom:18px;padding-top:10px;">
     <div class="popup-handle"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -935,6 +998,10 @@ body.lite .ts-expert-card{position:relative;}
       <div id="learn-prev" onclick="learnNav(-1)" style="flex:1;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(240,236,224,0.5);font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:center;display:none;">← Préc.</div>
       <div id="learn-next" onclick="learnNav(1)" style="flex:2;padding:10px;border-radius:10px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-align:center;">Suivant →</div>
     </div>
+    <!-- v1.10 — Bouton "Passer le tuto" : à n'importe quelle étape d'Apprendre, l'user
+         peut sauter directement au tour de l'app (tuto spotlight). Utile surtout pendant
+         l'onboarding pour les users qui veulent voir l'app sans lire toutes les règles. -->
+    <div id="learn-skip" onclick="skipLearnToTuto()" style="margin-top:8px;text-align:center;font-size:0.6rem;color:rgba(240,236,224,0.45);text-decoration:underline;cursor:pointer;letter-spacing:1px;padding:6px;" data-i18n="learnSkipToTuto">Passer le tuto →</div>
   </div>
 </div>
 
@@ -1332,17 +1399,9 @@ function toggleSpeak(){
   const ts=document.getElementById("dt-speak2");
   if(ts)ts.classList.toggle("on",speakOn);
 }
-// v1.6 — Toggle filtre anti-hallucination "as/ace" post-figure. Persiste en localStorage.
-// Convention : null ou '1' = filtre actif (défaut), '0' = explicitement désactivé.
-// ON par défaut depuis v1.6 (refonte). Désactivable pour récupérer l'ancien comportement
-// si l'user veut tester ou si le LM Chrome cesse d'halluciner sur certains téls.
-function toggleVoiceFilter(){
-  const cur=localStorage.getItem('bjg_voice_filter_face_as')!=='0'; // null = on
-  const next=!cur;
-  localStorage.setItem('bjg_voice_filter_face_as',next?'1':'0');
-  const t=document.getElementById('dt-voicefilter');
-  if(t)t.classList.toggle('on',next);
-}
+// v1.12 — Fonction toggleVoiceFilter() retirée : le toggle UI a été supprimé du menu
+// Paramètres. Le filtre "as parasite post-figure" reste actif en permanence dans
+// extractCards (workaround éprouvé contre l'hallucination du LM Chrome STT).
 
 // ══ LANGUE ══
 const LANGS={
@@ -1545,6 +1604,9 @@ const LANGS={
     },
     // ── Tutoriel step-by-step ──
     tutoSkip:"Passer", tutoNext:"Suivant →", tutoFinish:"Terminer ✓", tutoStartPlay:"Commencer à jouer 🃏",
+    learnSkipToTuto:"Passer le tuto →",
+    setSecDisplay:"Affichage", setSecVoice:"Voix & Caméra", setSecAccount:"Compte & Langue",
+    rotateTitle:"Tourne ton téléphone", rotateSub:"BJ Genius s'utilise en mode portrait.",
     tutoSeePro:"Voir l'offre Pro 👑",
     // Étape 1
     tutoS1Title:"Ta décision en 1 seconde ⚡",
@@ -1859,6 +1921,9 @@ const LANGS={
     },
     // ── Tutorial step-by-step ──
     tutoSkip:"Skip", tutoNext:"Next →", tutoFinish:"Finish ✓", tutoStartPlay:"Start playing 🃏",
+    learnSkipToTuto:"Skip to app tour →",
+    setSecDisplay:"Display", setSecVoice:"Voice & Camera", setSecAccount:"Account & Language",
+    rotateTitle:"Rotate your phone", rotateSub:"BJ Genius is portrait-only.",
     tutoSeePro:"See Pro offer 👑",
     // Step 1
     tutoS1Title:"Your decision in 1 second ⚡",
@@ -2173,6 +2238,9 @@ const LANGS={
     },
     // ── Tutorial paso a paso ──
     tutoSkip:"Saltar", tutoNext:"Siguiente →", tutoFinish:"Terminar ✓", tutoStartPlay:"Empezar a jugar 🃏",
+    learnSkipToTuto:"Saltar al tour →",
+    setSecDisplay:"Pantalla", setSecVoice:"Voz y Cámara", setSecAccount:"Cuenta e Idioma",
+    rotateTitle:"Gira tu teléfono", rotateSub:"BJ Genius funciona en modo vertical.",
     tutoSeePro:"Ver oferta Pro 👑",
     // Paso 1
     tutoS1Title:"Tu decisión en 1 segundo ⚡",
@@ -2377,6 +2445,14 @@ function applyLang(){
   tut("easter-close","easterClose");
   // Learn popup
   tut("learn-title","learnTitle");
+  tut("learn-skip","learnSkipToTuto");
+  // v1.12 — Settings section titles
+  tut("set-sec-display","setSecDisplay");
+  tut("set-sec-voice","setSecVoice");
+  tut("set-sec-account","setSecAccount");
+  // v1.14 — Overlay rotation paysage
+  tut("ro-title","rotateTitle");
+  tut("ro-sub","rotateSub");
   // Voice mic label (état courant)
   const ml=document.getElementById("mic-label");
   if(ml)ml.innerHTML=micOn?t.voiceLabelOn:t.voiceLabelOff;
@@ -2573,9 +2649,8 @@ function openSettingsPopup(){
   document.getElementById('toggle-font').classList.toggle('on',largeFont);
   document.getElementById('dt-mic2').classList.toggle('on',micOn);
   document.getElementById('dt-speak2').classList.toggle('on',speakOn);
-  // v1.6 — Init du toggle filtre vocal : null/'1' = ON (défaut), '0' = OFF
-  const vf=document.getElementById('dt-voicefilter');
-  if(vf)vf.classList.toggle('on',localStorage.getItem('bjg_voice_filter_face_as')!=='0');
+  // v1.12 — Init du toggle filtre vocal retirée : le toggle UI a été supprimé.
+  // Le filtre reste actif en permanence côté extractCards.
   document.getElementById('popup-settings-modal').classList.add('show');
 }
 function openSettings(){toggleDrawer();}
@@ -3154,6 +3229,23 @@ function closePopup(id){
     setTimeout(()=>startTutoSpotlight(true),250);
   }
 }
+
+// v1.10 — Click sur l'overlay d'Apprendre. Pendant l'onboarding (premier lancement),
+// on bloque la fermeture par click extérieur pour forcer l'user à utiliser soit les
+// boutons internes (Suivant/CTA) soit le bouton "Passer →" qui lance le tuto.
+// En replay depuis le burger (tutoIsFirstLaunch=false), on ferme normalement.
+function learnOverlayClick(event){
+  if(event.target!==event.currentTarget)return; // click sur le contenu : on ignore
+  if(tutoIsFirstLaunch)return; // onboarding : fermeture bloquée
+  closePopup('popup-learn');
+}
+
+// v1.10 — "Passer le tuto" depuis n'importe quelle étape d'Apprendre.
+// Saute le reste d'Apprendre et lance directement le tuto spotlight de l'app.
+// Réutilise goToAppTour() qui fait exactement ce qu'on veut.
+function skipLearnToTuto(){
+  goToAppTour();
+}
 // ═══════════════════════════════════════════════════════════════════
 // ══ TUTORIEL SPOTLIGHT : welcome page + spotlight sur l'écran principal ══
 // ═══════════════════════════════════════════════════════════════════
@@ -3653,7 +3745,19 @@ function getLearnSlides(){
   ];
 }
 
-function openLearn(){closeDrawer();learnStep=0;quizState={step:0,score:0,answered:false,finished:false};simState={step:0};renderLearnSlide();document.getElementById("popup-learn").classList.add("show");}
+function openLearn(){
+  closeDrawer();
+  learnStep=0;
+  quizState={step:0,score:0,answered:false,finished:false};
+  simState={step:0};
+  renderLearnSlide();
+  // v1.11 — Le bouton "Passer le tuto →" n'est utile que pendant l'onboarding initial.
+  // En replay (Apprendre ouvert depuis le burger), l'user a déjà vu le tuto : on cache
+  // le bouton pour ne pas le tenter de le relancer involontairement.
+  const skipBtn=document.getElementById("learn-skip");
+  if(skipBtn)skipBtn.style.display=tutoIsFirstLaunch?"":"none";
+  document.getElementById("popup-learn").classList.add("show");
+}
 
 // ── Quiz du tutoriel ──
 let quizState={step:0,score:0,answered:false,finished:false};
@@ -3812,10 +3916,16 @@ function goToTraining(){
 }
 
 // CTA "Tour de l'app" en fin d'Apprendre.
+// v1.11 — Ne lance le tuto spotlight QUE si on est au premier lancement (tutoIsFirstLaunch).
+// En replay (Apprendre ouvert depuis le burger), l'user a déjà vu le tuto : on ferme
+// juste Apprendre sans le forcer à le revoir. Replay = relecture des règles, point.
 function goToAppTour(){
   pendingTutoAfterLearn=false;
+  const wasFirstLaunch=tutoIsFirstLaunch;
   closePopup('popup-learn');
-  setTimeout(()=>startTutoSpotlight(true),250);
+  if(wasFirstLaunch){
+    setTimeout(()=>startTutoSpotlight(true),250);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -4283,14 +4393,12 @@ function splitMerged(word){
 function extractCards(transcript){
   let text=norm(transcript);
 
-  // Filtre "as/ace" parasite post-figure (toggle Paramètres, ON par défaut).
+  // v1.12 — Filtre "as/ace" parasite post-figure ACTIF EN PERMANENCE.
   // Chrome STT en fr-FR insère systématiquement "as" (verbe avoir) après dame/valet/roi
   // pour produire une phrase grammaticalement valide. C'est un bug du modèle de langue
-  // de Chrome, contournement ciblé et fiable.
-  // localStorage : null/'1' = filtre actif (défaut), '0' = explicitement désactivé.
-  if(localStorage.getItem('bjg_voice_filter_face_as')!=='0'){
-    text=text.replace(/\b(dame|reine|valet|jack|jacques|roi|queen|king)s?\s+(?:as|ace)(\s|$)/g,"$1$2");
-  }
+  // de Chrome, contournement ciblé et fiable. Le toggle UI a été retiré du menu en v1.12
+  // pour alléger les Paramètres : le filtre est inconditionnel maintenant.
+  text=text.replace(/\b(dame|reine|valet|jack|jacques|roi|queen|king)s?\s+(?:as|ace)(\s|$)/g,"$1$2");
 
   // Helper : check si un mot correspond à une vraie carte (pas une commande)
   const isCardWord=(w)=>isRealCard(bestMatch(w))||splitMerged(w);
@@ -5463,7 +5571,12 @@ function submitDailyAnswer(action){
   if(state.history[today])return;
   const correct=action===scenario.c;
   // Mettre à jour state
-  state.history[today]=correct?'win':'lose';
+  // v1.13 — FIX bug "Ta réponse" vide après reload : on stockait une STRING ('win'/'lose')
+  // dans state.history[today], puis on sauvegardait, puis on remplaçait par l'OBJET
+  // {result, answer} — mais c'était trop tard, le localStorage contenait déjà la string,
+  // donc à la 2ème ouverture la réponse de l'user était perdue. Désormais on construit
+  // l'objet AVANT de sauvegarder.
+  state.history[today]={result:correct?'win':'lose',answer:action};
   if(correct){
     state.streak=(state.streak||0)+1;
     if(state.streak>(state.best||0))state.best=state.streak;
@@ -5473,8 +5586,12 @@ function submitDailyAnswer(action){
   saveDailyState(state);
   // Cache l'indicateur burger (défi fait)
   updateDailyBurgerDot();
-  // Afficher le résultat avec l'action choisie en mémoire
-  state.history[today]={result:correct?'win':'lose',answer:action};
+  // v1.13 — FIX bug streak qui ne s'affichait pas à la 1ère validation : le DOM
+  // n'était rafraîchi qu'à openDailyChallenge(), donc l'incrément/reset du streak
+  // après validation n'était pas visible avant fermeture/réouverture du popup.
+  const streakEl=document.getElementById('daily-streak');
+  if(streakEl)streakEl.textContent=state.streak;
+  // Afficher le résultat
   showDailyResult(correct?'win':'lose',scenario,state,today,action);
 }
 

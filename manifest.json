@@ -1,19 +1,39 @@
 {
-  "name": "BlackJack Genius - Stratégie",
+  "name": "BJ Genius",
   "short_name": "BJ Genius",
-  "description": "Application éducative de stratégie au blackjack",
+  "description": "Ton coach de blackjack dans la poche. Décision optimale en 1 seconde, hors-ligne, sans pub.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0a5530",
-  "theme_color": "#0a5530",
   "orientation": "portrait",
+  "background_color": "#0a1f10",
+  "theme_color": "#c9a84c",
   "lang": "fr",
-  "categories": ["education", "games"],
+  "categories": ["games", "education", "entertainment"],
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }
