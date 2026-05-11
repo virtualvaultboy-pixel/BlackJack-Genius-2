@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.22 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.23 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -214,6 +214,18 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
    de modals. Permet de rouvrir le popup d'explication d'une feature. */
 .info-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;font-size:0.65rem;font-weight:700;font-style:italic;margin-left:6px;cursor:pointer;vertical-align:middle;transition:background 0.15s;}
 .info-help:active{background:rgba(201,168,76,0.28);}
+/* v1.23 — Bouton d'aide flottant en bas a droite de l'ecran principal.
+   Toujours visible. Ouvre un menu donnant acces aux 4 popups d'explication. */
+#help-fab{position:fixed;bottom:14px;right:14px;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0a3d1f,#0a2515);border:1.5px solid rgba(201,168,76,0.45);box-shadow:0 3px 12px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:#c9a84c;font-weight:900;cursor:pointer;z-index:200;transition:transform 0.15s,box-shadow 0.15s;font-style:italic;}
+#help-fab:active{transform:scale(0.92);box-shadow:0 1px 4px rgba(0,0,0,0.5);}
+/* En mode discret, on l'estompe encore pour ne pas attirer l'attention */
+body.discrete #help-fab{opacity:0.35;}
+/* En mode PiP (bulle), on cache le FAB pour ne pas pourrir l'affichage minimal */
+@media (display-mode:picture-in-picture){#help-fab{display:none!important;}}
+body.pip-mode #help-fab{display:none!important;}
+/* Cards du menu d'aide rapide : tappables, hover-like en mobile */
+.help-card{background:rgba(0,0,0,0.28);border:1.5px solid rgba(212,184,99,0.22);border-radius:11px;padding:14px 8px;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.help-card:active{transform:scale(0.96);background:rgba(212,184,99,0.1);border-color:rgba(212,184,99,0.5);}
 .settings-section-title:first-of-type{margin-top:6px;}
 .toggle{width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;}
 .toggle.on{background:#22c55e;}
@@ -654,7 +666,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.22</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.23</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -749,8 +761,11 @@ body.pip-mode #pip-display{display:flex!important;}
   <div class="cam-debug-tag" id="cam-debug-tag" style="display:none;">🐞 DEBUG</div>
   <div class="cam-topbar">
     <div class="cam-status" id="cam-status"></div>
-    <!-- v1.21 — Bouton info pour rouvrir l'explication du scan camera -->
-    <div class="cam-close-btn" onclick="showIntro('cam')" style="font-size:1.05rem;margin-right:6px;" title="Aide">ℹ</div>
+    <!-- v1.21/v1.23 — Bouton AIDE pour rouvrir l'explication du scan. Rendu
+         plus visible que la version initiale (etait trop discret). -->
+    <div onclick="showIntro('cam')" id="cam-help-btn" style="display:flex;align-items:center;gap:5px;background:rgba(201,168,76,0.16);border:1.5px solid rgba(201,168,76,0.5);border-radius:9px;padding:5px 9px;color:#c9a84c;font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-right:8px;">
+      <span style="font-style:italic;font-size:0.78rem;">i</span><span id="cam-help-lbl">Aide</span>
+    </div>
     <div class="cam-close-btn" onclick="camClose()">✕</div>
   </div>
   <div class="cam-frame">
@@ -950,8 +965,13 @@ body.pip-mode #pip-display{display:flex!important;}
 <!-- POPUP SETTINGS -->
 <div class="popup-overlay" id="popup-settings-modal" onclick="closePopup('popup-settings-modal')">
   <div class="popup" onclick="event.stopPropagation()">
-    <div class="popup-handle"></div>
-    <div class="popup-title">⚙️ Paramètres</div>
+    <!-- v1.23 — Handle + croix cliquables pour fermer le popup. Le tap-extérieur
+         existant fonctionne toujours, mais ces controls sont plus visibles. -->
+    <div class="popup-handle" onclick="closePopup('popup-settings-modal')" style="cursor:pointer;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div class="popup-title" style="margin-bottom:0;">⚙️ Paramètres</div>
+      <div onclick="closePopup('popup-settings-modal')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(240,236,224,0.7);font-size:0.85rem;cursor:pointer;" title="Fermer">✕</div>
+    </div>
 
     <!-- v1.12 — Structuration en 3 sections (Affichage / Voix & Caméra / Compte)
          pour aérer le menu, qui devenait trop chargé. -->
@@ -998,6 +1018,10 @@ body.pip-mode #pip-display{display:flex!important;}
       </div>
       <div class="promo-feedback" id="promo-feedback"></div>
     </div>
+
+    <!-- v1.23 — Bouton Fermer explicite : l'overlay-tap fonctionne deja mais
+         pas toujours decouvrable. Ce bouton est plus accessible. -->
+    <div onclick="closePopup('popup-settings-modal')" id="settings-close-btn" style="margin-top:14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.32);border-radius:11px;padding:11px;color:#c9a84c;font-size:0.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;">Fermer ✓</div>
   </div>
 </div>
 
@@ -1225,6 +1249,41 @@ body.pip-mode #pip-display{display:flex!important;}
   </div>
 </div>
 
+<!-- v1.23 — Bouton d'aide flottant accessible directement depuis l'écran
+     principal. Tap → mini menu qui regroupe l'acces aux 4 popups intro.
+     Idee de l'user : avoir l'aide a portee de main sans passer par Parametres. -->
+<div id="help-fab" onclick="openHelpMenu()" title="Aide">
+  <span style="font-size:1.05rem;">?</span>
+</div>
+
+<!-- Popup menu d'aide : 4 cards pour acceder rapidement aux explications -->
+<div class="popup-overlay" id="popup-help-menu" onclick="closePopup('popup-help-menu')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:1.05rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;" id="help-menu-title">Aide rapide</div>
+    <div style="font-size:0.65rem;color:rgba(240,236,224,0.55);margin-bottom:14px;" id="help-menu-sub">Tape sur une fonction pour revoir l'explication</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div onclick="closePopup('popup-help-menu');showIntro('mic')" class="help-card">
+        <div style="font-size:1.8rem;">🎤</div>
+        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-mic">Commande vocale</div>
+      </div>
+      <div onclick="closePopup('popup-help-menu');showIntro('cam')" class="help-card">
+        <div style="font-size:1.8rem;">📷</div>
+        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-cam">Scan caméra</div>
+      </div>
+      <div onclick="closePopup('popup-help-menu');showIntro('whisper')" class="help-card">
+        <div style="font-size:1.8rem;">🧠</div>
+        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-whisper">Moteur Whisper</div>
+      </div>
+      <div onclick="closePopup('popup-help-menu');showIntro('pip')" class="help-card">
+        <div style="font-size:1.8rem;">🪟</div>
+        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-pip">Mode bulle</div>
+      </div>
+    </div>
+    <div onclick="closePopup('popup-help-menu')" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:11px;padding:10px;color:#c9a84c;font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;" id="help-menu-close">Fermer</div>
+  </div>
+</div>
+
 <!-- v1.20 — POPUPS INTRO CONTEXTUELS. Chacun s'affiche UNE SEULE FOIS à la
      première activation/utilisation de la feature correspondante. Flag stocké
      en localStorage (bjg_intro_<name>_seen=1). L'user peut les revoir
@@ -1265,7 +1324,10 @@ body.pip-mode #pip-display{display:flex!important;}
     </div>
 
     <!-- Bouton détails -->
-    <div onclick="showIntro('mic-detail')" style="background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);border-radius:11px;padding:9px;color:#c9a84c;font-size:0.66rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;" id="intro-mic-more">📖 Toutes les commandes</div>
+    <div onclick="showIntro('mic-detail')" style="background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);border-radius:11px;padding:9px;color:#c9a84c;font-size:0.66rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:8px;" id="intro-mic-more">📖 Toutes les commandes</div>
+
+    <!-- v1.23 — Rappel : on peut retrouver cette explication via le FAB d'aide -->
+    <div style="font-size:0.58rem;color:rgba(240,236,224,0.45);font-style:italic;margin-bottom:10px;line-height:1.4;" id="intro-mic-reminder">💡 Retrouve cette aide via le bouton <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:#c9a84c;font-style:italic;font-weight:900;font-size:0.55rem;vertical-align:middle;">?</span> en bas à droite</div>
 
     <div onclick="closePopup('popup-intro-mic')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-mic-ok">Compris ✓</div>
   </div>
@@ -1351,6 +1413,9 @@ body.pip-mode #pip-display{display:flex!important;}
         <div style="font-size:0.55rem;color:rgba(240,236,224,0.85);line-height:1.3;margin-top:3px;" id="intro-cam-tip3">Re-scan après tirage</div>
       </div>
     </div>
+
+    <!-- v1.23 — Rappel : aide retrouvable via FAB ou bouton AIDE en haut du modal cam -->
+    <div style="font-size:0.58rem;color:rgba(240,236,224,0.45);font-style:italic;margin-bottom:10px;line-height:1.4;" id="intro-cam-reminder">💡 Retrouve cette aide via le bouton <span style="background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);border-radius:4px;padding:0 4px;color:#c9a84c;font-size:0.55rem;font-weight:800;">i AIDE</span> en haut du scan, ou via le <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:#c9a84c;font-style:italic;font-weight:900;font-size:0.55rem;vertical-align:middle;">?</span> en bas à droite</div>
 
     <div onclick="closePopup('popup-intro-cam')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-cam-ok">Compris ✓</div>
   </div>
@@ -5012,7 +5077,17 @@ function hideVoiceToast(){document.getElementById("voice-toast").classList.remov
 // toggleMic() et l'init du mic appellent startActiveRecognition()/stopAllRecognition()
 // qui dispatchent vers le bon moteur selon voiceEngine.
 
-let voiceEngine=localStorage.getItem('bjg_voice_engine')||'webspeech';
+// v1.23 — Default vers Whisper pour les users PRO (sans coupure 5s = meilleure UX).
+// Si l'user a deja une preference explicite stockee, on la respecte. Sinon, si
+// premium, on bascule sur whisper. Si pas premium, on garde webspeech (Whisper
+// est PRO de toute facon).
+let voiceEngine=(function(){
+  const stored=localStorage.getItem('bjg_voice_engine');
+  if(stored)return stored;
+  let prem=false;
+  try{prem=localStorage.getItem('bjg_pro')==='1';}catch(e){}
+  return prem?'whisper':'webspeech';
+})();
 let whisperPipeline=null,whisperReady=false,whisperLoading=false;
 let whisperStream=null,whisperAudioContext=null,whisperProcessor=null,whisperSource=null;
 let whisperActive=false,whisperAudioBuf=[];
@@ -5049,6 +5124,11 @@ function showIntro(name){
   if(name==='mic-detail')renderMicCommandsDetail();
   const popup=document.getElementById('popup-intro-'+name);
   if(popup)popup.classList.add('show');
+}
+// v1.23 — Ouvre le menu d'aide globale (popup avec 4 cards) depuis le FAB.
+function openHelpMenu(){
+  const p=document.getElementById('popup-help-menu');
+  if(p)p.classList.add('show');
 }
 
 // v1.22 — Remplit dynamiquement le popup-intro-mic-detail avec la liste
@@ -6548,6 +6628,14 @@ function purchasePro(){
   //   window.CdvPurchase.store.order('bjg_pro');
   //   et appeler setPremium(true) seulement après confirmation.
   setPremium(true);
+  // v1.23 — Si l'user n'a pas encore choisi de moteur vocal, bascule auto sur
+  // Whisper (sans coupure) pour la meilleure UX. Stocke le choix.
+  if(!localStorage.getItem('bjg_voice_engine')){
+    voiceEngine='whisper';
+    try{localStorage.setItem('bjg_voice_engine','whisper');}catch(e){}
+    const t=document.getElementById('dt-whisper');
+    if(t)t.classList.add('on');
+  }
   closePopup("popup-paywall");
   document.getElementById("popup-pro-ok").classList.add("show");
 }
