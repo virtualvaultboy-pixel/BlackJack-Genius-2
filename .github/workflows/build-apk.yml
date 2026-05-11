@@ -49,6 +49,45 @@ jobs:
           echo "=== Contents of www/ ==="
           ls -la www/
 
+      - name: Download Whisper-tiny model (bundle in APK)
+        # v1.30 — Telecharge le modele Whisper-tiny quantized depuis HuggingFace
+        # et le place dans www/models/ pour qu'il soit bundle dans l'APK Android.
+        # Resultat : ~40 Mo de plus dans l'APK, mais l'user a Whisper pret a l'usage
+        # des l'installation, sans DL reseau au runtime.
+        # transformers.js cherche les modeles a env.localModelPath + "Xenova/whisper-tiny/"
+        # On utilise les .onnx quantized (8-bit) pour limiter la taille.
+        run: |
+          set -e
+          MODEL_DIR="www/models/Xenova/whisper-tiny"
+          ONNX_DIR="$MODEL_DIR/onnx"
+          mkdir -p "$ONNX_DIR"
+          BASE="https://huggingface.co/Xenova/whisper-tiny/resolve/main"
+          echo "→ Downloading config & tokenizer files..."
+          for f in config.json generation_config.json preprocessor_config.json \
+                   tokenizer.json tokenizer_config.json added_tokens.json \
+                   special_tokens_map.json vocab.json normalizer.json; do
+            # Some files may not exist; -f makes curl fail on 404 but we want to continue
+            curl -sL "$BASE/$f" -o "$MODEL_DIR/$f" || echo "  (skip $f, not present)"
+            # Si le fichier telecharge est en fait une page d'erreur HTML, on le supprime
+            if [ -f "$MODEL_DIR/$f" ]; then
+              if head -c 200 "$MODEL_DIR/$f" | grep -qi "<html\|not found\|error"; then
+                echo "  (removed $f, was HTML error page)"
+                rm -f "$MODEL_DIR/$f"
+              else
+                echo "  ✓ $f ($(stat -c %s "$MODEL_DIR/$f") bytes)"
+              fi
+            fi
+          done
+          echo "→ Downloading ONNX quantized models (~40 MB total)..."
+          curl -fsSL "$BASE/onnx/encoder_model_quantized.onnx" -o "$ONNX_DIR/encoder_model_quantized.onnx"
+          echo "  ✓ encoder_model_quantized.onnx ($(stat -c %s "$ONNX_DIR/encoder_model_quantized.onnx") bytes)"
+          curl -fsSL "$BASE/onnx/decoder_model_merged_quantized.onnx" -o "$ONNX_DIR/decoder_model_merged_quantized.onnx"
+          echo "  ✓ decoder_model_merged_quantized.onnx ($(stat -c %s "$ONNX_DIR/decoder_model_merged_quantized.onnx") bytes)"
+          echo "=== Final www/models/ tree ==="
+          find www/models -type f -exec ls -lh {} \;
+          echo "=== Total size ==="
+          du -sh www/models/
+
       - name: Install Capacitor
         run: npm install --no-fund --no-audit
 
