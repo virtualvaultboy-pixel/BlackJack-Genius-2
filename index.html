@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.19 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.21 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -210,6 +210,10 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
 .setting-label{font-size:0.72rem;color:rgba(240,236,224,0.7);}
 /* v1.12 — Titres de section discrets pour structurer le menu Paramètres */
 .settings-section-title{font-size:0.5rem;color:rgba(201,168,76,0.55);letter-spacing:2.5px;font-weight:800;text-transform:uppercase;margin-top:14px;margin-bottom:2px;padding-bottom:4px;border-bottom:1px solid rgba(201,168,76,0.12);}
+/* v1.21 — Bouton "info" discret dans les labels de Paramètres et headers
+   de modals. Permet de rouvrir le popup d'explication d'une feature. */
+.info-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;font-size:0.65rem;font-weight:700;font-style:italic;margin-left:6px;cursor:pointer;vertical-align:middle;transition:background 0.15s;}
+.info-help:active{background:rgba(201,168,76,0.28);}
 .settings-section-title:first-of-type{margin-top:6px;}
 .toggle{width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;}
 .toggle.on{background:#22c55e;}
@@ -650,7 +654,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.19</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.21</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -745,6 +749,8 @@ body.pip-mode #pip-display{display:flex!important;}
   <div class="cam-debug-tag" id="cam-debug-tag" style="display:none;">🐞 DEBUG</div>
   <div class="cam-topbar">
     <div class="cam-status" id="cam-status"></div>
+    <!-- v1.21 — Bouton info pour rouvrir l'explication du scan camera -->
+    <div class="cam-close-btn" onclick="showIntro('cam')" style="font-size:1.05rem;margin-right:6px;" title="Aide">ℹ</div>
     <div class="cam-close-btn" onclick="camClose()">✕</div>
   </div>
   <div class="cam-frame">
@@ -955,12 +961,15 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="setting-row" id="si-font"><div class="setting-label">🔤 Grande police</div><div class="toggle" id="toggle-font" onclick="toggleFont()"></div></div>
 
     <div class="settings-section-title" id="set-sec-voice">Voix & Caméra</div>
-    <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
+    <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale <span class="info-help" onclick="event.stopPropagation();showIntro('mic')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
     <!-- v1.16 — Toggle moteur Whisper offline. Activé : Whisper transformers.js en WASM
          local, audio continu sans coupure. Désactivé : Web Speech API natif (par défaut).
          Premier activation : téléchargement ~40 Mo du modèle (cached ensuite). -->
-    <div class="setting-row" id="si-whisper"><div class="setting-label">🧠 <span id="whisper-label">Moteur Whisper (sans coupure)</span></div><div class="toggle" id="dt-whisper" onclick="toggleVoiceEngine()"></div></div>
-    <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
+    <div class="setting-row" id="si-whisper"><div class="setting-label">🧠 <span id="whisper-label">Moteur Whisper (sans coupure)</span> <span class="info-help" onclick="event.stopPropagation();showIntro('whisper')" title="Aide">ℹ</span></div><div class="toggle" id="dt-whisper" onclick="toggleVoiceEngine()"></div></div>
+    <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra <span class="info-help" onclick="event.stopPropagation();showIntro('cam')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
+    <!-- v1.21 — Ligne d'aide dediee au mode bulle (PiP). Pas de toggle (le PiP
+         est declenche par le bouton Home Android), juste un acces a l'explication. -->
+    <div class="setting-row" id="si-pip" onclick="showIntro('pip')" style="cursor:pointer;"><div class="setting-label">🪟 <span id="pip-help-label">Mode bulle</span></div><div style="font-size:0.7rem;color:rgba(240,236,224,0.4);">ℹ ›</div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
 
     <div class="settings-section-title" id="set-sec-account">Compte & Langue</div>
@@ -1206,24 +1215,102 @@ body.pip-mode #pip-display{display:flex!important;}
 </div>
 
 <!-- POPUP "PRO ACTIVÉ" -->
-<div class="popup-overlay" id="popup-pro-ok" onclick="event.stopPropagation()">
+<div class="popup-overlay" id="popup-pro-ok" onclick="closePopup('popup-pro-ok')">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;background:linear-gradient(135deg,#0a3d1f,#0a1f10);">
     <div class="popup-handle"></div>
-    <div style="font-size:3rem;margin-bottom:6px;" id="prook-icon">🎉</div>
+    <div style="font-size:3rem;margin-bottom:6px;">🎉</div>
     <div style="font-size:1.1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;" id="prook-title">Pro activé !</div>
-    <div style="font-size:0.72rem;color:rgba(240,236,224,0.7);margin-bottom:12px;line-height:1.55;" id="prook-msg">Toutes les fonctionnalités sont maintenant débloquées. Profitez !</div>
-    <!-- v1.19 — Mode "tour" : indicateur d'étape + boutons Précédent/Suivant.
-         Affiché lors d'un achat neuf (purchasePro). Caché en mode "simple"
-         (restorePurchase, anciens utilisateurs). -->
-    <div id="prook-tour-controls" style="display:none;">
-      <div style="font-size:0.55rem;letter-spacing:2px;color:rgba(201,168,76,0.5);margin-bottom:10px;text-transform:uppercase;font-weight:700;" id="prook-step-indicator">1 / 6</div>
-      <div style="display:flex;gap:8px;">
-        <div onclick="proFeatNav(-1)" id="prook-prev" style="flex:1;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.3);border-radius:12px;padding:11px;color:#c9a84c;font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;visibility:hidden;">← <span id="prook-prev-lbl">Précédent</span></div>
-        <div onclick="proFeatNav(1)" id="prook-next" style="flex:2;background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;"><span id="prook-next-lbl">Suivant →</span></div>
+    <div style="font-size:0.72rem;color:rgba(240,236,224,0.6);margin-bottom:14px;line-height:1.5;" id="prook-msg">Toutes les fonctionnalités sont maintenant débloquées. Profitez !</div>
+    <div onclick="closePopup('popup-pro-ok')" id="prook-close" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Fermer ✓</div>
+  </div>
+</div>
+
+<!-- v1.20 — POPUPS INTRO CONTEXTUELS. Chacun s'affiche UNE SEULE FOIS à la
+     première activation/utilisation de la feature correspondante. Flag stocké
+     en localStorage (bjg_intro_<name>_seen=1). L'user peut les revoir
+     manuellement via Paramètres → Rejouer les explications (futur). -->
+
+<!-- INTRO MICRO : 1ère activation du micro -->
+<div class="popup-overlay" id="popup-intro-mic" onclick="closePopup('popup-intro-mic')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:6px;">🎤</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-mic-title">Commande vocale activée</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-mic-sub">Annonce les cartes à voix haute, BJ Genius reconnaît et calcule la décision en direct.</div>
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:11px;padding:10px;margin-bottom:10px;text-align:left;">
+      <div style="font-size:0.52rem;letter-spacing:2px;color:#22c55e;text-transform:uppercase;font-weight:800;margin-bottom:6px;" id="intro-mic-exh">Exemples</div>
+      <div style="font-size:0.72rem;color:#f0ecdf;line-height:1.7;font-family:monospace;">
+        <div>"<strong>as quatre cinq</strong>" → A · 4 · 5</div>
+        <div>"<strong>valet sept</strong>" → J · 7</div>
+        <div>"<strong>dame cinq</strong>" → Q · 5</div>
+        <div>"<strong>double trois</strong>" → 3+3 (paire)</div>
       </div>
     </div>
-    <!-- Mode "simple" : juste un bouton "Fermer". Utilisé par restorePurchase. -->
-    <div onclick="closePopup('popup-pro-ok')" id="prook-close" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Fermer ✓</div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-mic-tip">💡 <strong>Astuce :</strong> tu peux dire les chiffres en français, anglais ou espagnol indifféremment. Pause entre les cartes : 500 ms.</div>
+    <div onclick="closePopup('popup-intro-mic')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-mic-ok">Compris ✓</div>
+  </div>
+</div>
+
+<!-- INTRO CAMÉRA : 1ère ouverture du scan -->
+<div class="popup-overlay" id="popup-intro-cam" onclick="closePopup('popup-intro-cam')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:6px;">📷</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-cam-title">Scan caméra</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-cam-sub">Une photo de la table, l'app détecte automatiquement toutes les cartes.</div>
+    <!-- Schéma visuel : croupier en haut / main en bas -->
+    <div style="background:rgba(212,184,99,0.06);border:1.5px solid rgba(212,184,99,0.25);border-radius:11px;padding:10px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;margin-bottom:6px;border:1px dashed rgba(212,184,99,0.4);">
+        <div style="font-size:1rem;">🃏</div>
+        <div style="font-size:0.66rem;font-weight:800;color:#c9a84c;letter-spacing:1px;" id="intro-cam-top">CROUPIER EN HAUT</div>
+      </div>
+      <div style="font-size:0.5rem;color:rgba(240,236,224,0.4);margin:3px 0;" id="intro-cam-sep">⋮</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,0.3);border-radius:8px;padding:8px;border:1px dashed rgba(212,184,99,0.4);">
+        <div style="font-size:1rem;">✋</div>
+        <div style="font-size:0.66rem;font-weight:800;color:#c9a84c;letter-spacing:1px;" id="intro-cam-bot">TA MAIN EN BAS</div>
+      </div>
+    </div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-cam-tip">💡 Tel à plat au-dessus, bonne lumière. <strong>Re-scan après chaque carte tirée</strong> pour mettre à jour la main.</div>
+    <div onclick="closePopup('popup-intro-cam')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-cam-ok">Compris ✓</div>
+  </div>
+</div>
+
+<!-- INTRO WHISPER : 1ère activation du toggle Whisper -->
+<div class="popup-overlay" id="popup-intro-whisper" onclick="closePopup('popup-intro-whisper')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:6px;">🧠</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-whi-title">Moteur Whisper</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-whi-sub">Reconnaissance vocale qui tourne 100 % en local sur ton téléphone.</div>
+    <div style="background:rgba(127,170,255,0.08);border:1px solid rgba(127,170,255,0.25);border-radius:11px;padding:10px;margin-bottom:10px;text-align:left;">
+      <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.8;" id="intro-whi-list">
+        <div>✓ <strong>Sans coupure</strong> (vs 5s du moteur natif)</div>
+        <div>✓ <strong>Plus précis</strong> sur les accents</div>
+        <div>✓ <strong>Marche sans réseau</strong> après installation</div>
+      </div>
+    </div>
+    <div style="background:rgba(212,184,99,0.1);border:1px solid rgba(212,184,99,0.3);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.9);line-height:1.55;" id="intro-whi-dl">⏳ <strong>Premier lancement :</strong> ~40 Mo de modèle à télécharger. Mets-toi en <strong>Wi-Fi</strong>. Stocké ensuite, plus de DL.</div>
+    <div onclick="closePopup('popup-intro-whisper')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-whi-ok">Compris ✓</div>
+  </div>
+</div>
+
+<!-- INTRO BULLE PIP : 1ère sortie du mode PiP -->
+<div class="popup-overlay" id="popup-intro-pip" onclick="closePopup('popup-intro-pip')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:6px;">🪟</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-pip-title">Mode bulle débloqué</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-pip-sub">BJ Genius reste visible en bulle flottante par-dessus tes autres apps.</div>
+    <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.3);border-radius:11px;padding:11px;margin-bottom:10px;text-align:left;">
+      <div style="font-size:0.55rem;letter-spacing:2px;color:#22c55e;text-transform:uppercase;font-weight:800;margin-bottom:7px;" id="intro-pip-howh">Comment l'activer</div>
+      <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.7;" id="intro-pip-howl">
+        <div><strong>1.</strong> Active le micro 🎤</div>
+        <div><strong>2.</strong> Appuie sur <strong>Home</strong></div>
+        <div><strong>3.</strong> La bulle apparaît automatiquement</div>
+      </div>
+    </div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-pip-tip">💡 <strong>Le mic continue de capter</strong> en mode bulle. Dis tes cartes, vois la décision s'afficher en gros, sans quitter ton autre app.</div>
+    <div onclick="closePopup('popup-intro-pip')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-pip-ok">Compris ✓</div>
   </div>
 </div>
 
@@ -3426,10 +3513,7 @@ const TUTO_STEPS=[
   {target:"#burger-btn",icon:"☰",titleKey:"tutoSpT5",descKey:"tutoSpD5"},
   {target:"#hilo-badge",icon:"🔢",titleKey:"tutoSpT6",descKey:"tutoSpD6",pro:true},
   {target:"#mic-btn",icon:"🎤",titleKey:"tutoSpT7",descKey:"tutoSpD7",pro:true},
-  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true},
-  // v1.19 — Nouvelles étapes pour les features récentes (PiP + Whisper)
-  {target:null,icon:"🪟",titleKey:"tutoSpTpip",descKey:"tutoSpDpip",centered:true,pro:true},
-  {target:null,icon:"🧠",titleKey:"tutoSpTwhi",descKey:"tutoSpDwhi",centered:true,pro:true}
+  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true}
 ];
 
 // Vérifie si la condition d'une étape interactive est remplie
@@ -4723,6 +4807,8 @@ function toggleMic(){
     if(dm)dm.classList.add("on");
     // v1.16 — Dispatcher vers le moteur actif (Web Speech ou Whisper)
     startActiveRecognition();
+    // v1.20 — Intro contextuel a la 1ere activation du micro
+    showIntroOnce('mic');
   } else {
     btn.classList.remove("on","listening");
     document.getElementById("mic-label").innerHTML=tr.voiceLabelOff;
@@ -4852,6 +4938,52 @@ let whisperActive=false,whisperAudioBuf=[];
 const WHISPER_CHUNK_SECONDS=2.5;
 const WHISPER_SAMPLE_RATE=16000;
 
+// ═══════════════════════════════════════════════════════════════════
+// ══ v1.20 — POPUPS INTRO CONTEXTUELS ══
+// ═══════════════════════════════════════════════════════════════════
+// Chaque feature pro affiche un popup explicatif UNE SEULE FOIS à la
+// première activation. Flag stocke en localStorage : bjg_intro_<name>_seen=1.
+// Names supportes : 'mic', 'cam', 'whisper', 'pip'.
+
+function hasIntroSeen(name){
+  try{return localStorage.getItem('bjg_intro_'+name+'_seen')==='1';}catch(e){return false;}
+}
+function markIntroSeen(name){
+  try{localStorage.setItem('bjg_intro_'+name+'_seen','1');}catch(e){}
+}
+function showIntroOnce(name){
+  if(hasIntroSeen(name))return;
+  const popupId='popup-intro-'+name;
+  const popup=document.getElementById(popupId);
+  if(!popup)return;
+  // Petit delai pour ne pas chevaucher la transition UI de la feature elle-meme
+  setTimeout(()=>{popup.classList.add('show');},350);
+  markIntroSeen(name);
+}
+// v1.21 — Force l'affichage du popup intro meme si deja vu (bouton "?" dans
+// chaque feature). Pas de delai, pas de check de flag.
+function showIntro(name){
+  const popup=document.getElementById('popup-intro-'+name);
+  if(popup)popup.classList.add('show');
+}
+
+// v1.20 — Detection de la sortie du mode PiP via MutationObserver sur body.pip-mode.
+// MainActivity.java natif appelle document.body.classList.toggle('pip-mode',isInPip).
+// On observe le retour a "no pip-mode" et on affiche l'intro PiP UNE fois.
+(function setupPipIntroWatcher(){
+  if(typeof MutationObserver==='undefined')return;
+  let wasInPip=false;
+  const obs=new MutationObserver(()=>{
+    const isInPip=document.body.classList.contains('pip-mode');
+    if(wasInPip&&!isInPip){
+      // L'user vient de sortir du mode bulle : il revient dans l'app, moment ideal
+      showIntroOnce('pip');
+    }
+    wasInPip=isInPip;
+  });
+  obs.observe(document.body,{attributes:true,attributeFilter:['class']});
+})();
+
 function toggleVoiceEngine(){
   // PRO check : Whisper réservé aux users PRO (comme la commande vocale)
   if(typeof isPro==='function'&&!isPro()&&voiceEngine!=='whisper'){
@@ -4862,6 +4994,8 @@ function toggleVoiceEngine(){
   localStorage.setItem('bjg_voice_engine',voiceEngine);
   const t=document.getElementById('dt-whisper');
   if(t)t.classList.toggle('on',voiceEngine==='whisper');
+  // v1.20 — Intro contextuel a la 1ere activation du moteur Whisper
+  if(voiceEngine==='whisper')showIntroOnce('whisper');
   // Si le mic est actif, on bascule à chaud
   if(micOn){
     stopAllRecognition();
@@ -5152,6 +5286,8 @@ async function camOpen(){
   if(!isPremium){openPaywall("camera");return;}
   const tr=LANGS[currentLang]||LANGS.fr;
   document.getElementById("cam-modal").classList.add("show");
+  // v1.20 — Intro contextuel a la 1ere ouverture du scan camera
+  showIntroOnce('cam');
   // v1.6 — sync du tag debug à l'ouverture (si toggle activé via long-press)
   const dbgTag=document.getElementById("cam-debug-tag");
   if(dbgTag)dbgTag.style.display=camDebugMode?"":"none";
@@ -5690,8 +5826,7 @@ function validatePromoCode(){
     input.value="";
     fb.className="promo-feedback";
     closePopup("popup-settings-modal");
-    // v1.19 — Code promo "unlock_pro" lance aussi la séquence guidée de découverte
-    showProFeatTour();
+    document.getElementById("popup-pro-ok").classList.add("show");
   } else if(promo.action==="lock_lite"){
     if(!isPremium){
       fb.textContent=tr.promoAlreadyLite;fb.className="promo-feedback ok";
@@ -6216,74 +6351,7 @@ function purchasePro(){
   //   et appeler setPremium(true) seulement après confirmation.
   setPremium(true);
   closePopup("popup-paywall");
-  // v1.19 — Lance la séquence guidée de découverte des features PRO
-  // au lieu d'un simple popup de confirmation.
-  showProFeatTour();
-}
-
-// v1.19 — Séquence guidée post-achat : explique chaque feature PRO en
-// popups successifs navigables. L'user peut cliquer Précédent/Suivant ou
-// "C'est bon ✓" à la fin pour fermer.
-let proFeatStep=0;
-function getProFeatures(){
-  const tr=LANGS[currentLang]||LANGS.fr;
-  return [
-    {icon:'🎉',title:tr.proFeatT0||'Pro activé !',desc:tr.proFeatD0||'Découvre en 5 étapes tout ce que tu peux faire maintenant.'},
-    {icon:'🎤',title:tr.proFeatT1||'Commande vocale',desc:tr.proFeatD1||'Active le micro depuis l\'en-tête de l\'app. Annonce les cartes ("as quatre cinq"), BJ Genius reconnaît et calcule la décision en temps réel.'},
-    {icon:'🧠',title:tr.proFeatT2||'Moteur Whisper',desc:tr.proFeatD2||'Reconnaissance vocale offline sans coupure. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger.'},
-    {icon:'📷',title:tr.proFeatT3||'Scan caméra',desc:tr.proFeatD3||'Pointe la caméra vers la table (croupier en haut, ta main en bas), une photo, l\'app détecte automatiquement toutes les cartes.'},
-    {icon:'🪟',title:tr.proFeatT4||'Mode bulle',desc:tr.proFeatD4||'Active le micro puis appuie sur Home : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Idéal pour tester en parallèle.'},
-    {icon:'🔢',title:tr.proFeatT5||'Comptage Hi-Lo',desc:tr.proFeatD5||'Badge "+/-" en haut de l\'app. Compte les cartes au fur et à mesure pour anticiper les paris. À utiliser avec le mode discret pour rester sobre.'}
-  ];
-}
-
-function showProFeatTour(){
-  proFeatStep=0;
-  document.getElementById('prook-tour-controls').style.display='block';
-  document.getElementById('prook-close').style.display='none';
-  renderProFeatStep();
   document.getElementById("popup-pro-ok").classList.add("show");
-}
-
-function showProFeatSimple(){
-  // Mode simple pour restorePurchase : pas de tour, juste un confirm.
-  const tr=LANGS[currentLang]||LANGS.fr;
-  document.getElementById('prook-icon').textContent='🎉';
-  document.getElementById('prook-title').textContent=tr.prookTitle||'Pro activé !';
-  document.getElementById('prook-msg').innerHTML=tr.prookMsg||'Toutes les fonctionnalités sont maintenant débloquées. Profitez !';
-  document.getElementById('prook-tour-controls').style.display='none';
-  document.getElementById('prook-close').style.display='block';
-  document.getElementById("popup-pro-ok").classList.add("show");
-}
-
-function renderProFeatStep(){
-  const features=getProFeatures();
-  const step=features[proFeatStep];
-  if(!step)return;
-  const tr=LANGS[currentLang]||LANGS.fr;
-  document.getElementById('prook-icon').textContent=step.icon;
-  document.getElementById('prook-title').textContent=step.title;
-  document.getElementById('prook-msg').innerHTML=step.desc;
-  document.getElementById('prook-step-indicator').textContent=(proFeatStep+1)+' / '+features.length;
-  // Visibilité Précédent (caché à l'étape 0)
-  document.getElementById('prook-prev').style.visibility=proFeatStep===0?'hidden':'visible';
-  // Label Suivant → "C'est bon ✓" à la dernière étape
-  if(proFeatStep===features.length-1){
-    document.getElementById('prook-next-lbl').innerHTML=tr.proFeatDone||"C'est bon ✓";
-  } else {
-    document.getElementById('prook-next-lbl').innerHTML=(tr.proFeatNext||'Suivant')+' →';
-  }
-  document.getElementById('prook-prev-lbl').textContent=tr.proFeatPrev||'Précédent';
-}
-
-function proFeatNav(dir){
-  const features=getProFeatures();
-  if(dir===1&&proFeatStep===features.length-1){
-    closePopup('popup-pro-ok');
-    return;
-  }
-  proFeatStep=Math.max(0,Math.min(features.length-1,proFeatStep+dir));
-  renderProFeatStep();
 }
 
 function restorePurchase(){
