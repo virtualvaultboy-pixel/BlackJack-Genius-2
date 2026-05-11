@@ -62,6 +62,71 @@ jobs:
             npx cap sync android
           fi
 
+      - name: Patch AndroidManifest.xml (add camera + mic permissions)
+        run: |
+          python3 << 'PYEOF'
+          import os
+          path = "android/app/src/main/AndroidManifest.xml"
+          with open(path, "r", encoding="utf-8") as f:
+              content = f.read()
+          new_perms = (
+              '    <uses-permission android:name="android.permission.CAMERA" />\n'
+              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+              '    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n'
+              '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
+              '    <uses-feature android:name="android.hardware.microphone" android:required="false" />\n'
+          )
+          if "android.permission.CAMERA" not in content:
+              content = content.replace("</manifest>", new_perms + "</manifest>")
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(content)
+              print("✓ Permissions injected")
+          else:
+              print("✓ Permissions already present, skipping")
+          print("=== Final AndroidManifest.xml ===")
+          print(content)
+          PYEOF
+
+      - name: Build Debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bjgenius-debug-apk-build-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
+      - name: Prepare web assets
+        run: |
+          mkdir -p www
+          cp index.html www/
+          [ -f service-worker.js ] && cp service-worker.js www/ || echo "no service-worker.js"
+          [ -f privacy.html ] && cp privacy.html www/ || echo "no privacy.html"
+          [ -f manifest.json ] && cp manifest.json www/ || echo "no manifest.json"
+          shopt -s nullglob
+          for f in icon*.png favicon*.png favicon*.ico *.svg apple-touch-icon*.png; do
+            cp "$f" www/ 2>/dev/null && echo "copied $f"
+          done
+          echo "=== Contents of www/ ==="
+          ls -la www/
+
+      - name: Install Capacitor
+        run: npm install --no-fund --no-audit
+
+      - name: Add Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Adding Android platform"
+            npx cap add android
+          else
+            echo "Syncing existing Android platform"
+            npx cap sync android
+          fi
+
       - name: Build Debug APK
         working-directory: android
         run: |
