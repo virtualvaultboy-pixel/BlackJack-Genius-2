@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.27 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.30 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -214,6 +214,15 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
    de modals. Permet de rouvrir le popup d'explication d'une feature. */
 .info-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;font-size:0.65rem;font-weight:700;font-style:italic;margin-left:6px;cursor:pointer;vertical-align:middle;transition:background 0.15s;}
 .info-help:active{background:rgba(201,168,76,0.28);}
+/* v1.29 — Bouton aide mode mic, symetrique du bouton "i AIDE" du modal camera.
+   Visible uniquement quand body.mic-on est actif. Position : bas-droite, discret. */
+#mic-help-fab{position:fixed;bottom:14px;right:14px;display:none;align-items:center;gap:5px;background:rgba(201,168,76,0.16);border:1.5px solid rgba(201,168,76,0.5);border-radius:9px;padding:6px 11px;color:#c9a84c;font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;z-index:200;box-shadow:0 3px 10px rgba(0,0,0,0.4);animation:micFabSlideIn 0.3s ease;}
+body.mic-on #mic-help-fab{display:inline-flex;}
+@keyframes micFabSlideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+#mic-help-fab:active{transform:scale(0.95);background:rgba(201,168,76,0.3);}
+/* Cache en mode PiP (la bulle est minimaliste) */
+@media (display-mode:picture-in-picture){#mic-help-fab{display:none!important;}}
+body.pip-mode #mic-help-fab{display:none!important;}
 .settings-section-title:first-of-type{margin-top:6px;}
 .toggle{width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;}
 .toggle.on{background:#22c55e;}
@@ -655,7 +664,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.27</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.30</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -741,6 +750,14 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="voice-toast" id="voice-toast">
   <div class="voice-toast-ico">🎤</div>
   <div class="voice-toast-txt" id="voice-toast-txt">En écoute...</div>
+</div>
+
+<!-- v1.29 — Bouton d'aide flottant visible UNIQUEMENT quand le micro est ON.
+     Symetrique du bouton "i AIDE" dore dans le modal scan camera. Permet a
+     l'user de rouvrir l'explication des commandes vocales pendant qu'il utilise
+     le mic. Apparait avec animation slide-in, position en bas a droite. -->
+<div id="mic-help-fab" onclick="showIntro('mic')" title="Aide commandes vocales">
+  <span style="font-style:italic;font-size:0.78rem;">i</span><span id="mic-help-fab-lbl">Aide</span>
 </div>
 
 <!-- CAMERA MODAL (PRO) -->
@@ -970,15 +987,17 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="setting-row" id="si-font"><div class="setting-label">🔤 Grande police</div><div class="toggle" id="toggle-font" onclick="toggleFont()"></div></div>
 
     <div class="settings-section-title" id="set-sec-voice">Voix & Caméra</div>
-    <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale <span class="info-help" onclick="event.stopPropagation();showIntro('mic')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
+    <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
     <!-- v1.24 — Toggle Whisper retire : aucune raison de proposer le choix.
          Pour les users PRO, Whisper est utilise automatiquement (meilleure UX,
          pas de coupure). Web Speech reste un fallback silencieux si Whisper
          echoue a charger. -->
-    <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra <span class="info-help" onclick="event.stopPropagation();showIntro('cam')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
-    <!-- v1.21 — Ligne d'aide dediee au mode bulle (PiP). Pas de toggle (le PiP
-         est declenche par le bouton Home Android), juste un acces a l'explication. -->
-    <div class="setting-row" id="si-pip" onclick="showIntro('pip')" style="cursor:pointer;"><div class="setting-label">🪟 <span id="pip-help-label">Mode bulle</span></div><div style="font-size:0.7rem;color:rgba(240,236,224,0.4);">ℹ ›</div></div>
+    <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra</div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
+    <!-- v1.30 — Le moteur Whisper est BUNDLE dans l'APK Android (telecharge par
+         le workflow GitHub Actions avant le build). Donc TOUS les users (PRO ou non)
+         l'ont des l'installation. Sur web, fallback DL au 1er usage. Plus de PRO-lock
+         sur cette ligne : le moteur est dispo, son USAGE (commande vocale) reste PRO. -->
+    <div class="setting-row" id="si-whisper-dl" onclick="onWhisperDLTap(event)" style="cursor:pointer;"><div class="setting-label">🧠 <span id="whisper-dl-label">Moteur vocal</span></div><div id="whisper-dl-status" style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;">Télécharger ›</div></div>
     <div class="setting-row" id="si-speak"><div class="setting-label">🔊 Annonce vocale</div><div class="toggle" id="dt-speak2" onclick="toggleSpeak()"></div></div>
 
     <div class="settings-section-title" id="set-sec-account">Compte & Langue</div>
@@ -1008,9 +1027,8 @@ body.pip-mode #pip-display{display:flex!important;}
       <div class="promo-feedback" id="promo-feedback"></div>
     </div>
 
-    <!-- v1.23 — Bouton Fermer explicite : l'overlay-tap fonctionne deja mais
-         pas toujours decouvrable. Ce bouton est plus accessible. -->
-    <div onclick="closePopup('popup-settings-modal')" id="settings-close-btn" style="margin-top:14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.32);border-radius:11px;padding:11px;color:#c9a84c;font-size:0.74rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;">Fermer ✓</div>
+    <!-- v1.29 — Bouton "Fermer ✓" retire : redondant avec la croix ✕ en haut
+         du popup et le tap-exterieur. On garde 2 moyens standards de fermer. -->
   </div>
 </div>
 
@@ -1077,7 +1095,7 @@ body.pip-mode #pip-display{display:flex!important;}
 </div>
 
 <!-- POPUP TRAINING MODE SELECTOR -->
-<div class="popup-overlay" id="popup-train-select" onclick="closePopup('popup-train-select')">
+<div class="popup-overlay" id="popup-train-select" onclick="onTrainSelectOverlayClose(event)">
   <div class="popup" onclick="event.stopPropagation()">
     <div class="popup-handle"></div>
     <div class="popup-title" id="ts-title">🎯 Mode Entraînement</div>
@@ -2889,6 +2907,16 @@ function openSettingsPopup(){
   // Le filtre reste actif en permanence côté extractCards.
   // v1.24 — Init dt-whisper retire (le toggle a ete supprime des parametres,
   // Whisper est utilise automatiquement pour les PRO).
+  // v1.29 — Restaure l'etat "Whisper pret" depuis localStorage si applicable
+  try{
+    if(localStorage.getItem('bjg_whisper_ready')==='1'&&!whisperReady){
+      // Note: on ne peut pas savoir si le modele est REELLEMENT toujours en cache
+      // navigateur, mais on lui fait confiance. Si echec au prochain usage, on
+      // bascule sur Web Speech via le catch dans loadWhisper.
+      whisperReady=true; // optimiste, sera revalide au prochain start
+    }
+  }catch(e){}
+  updateWhisperDLStatus();
   document.getElementById('popup-settings-modal').classList.add('show');
 }
 function openSettings(){toggleDrawer();}
@@ -3523,6 +3551,28 @@ function closePopup(id){
   }
   // Idem si on vient de fermer le training et qu'il avait été lancé depuis Apprendre
   if(id==='popup-training' && pendingTutoAfterTraining){
+    pendingTutoAfterTraining=false;
+    setTimeout(()=>startTutoSpotlight(true),250);
+  }
+  // v1.28 — Idem pour le mode expert : si l'user PRO a lance le tuto initial,
+  // choisi Expert, puis ferme popup-expert, on doit aussi lancer le tuto.
+  if(id==='popup-expert' && pendingTutoAfterTraining){
+    pendingTutoAfterTraining=false;
+    setTimeout(()=>startTutoSpotlight(true),250);
+  }
+}
+
+// v1.28 — Tap-exterieur sur le selecteur de mode entrainement (popup-train-select).
+// Avant ce fix, ce tap fermait juste le popup et le tuto spotlight n'etait jamais
+// lance (le check au closePopup ciblait 'popup-training' mais pas 'popup-train-select').
+// L'user reportait : "quand on atteint le pop up mode entraînement, si on ne clique
+// pas sur l'entraînement mais sur la page d'app, ça ne lance pas le tuto de l'app".
+function onTrainSelectOverlayClose(event){
+  // Securite : si le click vient d'un descendant qui n'a pas stopPropagation, on
+  // s'assure qu'on est bien sur l'overlay (= tap-exterieur du contenu).
+  if(event && event.target!==event.currentTarget)return;
+  closePopup('popup-train-select');
+  if(pendingTutoAfterTraining){
     pendingTutoAfterTraining=false;
     setTimeout(()=>startTutoSpotlight(true),250);
   }
@@ -4846,6 +4896,9 @@ function toggleMic(){
     showVoiceToast(tr.voiceErrChrome);setTimeout(hideVoiceToast,2000);return;
   }
   micOn=!micOn;
+  // v1.29 — Class sur body pour piloter l'affichage du bouton mic-help-fab
+  // (apparait uniquement quand mic ON, symetrique du bouton AIDE en mode camera).
+  document.body.classList.toggle('mic-on',micOn);
   const btn=document.getElementById("mic-btn");
   if(micOn){
     btn.classList.add("on");
@@ -5186,11 +5239,22 @@ async function loadWhisper(){
   }
   whisperLoading=true;
   showVoiceToast("⏳ Chargement Whisper...");
+  updateWhisperDLStatus(); // v1.29 — sync ligne paramètres "Moteur vocal"
   try{
     // Import dynamique de transformers.js depuis jsDelivr
     if(!window.__transformers){
       const mod=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js');
       window.__transformers=mod;
+      // v1.30 — Configuration pour utiliser le modele BUNDLE dans l'APK Android.
+      // Le workflow GitHub Actions telecharge le modele Whisper-tiny quantized
+      // dans www/models/Xenova/whisper-tiny/ AVANT le build APK. Capacitor copie
+      // ensuite www/ vers les assets Android. Resultat : le modele est present
+      // localement des l'installation de l'app, pas besoin de DL au runtime.
+      // Sur web (GitHub Pages, etc.), le path local n'existe pas, transformers.js
+      // fallback automatiquement sur HuggingFace remote.
+      mod.env.localModelPath='./models/';
+      mod.env.allowLocalModels=true;
+      mod.env.allowRemoteModels=true; // fallback web si pas bundle
       // Config : single-thread WASM sur mobile (plus stable que multi-thread)
       if(mod.env&&mod.env.backends&&mod.env.backends.onnx&&mod.env.backends.onnx.wasm){
         mod.env.backends.onnx.wasm.numThreads=1;
@@ -5201,7 +5265,11 @@ async function loadWhisper(){
       quantized:true,
       progress_callback:(p)=>{
         if(p.status==='progress'&&typeof p.progress==='number'){
-          showVoiceToast("⏳ Whisper "+Math.round(p.progress)+"%");
+          const pct=Math.round(p.progress);
+          showVoiceToast("⏳ Whisper "+pct+"%");
+          // v1.29 — Update aussi la ligne paramètres en temps reel
+          const dlStatus=document.getElementById('whisper-dl-status');
+          if(dlStatus)dlStatus.textContent='⏳ '+pct+'%';
         } else if(p.status==='downloading'){
           showVoiceToast("⏳ Téléchargement...");
         } else if(p.status==='loading'){
@@ -5213,6 +5281,9 @@ async function loadWhisper(){
     whisperLoading=false;
     showVoiceToast("✓ Whisper prêt");
     setTimeout(hideVoiceToast,1200);
+    // v1.29 — Marquer ready en localStorage pour persister l'etat entre sessions
+    try{localStorage.setItem('bjg_whisper_ready','1');}catch(e){}
+    updateWhisperDLStatus();
     return true;
   } catch(err){
     console.error('Whisper load failed:',err);
@@ -5223,7 +5294,45 @@ async function loadWhisper(){
     // Auto-revert au Web Speech pour ne pas bloquer l'user
     voiceEngine='webspeech';
     // v1.26 — Pas de toggle UI a mettre a jour (retire en v1.24)
+    updateWhisperDLStatus();
     return false;
+  }
+}
+
+// v1.29 — Tap sur la ligne "🧠 Moteur vocal" dans Paramètres.
+// v1.30 — Plus de PRO-lock : le moteur est bundle dans l'APK pour tous.
+// Si l'user est en web (pas Android Capacitor) et n'a pas encore Whisper,
+// ce tap declenche le DL manuel.
+function onWhisperDLTap(event){
+  if(event)event.stopPropagation();
+  if(whisperReady){
+    showVoiceToast("✓ Moteur vocal déjà prêt");
+    setTimeout(hideVoiceToast,1500);
+    return;
+  }
+  if(whisperLoading){
+    showVoiceToast("⏳ Téléchargement en cours...");
+    setTimeout(hideVoiceToast,1500);
+    return;
+  }
+  // Lance le DL en background, l'user peut continuer a utiliser l'app
+  loadWhisper();
+}
+
+// v1.29 — Met a jour le texte de la ligne "🧠 Moteur vocal" dans Paramètres
+// selon l'etat (a telecharger / en cours / pret / echec).
+function updateWhisperDLStatus(){
+  const el=document.getElementById('whisper-dl-status');
+  if(!el)return;
+  if(whisperReady){
+    el.textContent='✓ Prêt';
+    el.style.color='#22c55e';
+  } else if(whisperLoading){
+    el.textContent='⏳ ...';
+    el.style.color='#d4b863';
+  } else {
+    el.textContent='Télécharger ›';
+    el.style.color='rgba(240,236,224,0.5)';
   }
 }
 
@@ -6656,6 +6765,33 @@ function toggleCamDebug(){
 }
 
 renderHand();updateAll();applyLang();applyPremiumState();
+
+// v1.30 — Pre-load automatique du moteur vocal Whisper au boot.
+// Sur Android (Capacitor), le modèle est bundle dans l'APK via le workflow GitHub
+// Actions : load instantane, pas de DL reseau. Pour TOUS les users (PRO ou non),
+// pour qu'ils l'aient des l'installation. Quand l'user passera PRO et activera le
+// mic, c'est instantane.
+// Sur le web (GitHub Pages), on ne pre-load PAS automatiquement pour eviter
+// 40 Mo de DL gaspille pour les visiteurs non-PRO : ils declencheront le DL via
+// la ligne "Moteur vocal" dans Parametres ou au 1er usage du mic.
+(function preloadWhisperBundled(){
+  setTimeout(()=>{
+    if(whisperReady||whisperLoading)return;
+    // Detection Android Capacitor : le modele est bundle localement
+    const isAndroidApp=!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform());
+    if(isAndroidApp){
+      console.log('[BJG] Whisper preload starting (bundled in APK)...');
+      loadWhisper().then(ok=>{
+        console.log('[BJG] Whisper preload:',ok?'READY':'failed');
+      });
+    } else if(isPremium){
+      // Sur web, on prefetch seulement si premium (l'user a achete l'app, autant
+      // que ce soit pret quand il en aura besoin)
+      console.log('[BJG] Whisper prefetch (web premium)...');
+      loadWhisper();
+    }
+  },3000); // 3s apres boot pour ne pas surcharger le 1er paint
+})();
 
 // ═══════════════════════════════════════════════════════════════════
 // ══ BLOCAGE SCROLL BODY QUAND POPUP OUVERT ══
