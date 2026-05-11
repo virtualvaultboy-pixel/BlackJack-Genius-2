@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.util.Log
 import android.view.MotionEvent
@@ -40,11 +39,12 @@ class BubbleOverlayView(context: Context) : View(context) {
         color = Color.parseColor("#c9a84c")
         style = Paint.Style.FILL
     }
-    // Ombre du cercle pour effet "flottant"
+    // Ombre du cercle pour effet "flottant" — sera dessinee comme cercle gris translucide
+    // derriere le cercle dore. Plus simple que setShadowLayer qui necessite setLayerType
+    // SOFTWARE et pose parfois des soucis en overlay window.
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80000000")
+        color = Color.parseColor("#60000000")
         style = Paint.Style.FILL
-        setShadowLayer(8f * density, 0f, 3f * density, Color.parseColor("#80000000"))
     }
     // Texte "BJ" centre dans la bulle
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -76,8 +76,6 @@ class BubbleOverlayView(context: Context) : View(context) {
     private val tapMaxDuration = 200L // ms max pour un tap simple
 
     init {
-        // Active les ombres logicielles (sinon shadowLayer ne marche pas)
-        setLayerType(LAYER_TYPE_SOFTWARE, null)
         // Taille fixe : carre qui contient la bulle + zone pour le bouton fermer
         val totalSize = bubbleSize + (closeButtonOffset * 2).toInt()
         layoutParams = WindowManager.LayoutParams(totalSize, totalSize)
@@ -89,8 +87,9 @@ class BubbleOverlayView(context: Context) : View(context) {
         val cy = height / 2f
         val radius = bubbleSize / 2f
 
-        // Cercle principal avec ombre
-        canvas.drawCircle(cx, cy, radius, shadowPaint)
+        // Cercle d'ombre (decale en bas-droite, plus grand, translucide)
+        canvas.drawCircle(cx + 2 * density, cy + 3 * density, radius + 1 * density, shadowPaint)
+        // Cercle principal
         canvas.drawCircle(cx, cy, radius, bgPaint)
 
         // Texte "BJ" au centre (avec leger offset pour centrage visuel)
@@ -188,22 +187,16 @@ class BubbleOverlayView(context: Context) : View(context) {
         } else {
             screenW - width + (width - bubbleSize) / 2 - (8 * density).toInt() // colle a droite
         }
-        // Animation simple step (pas de Animator pour rester leger)
-        animate()
-            .setDuration(200)
-            .withStartAction {
-                val start = params.x
-                val anim = android.animation.ValueAnimator.ofInt(start, targetX).apply {
-                    duration = 200
-                    addUpdateListener { va ->
-                        params.x = va.animatedValue as Int
-                        try {
-                            windowManager?.updateViewLayout(this@BubbleOverlayView, params)
-                        } catch (_: Exception) {}
-                    }
-                    start()
-                }
-            }
-            .start()
+        // Animation simple via ValueAnimator
+        val start = params.x
+        val anim = android.animation.ValueAnimator.ofInt(start, targetX)
+        anim.duration = 200
+        anim.addUpdateListener { va ->
+            params.x = va.animatedValue as Int
+            try {
+                windowManager?.updateViewLayout(this, params)
+            } catch (_: Exception) {}
+        }
+        anim.start()
     }
 }

@@ -125,7 +125,14 @@ class BJGeniusBubbleService : Service() {
         }
         bubbleView = null
         isRunning = false
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        // v1.2 — Compat tous SDK : STOP_FOREGROUND_REMOVE n'existe que sur API 24+,
+        // sinon on utilise la version booleene historique.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
     }
 
