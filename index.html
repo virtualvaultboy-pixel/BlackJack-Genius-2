@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ═══════════════════════ BJ Genius — v1.4 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -558,7 +559,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.4</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4269,6 +4270,12 @@ function splitMerged(word){
 function extractCards(transcript){
   let text=norm(transcript);
 
+  // v1.3 — Revert du filtre v1.2 sur "figure + as". Aurélien a confirmé que ce pattern
+  // est ultra fréquent au BJ (Q+A = blackjack, J+A = 21, K+A = 21, hit d'un As après
+  // figure en main 3+ cartes). Le filtre cassait trop de cas légitimes. Pour le bug
+  // "Chrome insère parfois as parasite après figure", l'user corrige manuellement via
+  // le bouton × sur la carte. Pas de discrimination fiable possible côté code.
+
   // Helper : check si un mot mappe à une vraie carte (pas une commande)
   const isCardWord=(w)=>isRealCard(bestMatch(w))||splitMerged(w);
 
@@ -4295,6 +4302,68 @@ function extractCards(transcript){
     if(result)for(const c of result)cards.push(c);
   }
   return cards;
+}
+
+// v1.4 — Scoring des alternatives Chrome STT par "voting" inter-alternatives au niveau
+// des CODES CARTES (pas des mots bruts).
+//
+// Chrome retourne plusieurs interprétations (r[0]..r[maxAlternatives-1]). r[0] est jugé
+// le meilleur PAR CHROME, mais son scoring inclut un fort biais du modèle de langue qui
+// hallucine parfois des mots de liaison ("as" verbe avoir, "et"...) pour grammaticaliser.
+// Les alternatives 1+ reflètent souvent un décodage plus brut, plus fidèle à l'audio.
+//
+// Algo : on convertit chaque alternative en sa séquence de codes cartes via extractCards.
+// On parcourt r[0]; pour chaque k-ième occurrence d'un code, on compte combien
+// d'alternatives ont AU MOINS k occurrences de ce code. Si ≥ threshold (majorité stricte),
+// on garde ce code. Sinon (le code n'est supporté que par r[0]), il est éliminé.
+//
+// Pourquoi au niveau des codes et pas des mots : "trois" et "3" sont le même code "3",
+// "dame" et "dam" sont le même code "Q". Voter sur les mots bruts casserait les cas où
+// les alternatives utilisent des formes différentes (digit vs mot, variante phonétique).
+//
+// Exemples :
+//  • Hallucination "as" — r[0]="2 dame as 3", r[1]="2 dame 3"
+//    Codes r[0]=[2,Q,A,3], r[1]=[2,Q,3]. "A" supporté par 1/2 < 2 → REMOVE. → [2,Q,3] ✓
+//  • Q+A+3 légitime — r[0]="dame as 3", r[1]="dam as trois", r[2]="dame ace 3"
+//    Tous les codes [Q,A,3] supportés par 3/3 → tout KEEP. → [Q,A,3] ✓
+//
+// Cas dégénérés :
+//  • 1 seule alternative : pas de vote possible, on garde r[0] direct.
+//  • Toutes les alternatives ont la même hallucination : pas de discrimination possible.
+//  • r[k] très différent de r[0] : peut éliminer des codes légitimes (compromis assumé).
+function pickBestAlternative(result){
+  if(!result||!result.length)return "";
+  const transcripts=[];
+  for(let k=0;k<result.length;k++){
+    if(result[k]&&result[k].transcript){
+      const t=result[k].transcript.trim();
+      if(t)transcripts.push(t);
+    }
+  }
+  if(!transcripts.length)return "";
+  if(transcripts.length===1)return transcripts[0];
+  // Convertir chaque alternative en séquence de codes cartes (ordre préservé)
+  const codeSeqs=transcripts.map(t=>extractCards(t));
+  // Threshold : majorité stricte. Min 2 pour qu'avec 2 alts on exige consensus (sinon
+  // ceil(2/2)=1 et tout passe trivialement, ce qui défait le voting).
+  const threshold=Math.max(2,Math.ceil(transcripts.length/2));
+  const robust=[];
+  const occSeen={}; // compteur de la k-ième occurrence par code dans r[0]
+  for(const code of codeSeqs[0]){
+    occSeen[code]=(occSeen[code]||0)+1;
+    const required=occSeen[code];
+    let supporters=0;
+    for(const seq of codeSeqs){
+      let seen=0;
+      for(const c of seq){if(c===code){seen++;if(seen>=required)break;}}
+      if(seen>=required)supporters++;
+    }
+    if(supporters>=threshold)robust.push(code);
+  }
+  if(!robust.length)return transcripts[0]; // fallback pathologique
+  // On renvoie la séquence de codes joinée. extractCards les re-parsera correctement
+  // (A, 2-10, J, Q, K sont tous dans VC, donc directement matchés).
+  return robust.join(" ");
 }
 
 // v2.9 — Fonction dedupeVoice() supprimée : elle était définie mais jamais appelée
@@ -4459,7 +4528,7 @@ function startRecognition(){
   recognition.lang=currentLang==='en'?'en-US':currentLang==='es'?'es-ES':'fr-FR';
   recognition.continuous=true;
   recognition.interimResults=true;   // partiels actifs : on peut prévisualiser et garder le timer "vivant" pendant que l'user parle
-  recognition.maxAlternatives=3;     // 5 → 3 (largement suffisant, moins de calculs côté navigateur)
+  recognition.maxAlternatives=5;     // v1.4 — 3 → 5 (plus d'alternatives à scorer pour pickBestAlternative)
   recognition.onstart=()=>{document.getElementById("mic-btn").classList.add("listening");};
   recognition.onresult=(e)=>{
     const now=Date.now();
@@ -4467,7 +4536,10 @@ function startRecognition(){
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i];
       if(r.isFinal){
-        const tr=(r[0]&&r[0].transcript||"").trim();
+        // v1.4 — Au lieu de prendre aveuglément r[0] (qui peut contenir des hallucinations
+        // du modèle de langue Chrome type "dame as 3"), on score toutes les alternatives
+        // et on garde celle au meilleur ratio cardCount/wordCount.
+        const tr=pickBestAlternative(r);
         if(!tr)continue;
         // Anti-cumul : Chrome Android émet parfois plusieurs finals à un même index
         // qui ÉTENDENT le précédent ("huit", puis "huit quatre", puis "huit quatre neuf").
