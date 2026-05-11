@@ -558,7 +558,7 @@ body.lite .ts-expert-card{position:relative;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v2.9</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -4093,8 +4093,11 @@ const VC={
   "a1":"A","ace1":"A","ais":"A","aix":"A","ait":"A",
   // v2.9 — Doublons retirés ("ais", "hasse", "aze" étaient listés 2× dans le dict)
   "hase":"A","ase":"A","acé":"A","asé":"A",
-  // Deux — variantes étendues (sans "de" tout seul, trop ambigu avec la préposition française)
-  "deux":"2","deu":"2","deuh":"2","des":"2","deus":"2",
+  // Deux — variantes étendues. v1.1 — Ajout de "de":"2" : Chrome Android tronque
+  // fréquemment "deux" en "de" sur les flux fragmentés. L'exclusion initiale visait
+  // à éviter la confusion avec la préposition française, mais Aurélien a confirmé
+  // qu'au BJ on ne prononce JAMAIS "de" comme préposition → safe à mapper.
+  "deux":"2","deu":"2","deuh":"2","des":"2","deus":"2","de":"2",
   "doe":"2","deuze":"2","duex":"2","due":"2","deuxe":"2","deusse":"2",
   "trois":"3","troi":"3","twa":"3","troie":"3","trwa":"3",
   "quatre":"4","katr":"4","kat":"4","cat":"4","catre":"4",
@@ -4186,7 +4189,7 @@ function bestMatch(w){
   if(w.startsWith("hu")||w.startsWith("wi")) return "8"; // huit, wit...
   if(w.startsWith("ne")||w.startsWith("no")) return "9"; // neuf, noeuf...
   if(w.startsWith("di")) return "10";       // dix, dis...
-  if(w.startsWith("deu")) return "2"; // deux, deu, deuh (évite "de" tout seul)
+  if(w.startsWith("deu")) return "2"; // deux, deu, deuh (le "de" exact est désormais dans VC depuis v1.1)
   if(w.startsWith("as")&&w.length<=5) return "A"; // as, asse, ass, asss, ases
   if(w.startsWith("ac")&&w.length<=4) return "A"; // ace, aces
   if(w.startsWith("az")&&w.length<=4) return "A"; // az, aze
