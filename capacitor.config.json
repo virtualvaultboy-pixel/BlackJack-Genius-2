@@ -1,0 +1,13 @@
+{
+  "appId": "studio.deponchy.bjgenius",
+  "appName": "BJ Genius",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}
