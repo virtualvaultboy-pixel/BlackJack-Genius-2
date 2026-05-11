@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.23 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.27 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -214,18 +214,6 @@ body.popup-open{overflow:hidden;position:fixed;width:100%;}
    de modals. Permet de rouvrir le popup d'explication d'une feature. */
 .info-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;font-size:0.65rem;font-weight:700;font-style:italic;margin-left:6px;cursor:pointer;vertical-align:middle;transition:background 0.15s;}
 .info-help:active{background:rgba(201,168,76,0.28);}
-/* v1.23 — Bouton d'aide flottant en bas a droite de l'ecran principal.
-   Toujours visible. Ouvre un menu donnant acces aux 4 popups d'explication. */
-#help-fab{position:fixed;bottom:14px;right:14px;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0a3d1f,#0a2515);border:1.5px solid rgba(201,168,76,0.45);box-shadow:0 3px 12px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:#c9a84c;font-weight:900;cursor:pointer;z-index:200;transition:transform 0.15s,box-shadow 0.15s;font-style:italic;}
-#help-fab:active{transform:scale(0.92);box-shadow:0 1px 4px rgba(0,0,0,0.5);}
-/* En mode discret, on l'estompe encore pour ne pas attirer l'attention */
-body.discrete #help-fab{opacity:0.35;}
-/* En mode PiP (bulle), on cache le FAB pour ne pas pourrir l'affichage minimal */
-@media (display-mode:picture-in-picture){#help-fab{display:none!important;}}
-body.pip-mode #help-fab{display:none!important;}
-/* Cards du menu d'aide rapide : tappables, hover-like en mobile */
-.help-card{background:rgba(0,0,0,0.28);border:1.5px solid rgba(212,184,99,0.22);border-radius:11px;padding:14px 8px;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.help-card:active{transform:scale(0.96);background:rgba(212,184,99,0.1);border-color:rgba(212,184,99,0.5);}
 .settings-section-title:first-of-type{margin-top:6px;}
 .toggle{width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;}
 .toggle.on{background:#22c55e;}
@@ -380,7 +368,8 @@ body.lite .stat-btns{flex:0 0 auto;grid-template-columns:1fr;width:62px;}
 .pro-row-lock{font-size:0.55rem;color:#c9a84c;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:5px;padding:2px 6px;letter-spacing:1px;font-weight:800;margin-right:6px;}
 body.lite .setting-row.pro-locked .toggle{opacity:0.4;pointer-events:none;}
 body.lite .setting-row.pro-locked{cursor:pointer;}
-body.lite #drawer-hilo{display:none;}
+/* v1.27 — Regle "body.lite #drawer-hilo{display:none;}" retiree :
+   l'element #drawer-hilo n'existe plus dans le DOM. */
 /* Cadenas sur la carte Mode Expert */
 .pro-card-lock{position:absolute;top:8px;right:10px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.55rem;font-weight:900;padding:3px 8px;border-radius:10px;letter-spacing:1.2px;}
 body.lite .ts-expert-card{position:relative;}
@@ -666,7 +655,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.23</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.27</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -982,10 +971,10 @@ body.pip-mode #pip-display{display:flex!important;}
 
     <div class="settings-section-title" id="set-sec-voice">Voix & Caméra</div>
     <div class="setting-row pro-locked" id="si-mic" onclick="onMicRowTap(event)"><div class="setting-label">🎤 Commande vocale <span class="info-help" onclick="event.stopPropagation();showIntro('mic')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div class="toggle" id="dt-mic2" onclick="toggleMic()"></div></div></div>
-    <!-- v1.16 — Toggle moteur Whisper offline. Activé : Whisper transformers.js en WASM
-         local, audio continu sans coupure. Désactivé : Web Speech API natif (par défaut).
-         Premier activation : téléchargement ~40 Mo du modèle (cached ensuite). -->
-    <div class="setting-row" id="si-whisper"><div class="setting-label">🧠 <span id="whisper-label">Moteur Whisper (sans coupure)</span> <span class="info-help" onclick="event.stopPropagation();showIntro('whisper')" title="Aide">ℹ</span></div><div class="toggle" id="dt-whisper" onclick="toggleVoiceEngine()"></div></div>
+    <!-- v1.24 — Toggle Whisper retire : aucune raison de proposer le choix.
+         Pour les users PRO, Whisper est utilise automatiquement (meilleure UX,
+         pas de coupure). Web Speech reste un fallback silencieux si Whisper
+         echoue a charger. -->
     <div class="setting-row pro-locked" id="si-cam" onclick="onCamRowTap(event)"><div class="setting-label">📷 Scan caméra <span class="info-help" onclick="event.stopPropagation();showIntro('cam')" title="Aide">ℹ</span></div><div style="display:flex;align-items:center;"><span class="pro-row-lock">🔒 PRO</span><div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:0.5px;text-transform:uppercase;" onclick="onCamRowAction(event)" id="cam-row-action">Ouvrir ›</div></div></div>
     <!-- v1.21 — Ligne d'aide dediee au mode bulle (PiP). Pas de toggle (le PiP
          est declenche par le bouton Home Android), juste un acces a l'explication. -->
@@ -1249,40 +1238,10 @@ body.pip-mode #pip-display{display:flex!important;}
   </div>
 </div>
 
-<!-- v1.23 — Bouton d'aide flottant accessible directement depuis l'écran
-     principal. Tap → mini menu qui regroupe l'acces aux 4 popups intro.
-     Idee de l'user : avoir l'aide a portee de main sans passer par Parametres. -->
-<div id="help-fab" onclick="openHelpMenu()" title="Aide">
-  <span style="font-size:1.05rem;">?</span>
-</div>
-
-<!-- Popup menu d'aide : 4 cards pour acceder rapidement aux explications -->
-<div class="popup-overlay" id="popup-help-menu" onclick="closePopup('popup-help-menu')">
-  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
-    <div class="popup-handle"></div>
-    <div style="font-size:1.05rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;" id="help-menu-title">Aide rapide</div>
-    <div style="font-size:0.65rem;color:rgba(240,236,224,0.55);margin-bottom:14px;" id="help-menu-sub">Tape sur une fonction pour revoir l'explication</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <div onclick="closePopup('popup-help-menu');showIntro('mic')" class="help-card">
-        <div style="font-size:1.8rem;">🎤</div>
-        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-mic">Commande vocale</div>
-      </div>
-      <div onclick="closePopup('popup-help-menu');showIntro('cam')" class="help-card">
-        <div style="font-size:1.8rem;">📷</div>
-        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-cam">Scan caméra</div>
-      </div>
-      <div onclick="closePopup('popup-help-menu');showIntro('whisper')" class="help-card">
-        <div style="font-size:1.8rem;">🧠</div>
-        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-whisper">Moteur Whisper</div>
-      </div>
-      <div onclick="closePopup('popup-help-menu');showIntro('pip')" class="help-card">
-        <div style="font-size:1.8rem;">🪟</div>
-        <div style="font-size:0.65rem;color:#f0ecdf;font-weight:700;letter-spacing:1px;margin-top:4px;" id="help-card-pip">Mode bulle</div>
-      </div>
-    </div>
-    <div onclick="closePopup('popup-help-menu')" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:11px;padding:10px;color:#c9a84c;font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;" id="help-menu-close">Fermer</div>
-  </div>
-</div>
+<!-- v1.25 — FAB d'aide flottant + menu d'aide rapide retires : trop charge.
+     Les popups d'explication s'affichent automatiquement a la 1ere activation
+     de chaque feature, et restent accessibles via les ℹ dans Parametres ou
+     le bouton AIDE dans le modal scan camera. C'est suffisant. -->
 
 <!-- v1.20 — POPUPS INTRO CONTEXTUELS. Chacun s'affiche UNE SEULE FOIS à la
      première activation/utilisation de la feature correspondante. Flag stocké
@@ -1326,8 +1285,9 @@ body.pip-mode #pip-display{display:flex!important;}
     <!-- Bouton détails -->
     <div onclick="showIntro('mic-detail')" style="background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);border-radius:11px;padding:9px;color:#c9a84c;font-size:0.66rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:8px;" id="intro-mic-more">📖 Toutes les commandes</div>
 
-    <!-- v1.23 — Rappel : on peut retrouver cette explication via le FAB d'aide -->
-    <div style="font-size:0.58rem;color:rgba(240,236,224,0.45);font-style:italic;margin-bottom:10px;line-height:1.4;" id="intro-mic-reminder">💡 Retrouve cette aide via le bouton <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:#c9a84c;font-style:italic;font-weight:900;font-size:0.55rem;vertical-align:middle;">?</span> en bas à droite</div>
+    <!-- v1.24 — Mention du DL Whisper integree ici (toggle moteur retire des
+         parametres). On previent l'user qu'au 1er usage il y aura un DL. -->
+    <div style="background:rgba(127,170,255,0.07);border:1px solid rgba(127,170,255,0.22);border-radius:11px;padding:9px 11px;margin-bottom:12px;text-align:left;font-size:0.62rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-mic-whisper-info">🧠 <strong>Premier usage :</strong> téléchargement automatique d'un moteur vocal offline (~40 Mo). Mets-toi en <strong>Wi-Fi</strong>. Ensuite : reconnaissance sans coupure, sans réseau.</div>
 
     <div onclick="closePopup('popup-intro-mic')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-mic-ok">Compris ✓</div>
   </div>
@@ -1414,31 +1374,13 @@ body.pip-mode #pip-display{display:flex!important;}
       </div>
     </div>
 
-    <!-- v1.23 — Rappel : aide retrouvable via FAB ou bouton AIDE en haut du modal cam -->
-    <div style="font-size:0.58rem;color:rgba(240,236,224,0.45);font-style:italic;margin-bottom:10px;line-height:1.4;" id="intro-cam-reminder">💡 Retrouve cette aide via le bouton <span style="background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);border-radius:4px;padding:0 4px;color:#c9a84c;font-size:0.55rem;font-weight:800;">i AIDE</span> en haut du scan, ou via le <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:#c9a84c;font-style:italic;font-weight:900;font-size:0.55rem;vertical-align:middle;">?</span> en bas à droite</div>
-
     <div onclick="closePopup('popup-intro-cam')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-cam-ok">Compris ✓</div>
   </div>
 </div>
 
-<!-- INTRO WHISPER : 1ère activation du toggle Whisper -->
-<div class="popup-overlay" id="popup-intro-whisper" onclick="closePopup('popup-intro-whisper')">
-  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
-    <div class="popup-handle"></div>
-    <div style="font-size:2.6rem;margin-bottom:6px;">🧠</div>
-    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-whi-title">Moteur Whisper</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-whi-sub">Reconnaissance vocale qui tourne 100 % en local sur ton téléphone.</div>
-    <div style="background:rgba(127,170,255,0.08);border:1px solid rgba(127,170,255,0.25);border-radius:11px;padding:10px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.8;" id="intro-whi-list">
-        <div>✓ <strong>Sans coupure</strong> (vs 5s du moteur natif)</div>
-        <div>✓ <strong>Plus précis</strong> sur les accents</div>
-        <div>✓ <strong>Marche sans réseau</strong> après installation</div>
-      </div>
-    </div>
-    <div style="background:rgba(212,184,99,0.1);border:1px solid rgba(212,184,99,0.3);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.9);line-height:1.55;" id="intro-whi-dl">⏳ <strong>Premier lancement :</strong> ~40 Mo de modèle à télécharger. Mets-toi en <strong>Wi-Fi</strong>. Stocké ensuite, plus de DL.</div>
-    <div onclick="closePopup('popup-intro-whisper')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-whi-ok">Compris ✓</div>
-  </div>
-</div>
+<!-- v1.24 — Popup intro Whisper supprime : le choix du moteur est masque a
+     l'user, Whisper est utilise automatiquement pour les PRO. L'information
+     pertinente (~40 Mo de DL au 1er usage) est integree au popup intro mic. -->
 
 <!-- INTRO BULLE PIP : 1ère sortie du mode PiP -->
 <div class="popup-overlay" id="popup-intro-pip" onclick="closePopup('popup-intro-pip')">
@@ -1900,7 +1842,6 @@ const LANGS={
     learnSkipToTuto:"Passer le tuto →",
     setSecDisplay:"Affichage", setSecVoice:"Voix & Caméra", setSecAccount:"Compte & Langue",
     rotateTitle:"Tourne ton téléphone", rotateSub:"BJ Genius s'utilise en mode portrait.",
-    whisperLabel:"Moteur Whisper (sans coupure)",
     tutoSeePro:"Voir l'offre Pro 👑",
     // Étape 1
     tutoS1Title:"Ta décision en 1 seconde ⚡",
@@ -1970,18 +1911,6 @@ const LANGS={
     tutoSpD7:"Annonce les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
     tutoSpTcam:"Scan caméra",
     tutoSpDcam:"Pointe la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>ta main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
-    tutoSpTpip:"Mode bulle 🪟",
-    tutoSpDpip:"Active le micro, puis appuie sur <strong>Home</strong> : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Tu vois la décision en gros tout en utilisant une autre app. <strong>Disponible avec Pro</strong>.",
-    tutoSpTwhi:"Moteur Whisper 🧠",
-    tutoSpDwhi:"Reconnaissance vocale offline qui tourne en local sur ton tel, <strong>sans coupure toutes les 5s</strong>. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger. <strong>Disponible avec Pro</strong>.",
-    // v1.19 — Séquence guidée post-achat PRO
-    proFeatT0:"Pro activé !",  proFeatD0:"Découvre en 5 étapes tout ce que tu peux faire maintenant.",
-    proFeatT1:"Commande vocale", proFeatD1:"Active le micro depuis l'en-tête de l'app. Annonce les cartes (\"as quatre cinq\"), BJ Genius reconnaît et calcule la décision en temps réel.",
-    proFeatT2:"Moteur Whisper", proFeatD2:"Reconnaissance vocale offline <strong>sans coupure</strong>. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger.",
-    proFeatT3:"Scan caméra", proFeatD3:"Pointe la caméra vers la table (<strong>croupier en haut, ta main en bas</strong>), une photo et l'app détecte automatiquement toutes les cartes.",
-    proFeatT4:"Mode bulle 🪟", proFeatD4:"Active le micro puis appuie sur <strong>Home</strong> : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Idéal pour tester en parallèle.",
-    proFeatT5:"Comptage Hi-Lo", proFeatD5:"Badge \"+/-\" en haut de l'app. Compte les cartes au fur et à mesure pour anticiper les paris. À utiliser avec le mode discret pour rester sobre.",
-    proFeatNext:"Suivant", proFeatPrev:"Précédent", proFeatDone:"C'est bon ✓",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -2230,7 +2159,6 @@ const LANGS={
     learnSkipToTuto:"Skip to app tour →",
     setSecDisplay:"Display", setSecVoice:"Voice & Camera", setSecAccount:"Account & Language",
     rotateTitle:"Rotate your phone", rotateSub:"BJ Genius is portrait-only.",
-    whisperLabel:"Whisper engine (no cutoff)",
     tutoSeePro:"See Pro offer 👑",
     // Step 1
     tutoS1Title:"Your decision in 1 second ⚡",
@@ -2300,18 +2228,6 @@ const LANGS={
     tutoSpD7:"Speak the cards out loud, the app recognizes them and computes the decision. <strong>Available with Pro</strong>.",
     tutoSpTcam:"Camera scan",
     tutoSpDcam:"Point your camera at the table with the <strong>dealer on top</strong> and <strong>your hand on bottom</strong>. One photo, the app detects cards and applies automatically. Re-scan after each hit. <strong>Available with Pro</strong>.",
-    tutoSpTpip:"Bubble mode 🪟",
-    tutoSpDpip:"Turn the mic on, then press <strong>Home</strong>: BJ Genius shrinks into a floating bubble over your other apps. See the decision big while using another app. <strong>Available with Pro</strong>.",
-    tutoSpTwhi:"Whisper engine 🧠",
-    tutoSpDwhi:"Offline speech recognition running locally on your phone, <strong>no 5s cutoff</strong>. Toggle in Settings → Voice & Camera. First launch: ~40 MB to download. <strong>Available with Pro</strong>.",
-    // v1.19 — Pro features guided tour
-    proFeatT0:"Pro activated!", proFeatD0:"Discover in 5 steps everything you can do now.",
-    proFeatT1:"Voice command", proFeatD1:"Turn on the mic from the app header. Speak the cards (\"ace four five\"), BJ Genius recognizes them and computes the decision in real time.",
-    proFeatT2:"Whisper engine", proFeatD2:"Offline speech recognition <strong>without cutoff</strong>. Toggle in Settings → Voice & Camera. First launch: ~40 MB to download.",
-    proFeatT3:"Camera scan", proFeatD3:"Point your camera at the table (<strong>dealer on top, your hand on bottom</strong>), one photo and the app auto-detects all cards.",
-    proFeatT4:"Bubble mode 🪟", proFeatD4:"Turn the mic on then press <strong>Home</strong>: BJ Genius shrinks into a floating bubble over your other apps. Great for parallel testing.",
-    proFeatT5:"Hi-Lo counting", proFeatD5:"\"+/-\" badge at the top. Counts cards as you play to anticipate bets. Pair with discrete mode to stay subtle.",
-    proFeatNext:"Next", proFeatPrev:"Back", proFeatDone:"I'm done ✓",
     tutoSpT8:"Ready to level up?",
     tutoSpD8:"Unlock all Pro features for <strong>$4.99</strong> for life. One-time purchase, no subscription.",
     tutoSpFinal1:"5 Pro features for life",
@@ -2560,7 +2476,6 @@ const LANGS={
     learnSkipToTuto:"Saltar al tour →",
     setSecDisplay:"Pantalla", setSecVoice:"Voz y Cámara", setSecAccount:"Cuenta e Idioma",
     rotateTitle:"Gira tu teléfono", rotateSub:"BJ Genius funciona en modo vertical.",
-    whisperLabel:"Motor Whisper (sin cortes)",
     tutoSeePro:"Ver oferta Pro 👑",
     // Paso 1
     tutoS1Title:"Tu decisión en 1 segundo ⚡",
@@ -2630,18 +2545,6 @@ const LANGS={
     tutoSpD7:"Di las cartas en voz alta, la app las reconoce y calcula la decisión. <strong>Disponible con Pro</strong>.",
     tutoSpTcam:"Escaneo cámara",
     tutoSpDcam:"Apunta la cámara a la mesa con el <strong>crupier arriba</strong> y <strong>tu mano abajo</strong>. Una foto, la app detecta las cartas y aplica automáticamente. Re-escan después de cada robo. <strong>Disponible con Pro</strong>.",
-    tutoSpTpip:"Modo burbuja 🪟",
-    tutoSpDpip:"Activa el micrófono, luego pulsa <strong>Home</strong>: BJ Genius se reduce a una burbuja flotante sobre tus otras apps. Ves la decisión en grande mientras usas otra app. <strong>Disponible con Pro</strong>.",
-    tutoSpTwhi:"Motor Whisper 🧠",
-    tutoSpDwhi:"Reconocimiento de voz offline que funciona en local en tu móvil, <strong>sin cortes cada 5s</strong>. Actívalo en Ajustes → Voz y Cámara. Primera vez: ~40 MB para descargar. <strong>Disponible con Pro</strong>.",
-    // v1.19 — Tour guiado post-compra Pro
-    proFeatT0:"¡Pro activado!", proFeatD0:"Descubre en 5 pasos todo lo que puedes hacer ahora.",
-    proFeatT1:"Comando de voz", proFeatD1:"Activa el micrófono desde la cabecera. Di las cartas (\"as cuatro cinco\"), BJ Genius las reconoce y calcula la decisión en tiempo real.",
-    proFeatT2:"Motor Whisper", proFeatD2:"Reconocimiento de voz offline <strong>sin cortes</strong>. Actívalo en Ajustes → Voz y Cámara. Primera vez: ~40 MB para descargar.",
-    proFeatT3:"Escaneo cámara", proFeatD3:"Apunta la cámara a la mesa (<strong>crupier arriba, tu mano abajo</strong>), una foto y la app detecta automáticamente todas las cartas.",
-    proFeatT4:"Modo burbuja 🪟", proFeatD4:"Activa el mic y pulsa <strong>Home</strong>: BJ Genius se reduce a una burbuja flotante sobre tus otras apps. Ideal para probar en paralelo.",
-    proFeatT5:"Conteo Hi-Lo", proFeatD5:"Badge \"+/-\" arriba. Cuenta las cartas para anticipar las apuestas. Úsalo con el modo discreto para ser sutil.",
-    proFeatNext:"Siguiente", proFeatPrev:"Atrás", proFeatDone:"Listo ✓",
     tutoSpT8:"¿Listo para subir de nivel?",
     tutoSpD8:"Desbloquea todas las funciones Pro por <strong>4,99 €</strong> de por vida. Compra única, sin suscripción.",
     tutoSpFinal1:"5 funciones Pro de por vida",
@@ -2785,8 +2688,8 @@ function applyLang(){
   // v1.14 — Overlay rotation paysage
   tut("ro-title","rotateTitle");
   tut("ro-sub","rotateSub");
-  // v1.16 — Toggle Whisper engine
-  tut("whisper-label","whisperLabel");
+  // v1.26 — Binding tut("whisper-label",...) retire : l'element #whisper-label
+  // a ete supprime du DOM en v1.24 (toggle Whisper retire des Parametres).
   // Voice mic label (état courant)
   const ml=document.getElementById("mic-label");
   if(ml)ml.innerHTML=micOn?t.voiceLabelOn:t.voiceLabelOff;
@@ -2832,9 +2735,8 @@ function applyLang(){
   // Action "Ouvrir ›" du si-cam
   const camAction=document.getElementById("cam-row-action");
   if(camAction&&t.camRowOpen)camAction.textContent=t.camRowOpen;
-  // Settings sub-page title
-  const setTitle=document.getElementById("drawer-settings-title");
-  if(setTitle)setTitle.textContent=t.drawerSettings;
+  // v1.27 — Acces a #drawer-settings-title retire : l'element n'existe plus
+  // dans le DOM (legacy d'une ancienne sous-page). Settings est gere via popup-settings-modal.
   // ── Sélecteur de mode entraînement ──
   tut("ts-title","trainSelectTitle");
   tut("ts-classic-t","trainSelectClassicTitle");
@@ -2966,9 +2868,9 @@ function toggleDrawer(){
   const open=document.getElementById('drawer').classList.toggle('open');
   document.getElementById('drawer-overlay').classList.toggle('open',open);
   document.getElementById('burger-btn').classList.toggle('open',open);
-  const hv=document.getElementById('hilo-val');
-  const dh=document.getElementById('drawer-hilo');
-  if(hv&&dh)dh.textContent=hv.textContent;
+  // v1.27 — Sync drawer-hilo retire : l'element #drawer-hilo n'existe plus dans
+  // le DOM (legacy d'une ancienne version). Le compteur Hi-Lo est affiche
+  // directement via le pill #hilo-badge dans le header.
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
@@ -2985,9 +2887,8 @@ function openSettingsPopup(){
   document.getElementById('dt-speak2').classList.toggle('on',speakOn);
   // v1.12 — Init du toggle filtre vocal retirée : le toggle UI a été supprimé.
   // Le filtre reste actif en permanence côté extractCards.
-  // v1.16 — Init du toggle Whisper depuis localStorage
-  const wt=document.getElementById('dt-whisper');
-  if(wt)wt.classList.toggle('on',voiceEngine==='whisper');
+  // v1.24 — Init dt-whisper retire (le toggle a ete supprime des parametres,
+  // Whisper est utilise automatiquement pour les PRO).
   document.getElementById('popup-settings-modal').classList.add('show');
 }
 function openSettings(){toggleDrawer();}
@@ -5077,13 +4978,11 @@ function hideVoiceToast(){document.getElementById("voice-toast").classList.remov
 // toggleMic() et l'init du mic appellent startActiveRecognition()/stopAllRecognition()
 // qui dispatchent vers le bon moteur selon voiceEngine.
 
-// v1.23 — Default vers Whisper pour les users PRO (sans coupure 5s = meilleure UX).
-// Si l'user a deja une preference explicite stockee, on la respecte. Sinon, si
-// premium, on bascule sur whisper. Si pas premium, on garde webspeech (Whisper
-// est PRO de toute facon).
+// v1.24 — Choix du moteur vocal simplifie : pour les users PRO, on force
+// Whisper systematiquement (meilleure reconnaissance, sans coupure 5s).
+// Le toggle utilisateur est retire. Web Speech reste un fallback automatique
+// silencieux si Whisper echoue a charger (catch dans loadWhisper).
 let voiceEngine=(function(){
-  const stored=localStorage.getItem('bjg_voice_engine');
-  if(stored)return stored;
   let prem=false;
   try{prem=localStorage.getItem('bjg_pro')==='1';}catch(e){}
   return prem?'whisper':'webspeech';
@@ -5124,11 +5023,6 @@ function showIntro(name){
   if(name==='mic-detail')renderMicCommandsDetail();
   const popup=document.getElementById('popup-intro-'+name);
   if(popup)popup.classList.add('show');
-}
-// v1.23 — Ouvre le menu d'aide globale (popup avec 4 cards) depuis le FAB.
-function openHelpMenu(){
-  const p=document.getElementById('popup-help-menu');
-  if(p)p.classList.add('show');
 }
 
 // v1.22 — Remplit dynamiquement le popup-intro-mic-detail avec la liste
@@ -5199,12 +5093,13 @@ function renderMicCommandsDetail(){
     }
   };
   const data=dict[lang]||dict.fr;
-  const tr=LANGS[lang]||LANGS.fr;
-  // Titres de sections
-  document.getElementById('intro-micD-cardsH').textContent=tr.micDCardsH||(lang==='en'?'Cards':lang==='es'?'Cartas':'Cartes');
-  document.getElementById('intro-micD-comboH').textContent=tr.micDComboH||(lang==='en'?'Combos':lang==='es'?'Combinaciones':'Combinaisons');
-  document.getElementById('intro-micD-actH').textContent=tr.micDActH||(lang==='en'?'Actions':lang==='es'?'Acciones':'Actions');
-  document.getElementById('intro-micD-title').textContent=tr.micDTitle||(lang==='en'?'Voice commands':lang==='es'?'Comandos de voz':'Commandes vocales');
+  // v1.27 — Les titres/labels sont definis ici directement (multilingue inline)
+  // car ces clés ne sont referencees qu'a un seul endroit (ce popup). Pas besoin
+  // de polluer LANGS. Le code precedent referencait tr.micD* qui n'existait pas.
+  document.getElementById('intro-micD-cardsH').textContent=lang==='en'?'Cards':lang==='es'?'Cartas':'Cartes';
+  document.getElementById('intro-micD-comboH').textContent=lang==='en'?'Combos':lang==='es'?'Combinaciones':'Combinaisons';
+  document.getElementById('intro-micD-actH').textContent=lang==='en'?'Actions':lang==='es'?'Acciones':'Actions';
+  document.getElementById('intro-micD-title').textContent=lang==='en'?'Voice commands':lang==='es'?'Comandos de voz':'Commandes vocales';
   // Cartes : badges "say → card"
   const cardsHost=document.getElementById('intro-micD-cards');
   cardsHost.innerHTML='';
@@ -5242,7 +5137,7 @@ function renderMicCommandsDetail(){
     );
   });
   // Bouton fermer
-  document.getElementById('intro-micD-ok').textContent=tr.micDOk||(lang==='en'?'Close ✓':lang==='es'?'Cerrar ✓':'Fermer ✓');
+  document.getElementById('intro-micD-ok').textContent=lang==='en'?'Close ✓':lang==='es'?'Cerrar ✓':'Fermer ✓';
 }
 
 // v1.20 — Detection de la sortie du mode PiP via MutationObserver sur body.pip-mode.
@@ -5262,24 +5157,11 @@ function renderMicCommandsDetail(){
   obs.observe(document.body,{attributes:true,attributeFilter:['class']});
 })();
 
-function toggleVoiceEngine(){
-  // PRO check : Whisper réservé aux users PRO (comme la commande vocale)
-  if(typeof isPro==='function'&&!isPro()&&voiceEngine!=='whisper'){
-    showPaywall&&showPaywall();
-    return;
-  }
-  voiceEngine=voiceEngine==='whisper'?'webspeech':'whisper';
-  localStorage.setItem('bjg_voice_engine',voiceEngine);
-  const t=document.getElementById('dt-whisper');
-  if(t)t.classList.toggle('on',voiceEngine==='whisper');
-  // v1.20 — Intro contextuel a la 1ere activation du moteur Whisper
-  if(voiceEngine==='whisper')showIntroOnce('whisper');
-  // Si le mic est actif, on bascule à chaud
-  if(micOn){
-    stopAllRecognition();
-    setTimeout(startActiveRecognition,200);
-  }
-}
+// v1.26 — toggleVoiceEngine() retire (code mort) : le toggle UI a ete supprime
+// en v1.24, et la fonction reference des elements DOM (#dt-whisper) et popups
+// (#popup-intro-whisper) qui n'existent plus. Pour les users PRO, voiceEngine
+// est fixe a 'whisper' au boot (avec fallback webspeech automatique si Whisper
+// echoue dans loadWhisper).
 
 // Dispatcher central : route vers le moteur actif
 function startActiveRecognition(){
@@ -5340,9 +5222,7 @@ async function loadWhisper(){
     setTimeout(hideVoiceToast,2200);
     // Auto-revert au Web Speech pour ne pas bloquer l'user
     voiceEngine='webspeech';
-    localStorage.setItem('bjg_voice_engine','webspeech');
-    const t=document.getElementById('dt-whisper');
-    if(t)t.classList.remove('on');
+    // v1.26 — Pas de toggle UI a mettre a jour (retire en v1.24)
     return false;
   }
 }
@@ -6628,14 +6508,9 @@ function purchasePro(){
   //   window.CdvPurchase.store.order('bjg_pro');
   //   et appeler setPremium(true) seulement après confirmation.
   setPremium(true);
-  // v1.23 — Si l'user n'a pas encore choisi de moteur vocal, bascule auto sur
-  // Whisper (sans coupure) pour la meilleure UX. Stocke le choix.
-  if(!localStorage.getItem('bjg_voice_engine')){
-    voiceEngine='whisper';
-    try{localStorage.setItem('bjg_voice_engine','whisper');}catch(e){}
-    const t=document.getElementById('dt-whisper');
-    if(t)t.classList.add('on');
-  }
+  // v1.24 — A l'achat PRO, on force Whisper (meilleure reconnaissance).
+  // L'user n'a pas le choix : c'est transparent et pour son bien.
+  voiceEngine='whisper';
   closePopup("popup-paywall");
   document.getElementById("popup-pro-ok").classList.add("show");
 }
