@@ -38,18 +38,22 @@ class BJGeniusBubbleService : Service() {
         const val NOTIFICATION_ID = 4242
         const val TAG = "BJGeniusBubble"
 
+        // v1.2 — Etat interne du service. Modifie uniquement par le service
+        // lui-meme via startBubble()/stopBubble(). Lu de l'exterieur via la
+        // fonction statique isRunning() ci-dessous.
+        // Pas de @JvmStatic ici : la variable est privee, donc inutile d'exposer
+        // au monde Java (et @JvmStatic sur une private var emet un warning).
+        private var running: Boolean = false
+
         /**
          * Indique si le service tourne. Lu par le plugin Java pour eviter
          * les double-starts.
          *
-         * v1.2 — Annotations Kotlin pour interop Java :
-         *  - @JvmStatic : expose la propriete comme un champ statique
-         *    accessible via BJGeniusBubbleService.isRunning() depuis Java
-         *  - Setter prive : seul le service lui-meme peut modifier l'etat
+         * v1.2 — Fonction explicite plutot que propriete pour eviter les pieges
+         * de naming Kotlin/Java sur les booleens prefixes par 'is'.
          */
         @JvmStatic
-        var isRunning: Boolean = false
-            private set
+        fun isRunning(): Boolean = running
     }
 
     private var windowManager: WindowManager? = null
@@ -76,12 +80,30 @@ class BJGeniusBubbleService : Service() {
     }
 
     private fun startBubble() {
-        if (isRunning) {
+        if (running) {
             Log.d(TAG, "Already running, ignoring start")
             return
         }
-        // Doit etre appele AVANT toute action longue, sinon ANR
-        startForeground(NOTIFICATION_ID, buildNotification())
+        // Doit etre appele AVANT toute action longue, sinon ANR.
+        // v1.2 — Sur Android 14 (API 34+), il faut declarer le foregroundServiceType
+        // a l'appel runtime (en plus du manifest), sinon SecurityException.
+        // L'overload a 3 args n'existe que sur API 29+.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                startForeground(
+                    NOTIFICATION_ID,
+                    buildNotification(),
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } catch (e: Exception) {
+                // Fallback : si l'API systeme n'accepte pas specialUse (cas rare),
+                // on retombe sur l'overload standard.
+                Log.w(TAG, "startForeground with specialUse failed, fallback", e)
+                startForeground(NOTIFICATION_ID, buildNotification())
+            }
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification())
+        }
 
         try {
             bubbleView = BubbleOverlayView(this).apply {
@@ -115,7 +137,7 @@ class BJGeniusBubbleService : Service() {
             bubbleView?.windowManager = windowManager
             windowManager?.addView(bubbleView, params)
 
-            isRunning = true
+            running = true
             Log.d(TAG, "Bubble added to WindowManager at x=${params.x}, y=${params.y}")
 
         } catch (e: Exception) {
@@ -132,7 +154,7 @@ class BJGeniusBubbleService : Service() {
             Log.w(TAG, "Remove view failed (already removed?)", e)
         }
         bubbleView = null
-        isRunning = false
+        running = false
         // v1.2 — Compat tous SDK : STOP_FOREGROUND_REMOVE n'existe que sur API 24+,
         // sinon on utilise la version booleene historique.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -155,9 +177,15 @@ class BJGeniusBubbleService : Service() {
      * Android 8 (Oreo, API 26). Tap sur la notif = ouvre l'app principale.
      */
     private fun buildNotification(): Notification {
-        // Intent pour ramener l'app au premier plan au tap sur la notif
+        // v1.2 — Intent pour ramener l'app au premier plan au tap sur la notif.
+        // Securite : si getLaunchIntentForPackage retourne null (cas rare), on
+        // fallback sur un Intent vide vers le package, qui ouvrira l'app via
+        // l'activity declaree comme MAIN/LAUNCHER dans le manifest.
         val openAppIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        } ?: Intent().apply {
+            setPackage(packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
