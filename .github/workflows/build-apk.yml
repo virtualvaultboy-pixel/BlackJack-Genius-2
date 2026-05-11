@@ -1,0 +1,77 @@
+name: Build Android APK (Debug)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'service-worker.js'
+      - 'privacy.html'
+      - 'manifest.json'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare web assets
+        run: |
+          mkdir -p www
+          cp index.html www/
+          [ -f service-worker.js ] && cp service-worker.js www/ || echo "no service-worker.js"
+          [ -f privacy.html ] && cp privacy.html www/ || echo "no privacy.html"
+          [ -f manifest.json ] && cp manifest.json www/ || echo "no manifest.json"
+          shopt -s nullglob
+          for f in icon*.png favicon*.png favicon*.ico *.svg apple-touch-icon*.png; do
+            cp "$f" www/ 2>/dev/null && echo "copied $f"
+          done
+          echo "=== Contents of www/ ==="
+          ls -la www/
+
+      - name: Install Capacitor
+        run: npm install --no-fund --no-audit
+
+      - name: Add Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Adding Android platform"
+            npx cap add android
+          else
+            echo "Syncing existing Android platform"
+            npx cap sync android
+          fi
+
+      - name: Build Debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bjgenius-debug-apk-build-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
