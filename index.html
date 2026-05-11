@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.17 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.19 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -650,7 +650,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.17</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.19</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -1206,12 +1206,23 @@ body.pip-mode #pip-display{display:flex!important;}
 </div>
 
 <!-- POPUP "PRO ACTIVÉ" -->
-<div class="popup-overlay" id="popup-pro-ok" onclick="closePopup('popup-pro-ok')">
+<div class="popup-overlay" id="popup-pro-ok" onclick="event.stopPropagation()">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;background:linear-gradient(135deg,#0a3d1f,#0a1f10);">
     <div class="popup-handle"></div>
-    <div style="font-size:3rem;margin-bottom:6px;">🎉</div>
+    <div style="font-size:3rem;margin-bottom:6px;" id="prook-icon">🎉</div>
     <div style="font-size:1.1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;" id="prook-title">Pro activé !</div>
-    <div style="font-size:0.72rem;color:rgba(240,236,224,0.6);margin-bottom:14px;line-height:1.5;" id="prook-msg">Toutes les fonctionnalités sont maintenant débloquées. Profitez !</div>
+    <div style="font-size:0.72rem;color:rgba(240,236,224,0.7);margin-bottom:12px;line-height:1.55;" id="prook-msg">Toutes les fonctionnalités sont maintenant débloquées. Profitez !</div>
+    <!-- v1.19 — Mode "tour" : indicateur d'étape + boutons Précédent/Suivant.
+         Affiché lors d'un achat neuf (purchasePro). Caché en mode "simple"
+         (restorePurchase, anciens utilisateurs). -->
+    <div id="prook-tour-controls" style="display:none;">
+      <div style="font-size:0.55rem;letter-spacing:2px;color:rgba(201,168,76,0.5);margin-bottom:10px;text-transform:uppercase;font-weight:700;" id="prook-step-indicator">1 / 6</div>
+      <div style="display:flex;gap:8px;">
+        <div onclick="proFeatNav(-1)" id="prook-prev" style="flex:1;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.3);border-radius:12px;padding:11px;color:#c9a84c;font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;visibility:hidden;">← <span id="prook-prev-lbl">Précédent</span></div>
+        <div onclick="proFeatNav(1)" id="prook-next" style="flex:2;background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;"><span id="prook-next-lbl">Suivant →</span></div>
+      </div>
+    </div>
+    <!-- Mode "simple" : juste un bouton "Fermer". Utilisé par restorePurchase. -->
     <div onclick="closePopup('popup-pro-ok')" id="prook-close" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Fermer ✓</div>
   </div>
 </div>
@@ -1726,6 +1737,18 @@ const LANGS={
     tutoSpD7:"Annonce les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
     tutoSpTcam:"Scan caméra",
     tutoSpDcam:"Pointe la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>ta main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
+    tutoSpTpip:"Mode bulle 🪟",
+    tutoSpDpip:"Active le micro, puis appuie sur <strong>Home</strong> : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Tu vois la décision en gros tout en utilisant une autre app. <strong>Disponible avec Pro</strong>.",
+    tutoSpTwhi:"Moteur Whisper 🧠",
+    tutoSpDwhi:"Reconnaissance vocale offline qui tourne en local sur ton tel, <strong>sans coupure toutes les 5s</strong>. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger. <strong>Disponible avec Pro</strong>.",
+    // v1.19 — Séquence guidée post-achat PRO
+    proFeatT0:"Pro activé !",  proFeatD0:"Découvre en 5 étapes tout ce que tu peux faire maintenant.",
+    proFeatT1:"Commande vocale", proFeatD1:"Active le micro depuis l'en-tête de l'app. Annonce les cartes (\"as quatre cinq\"), BJ Genius reconnaît et calcule la décision en temps réel.",
+    proFeatT2:"Moteur Whisper", proFeatD2:"Reconnaissance vocale offline <strong>sans coupure</strong>. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger.",
+    proFeatT3:"Scan caméra", proFeatD3:"Pointe la caméra vers la table (<strong>croupier en haut, ta main en bas</strong>), une photo et l'app détecte automatiquement toutes les cartes.",
+    proFeatT4:"Mode bulle 🪟", proFeatD4:"Active le micro puis appuie sur <strong>Home</strong> : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Idéal pour tester en parallèle.",
+    proFeatT5:"Comptage Hi-Lo", proFeatD5:"Badge \"+/-\" en haut de l'app. Compte les cartes au fur et à mesure pour anticiper les paris. À utiliser avec le mode discret pour rester sobre.",
+    proFeatNext:"Suivant", proFeatPrev:"Précédent", proFeatDone:"C'est bon ✓",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -2044,6 +2067,18 @@ const LANGS={
     tutoSpD7:"Speak the cards out loud, the app recognizes them and computes the decision. <strong>Available with Pro</strong>.",
     tutoSpTcam:"Camera scan",
     tutoSpDcam:"Point your camera at the table with the <strong>dealer on top</strong> and <strong>your hand on bottom</strong>. One photo, the app detects cards and applies automatically. Re-scan after each hit. <strong>Available with Pro</strong>.",
+    tutoSpTpip:"Bubble mode 🪟",
+    tutoSpDpip:"Turn the mic on, then press <strong>Home</strong>: BJ Genius shrinks into a floating bubble over your other apps. See the decision big while using another app. <strong>Available with Pro</strong>.",
+    tutoSpTwhi:"Whisper engine 🧠",
+    tutoSpDwhi:"Offline speech recognition running locally on your phone, <strong>no 5s cutoff</strong>. Toggle in Settings → Voice & Camera. First launch: ~40 MB to download. <strong>Available with Pro</strong>.",
+    // v1.19 — Pro features guided tour
+    proFeatT0:"Pro activated!", proFeatD0:"Discover in 5 steps everything you can do now.",
+    proFeatT1:"Voice command", proFeatD1:"Turn on the mic from the app header. Speak the cards (\"ace four five\"), BJ Genius recognizes them and computes the decision in real time.",
+    proFeatT2:"Whisper engine", proFeatD2:"Offline speech recognition <strong>without cutoff</strong>. Toggle in Settings → Voice & Camera. First launch: ~40 MB to download.",
+    proFeatT3:"Camera scan", proFeatD3:"Point your camera at the table (<strong>dealer on top, your hand on bottom</strong>), one photo and the app auto-detects all cards.",
+    proFeatT4:"Bubble mode 🪟", proFeatD4:"Turn the mic on then press <strong>Home</strong>: BJ Genius shrinks into a floating bubble over your other apps. Great for parallel testing.",
+    proFeatT5:"Hi-Lo counting", proFeatD5:"\"+/-\" badge at the top. Counts cards as you play to anticipate bets. Pair with discrete mode to stay subtle.",
+    proFeatNext:"Next", proFeatPrev:"Back", proFeatDone:"I'm done ✓",
     tutoSpT8:"Ready to level up?",
     tutoSpD8:"Unlock all Pro features for <strong>$4.99</strong> for life. One-time purchase, no subscription.",
     tutoSpFinal1:"5 Pro features for life",
@@ -2362,6 +2397,18 @@ const LANGS={
     tutoSpD7:"Di las cartas en voz alta, la app las reconoce y calcula la decisión. <strong>Disponible con Pro</strong>.",
     tutoSpTcam:"Escaneo cámara",
     tutoSpDcam:"Apunta la cámara a la mesa con el <strong>crupier arriba</strong> y <strong>tu mano abajo</strong>. Una foto, la app detecta las cartas y aplica automáticamente. Re-escan después de cada robo. <strong>Disponible con Pro</strong>.",
+    tutoSpTpip:"Modo burbuja 🪟",
+    tutoSpDpip:"Activa el micrófono, luego pulsa <strong>Home</strong>: BJ Genius se reduce a una burbuja flotante sobre tus otras apps. Ves la decisión en grande mientras usas otra app. <strong>Disponible con Pro</strong>.",
+    tutoSpTwhi:"Motor Whisper 🧠",
+    tutoSpDwhi:"Reconocimiento de voz offline que funciona en local en tu móvil, <strong>sin cortes cada 5s</strong>. Actívalo en Ajustes → Voz y Cámara. Primera vez: ~40 MB para descargar. <strong>Disponible con Pro</strong>.",
+    // v1.19 — Tour guiado post-compra Pro
+    proFeatT0:"¡Pro activado!", proFeatD0:"Descubre en 5 pasos todo lo que puedes hacer ahora.",
+    proFeatT1:"Comando de voz", proFeatD1:"Activa el micrófono desde la cabecera. Di las cartas (\"as cuatro cinco\"), BJ Genius las reconoce y calcula la decisión en tiempo real.",
+    proFeatT2:"Motor Whisper", proFeatD2:"Reconocimiento de voz offline <strong>sin cortes</strong>. Actívalo en Ajustes → Voz y Cámara. Primera vez: ~40 MB para descargar.",
+    proFeatT3:"Escaneo cámara", proFeatD3:"Apunta la cámara a la mesa (<strong>crupier arriba, tu mano abajo</strong>), una foto y la app detecta automáticamente todas las cartas.",
+    proFeatT4:"Modo burbuja 🪟", proFeatD4:"Activa el mic y pulsa <strong>Home</strong>: BJ Genius se reduce a una burbuja flotante sobre tus otras apps. Ideal para probar en paralelo.",
+    proFeatT5:"Conteo Hi-Lo", proFeatD5:"Badge \"+/-\" arriba. Cuenta las cartas para anticipar las apuestas. Úsalo con el modo discreto para ser sutil.",
+    proFeatNext:"Siguiente", proFeatPrev:"Atrás", proFeatDone:"Listo ✓",
     tutoSpT8:"¿Listo para subir de nivel?",
     tutoSpD8:"Desbloquea todas las funciones Pro por <strong>4,99 €</strong> de por vida. Compra única, sin suscripción.",
     tutoSpFinal1:"5 funciones Pro de por vida",
@@ -2821,14 +2868,14 @@ function updateAll(){
 
   splitBtn.classList.remove("show");
 
-  if(!DC){azone.className="azone";ar.style.display="none";aph.style.display="";aph.textContent=T("selectDealer");expBtn.style.display="none";setStats(null);return;}
-  if(hand.length<2){azone.className="azone";ar.style.display="none";aph.style.display="";aph.textContent=hand.length===0?T("addCards"):T("add2nd");expBtn.style.display="none";setStats(null);return;}
+  if(!DC){azone.className="azone";ar.style.display="none";aph.style.display="";aph.textContent=T("selectDealer");expBtn.style.display="none";setStats(null);syncPipDisplay();return;}
+  if(hand.length<2){azone.className="azone";ar.style.display="none";aph.style.display="";aph.textContent=hand.length===0?T("addCards"):T("add2nd");expBtn.style.display="none";setStats(null);syncPipDisplay();return;}
 
   const code=calcStrategy(hand,DC);lastCode=code;
   aph.style.display="none";ar.style.display="flex";expBtn.style.display="";
 
-  if(code==="BUST"){azone.className="azone bst";ad.textContent=t.BUST;asc.textContent=t.bustSub;pop(ad);setStats({win:0,lose:100,bust:100,push:0});speak("Bust");return;}
-  if(code==="BJ"){azone.className="azone bj";ad.textContent=t.BJ;asc.textContent=t.bjSub;pop(ad);setStats({win:92,lose:8,bust:0,push:0});speak("Blackjack !");return;}
+  if(code==="BUST"){azone.className="azone bst";ad.textContent=t.BUST;asc.textContent=t.bustSub;pop(ad);setStats({win:0,lose:100,bust:100,push:0});speak("Bust");syncPipDisplay();return;}
+  if(code==="BJ"){azone.className="azone bj";ad.textContent=t.BJ;asc.textContent=t.bjSub;pop(ad);setStats({win:92,lose:8,bust:0,push:0});speak("Blackjack !");syncPipDisplay();return;}
 
   const info=INFO[code]||INFO["H"];
   // Label & sub : on prend la version traduite quand elle existe (Ds/Rs ont les mêmes labels que D/R)
@@ -2891,6 +2938,13 @@ function syncPipDisplay(){
 function speak(text){
   if(!micOn||!speakOn)return;
   if(!("speechSynthesis"in window))return;
+  // v1.18 — Logs debug TTS (visible via chrome://inspect#devices)
+  console.log("[BJG TTS] speak called:",text,"speakOn=",speakOn,"micOn=",micOn);
+  // v1.18 — Workaround Chrome/WebView Android : speechSynthesis se met en pause
+  // automatiquement apres ~15s d'inactivite. En mode PiP, l'inactivite est plus
+  // longue car l'app n'est plus au premier plan. resume() preventif force le
+  // moteur a redemarrer s'il etait en pause.
+  try{window.speechSynthesis.resume();}catch(e){}
   window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
   u.lang=currentLang==='en'?'en-US':currentLang==='es'?'es-ES':'fr-FR';
@@ -2906,13 +2960,26 @@ function speak(text){
   }
   const restartSTT=()=>{
     ttsActive=false;
+    console.log("[BJG TTS] utterance ended");
     if(wasListening&&micOn){
       setTimeout(startRecognition,200); // marge pour vider le buffer audio
     }
   };
   u.onend=restartSTT;
-  u.onerror=restartSTT;
-  window.speechSynthesis.speak(u);
+  u.onerror=(e)=>{console.error("[BJG TTS] utterance error:",e.error||e);restartSTT();};
+  u.onstart=()=>{console.log("[BJG TTS] utterance started");};
+  // v1.18 — Petit delai apres cancel() pour eviter le bug Chrome ou speak()
+  // appele trop vite apres cancel() est ignore silencieusement. En PiP cet
+  // effet est plus prononce. 60ms suffit dans la plupart des cas.
+  setTimeout(()=>{
+    try{
+      window.speechSynthesis.speak(u);
+      console.log("[BJG TTS] speak() invoked, speaking=",window.speechSynthesis.speaking,"pending=",window.speechSynthesis.pending);
+    }catch(e){
+      console.error("[BJG TTS] speak() threw:",e);
+      ttsActive=false;
+    }
+  },60);
 }
 
 // ══ GRIDS ══
@@ -3359,7 +3426,10 @@ const TUTO_STEPS=[
   {target:"#burger-btn",icon:"☰",titleKey:"tutoSpT5",descKey:"tutoSpD5"},
   {target:"#hilo-badge",icon:"🔢",titleKey:"tutoSpT6",descKey:"tutoSpD6",pro:true},
   {target:"#mic-btn",icon:"🎤",titleKey:"tutoSpT7",descKey:"tutoSpD7",pro:true},
-  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true}
+  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true},
+  // v1.19 — Nouvelles étapes pour les features récentes (PiP + Whisper)
+  {target:null,icon:"🪟",titleKey:"tutoSpTpip",descKey:"tutoSpDpip",centered:true,pro:true},
+  {target:null,icon:"🧠",titleKey:"tutoSpTwhi",descKey:"tutoSpDwhi",centered:true,pro:true}
 ];
 
 // Vérifie si la condition d'une étape interactive est remplie
@@ -5620,7 +5690,8 @@ function validatePromoCode(){
     input.value="";
     fb.className="promo-feedback";
     closePopup("popup-settings-modal");
-    document.getElementById("popup-pro-ok").classList.add("show");
+    // v1.19 — Code promo "unlock_pro" lance aussi la séquence guidée de découverte
+    showProFeatTour();
   } else if(promo.action==="lock_lite"){
     if(!isPremium){
       fb.textContent=tr.promoAlreadyLite;fb.className="promo-feedback ok";
@@ -6145,7 +6216,74 @@ function purchasePro(){
   //   et appeler setPremium(true) seulement après confirmation.
   setPremium(true);
   closePopup("popup-paywall");
+  // v1.19 — Lance la séquence guidée de découverte des features PRO
+  // au lieu d'un simple popup de confirmation.
+  showProFeatTour();
+}
+
+// v1.19 — Séquence guidée post-achat : explique chaque feature PRO en
+// popups successifs navigables. L'user peut cliquer Précédent/Suivant ou
+// "C'est bon ✓" à la fin pour fermer.
+let proFeatStep=0;
+function getProFeatures(){
+  const tr=LANGS[currentLang]||LANGS.fr;
+  return [
+    {icon:'🎉',title:tr.proFeatT0||'Pro activé !',desc:tr.proFeatD0||'Découvre en 5 étapes tout ce que tu peux faire maintenant.'},
+    {icon:'🎤',title:tr.proFeatT1||'Commande vocale',desc:tr.proFeatD1||'Active le micro depuis l\'en-tête de l\'app. Annonce les cartes ("as quatre cinq"), BJ Genius reconnaît et calcule la décision en temps réel.'},
+    {icon:'🧠',title:tr.proFeatT2||'Moteur Whisper',desc:tr.proFeatD2||'Reconnaissance vocale offline sans coupure. Activable dans Paramètres → Voix & Caméra. Premier lancement : ~40 Mo à télécharger.'},
+    {icon:'📷',title:tr.proFeatT3||'Scan caméra',desc:tr.proFeatD3||'Pointe la caméra vers la table (croupier en haut, ta main en bas), une photo, l\'app détecte automatiquement toutes les cartes.'},
+    {icon:'🪟',title:tr.proFeatT4||'Mode bulle',desc:tr.proFeatD4||'Active le micro puis appuie sur Home : BJ Genius rétrécit en bulle flottante par-dessus tes autres apps. Idéal pour tester en parallèle.'},
+    {icon:'🔢',title:tr.proFeatT5||'Comptage Hi-Lo',desc:tr.proFeatD5||'Badge "+/-" en haut de l\'app. Compte les cartes au fur et à mesure pour anticiper les paris. À utiliser avec le mode discret pour rester sobre.'}
+  ];
+}
+
+function showProFeatTour(){
+  proFeatStep=0;
+  document.getElementById('prook-tour-controls').style.display='block';
+  document.getElementById('prook-close').style.display='none';
+  renderProFeatStep();
   document.getElementById("popup-pro-ok").classList.add("show");
+}
+
+function showProFeatSimple(){
+  // Mode simple pour restorePurchase : pas de tour, juste un confirm.
+  const tr=LANGS[currentLang]||LANGS.fr;
+  document.getElementById('prook-icon').textContent='🎉';
+  document.getElementById('prook-title').textContent=tr.prookTitle||'Pro activé !';
+  document.getElementById('prook-msg').innerHTML=tr.prookMsg||'Toutes les fonctionnalités sont maintenant débloquées. Profitez !';
+  document.getElementById('prook-tour-controls').style.display='none';
+  document.getElementById('prook-close').style.display='block';
+  document.getElementById("popup-pro-ok").classList.add("show");
+}
+
+function renderProFeatStep(){
+  const features=getProFeatures();
+  const step=features[proFeatStep];
+  if(!step)return;
+  const tr=LANGS[currentLang]||LANGS.fr;
+  document.getElementById('prook-icon').textContent=step.icon;
+  document.getElementById('prook-title').textContent=step.title;
+  document.getElementById('prook-msg').innerHTML=step.desc;
+  document.getElementById('prook-step-indicator').textContent=(proFeatStep+1)+' / '+features.length;
+  // Visibilité Précédent (caché à l'étape 0)
+  document.getElementById('prook-prev').style.visibility=proFeatStep===0?'hidden':'visible';
+  // Label Suivant → "C'est bon ✓" à la dernière étape
+  if(proFeatStep===features.length-1){
+    document.getElementById('prook-next-lbl').innerHTML=tr.proFeatDone||"C'est bon ✓";
+  } else {
+    document.getElementById('prook-next-lbl').innerHTML=(tr.proFeatNext||'Suivant')+' →';
+  }
+  document.getElementById('prook-prev-lbl').textContent=tr.proFeatPrev||'Précédent';
+}
+
+function proFeatNav(dir){
+  const features=getProFeatures();
+  if(dir===1&&proFeatStep===features.length-1){
+    closePopup('popup-pro-ok');
+    return;
+  }
+  proFeatStep=Math.max(0,Math.min(features.length-1,proFeatStep+dir));
+  renderProFeatStep();
 }
 
 function restorePurchase(){
