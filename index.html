@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.30 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.1 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -24,8 +24,8 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 *{box-sizing:border-box;}
 /* ── Animations tap globales pour donner du "poids" tactile ── */
 .popup,.popup-overlay{transition:opacity 0.25s ease,transform 0.3s cubic-bezier(0.4,0,0.2,1);}
-.cards-hand-item,.daily-choice,.train-btn,.sbtn,.ditem,.setting-row,.daily-cal-cell{transition:transform 0.18s cubic-bezier(0.4,0,0.2,1),box-shadow 0.2s ease,background-color 0.2s ease;}
-.cards-hand-item:active,.ditem:active,.setting-row:active{transform:scale(0.97);}
+.daily-choice,.train-btn,.sbtn,.ditem,.setting-row,.daily-cal-cell{transition:transform 0.18s cubic-bezier(0.4,0,0.2,1),box-shadow 0.2s ease,background-color 0.2s ease;}
+.ditem:active,.setting-row:active{transform:scale(0.97);}
 /* Glow doré au hover/focus sur les éléments importants */
 .train-btn:active{transform:scale(0.95);}
 .sbtn:active{transform:scale(0.96);}
@@ -50,13 +50,7 @@ body.fs-large .adecision{font-size:2rem;}
 
 @keyframes popIn{from{transform:translate(-50%,-50%) scale(0.7);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
 /* EXPERT MODE */
-.expert-table{background:#0d5530;border-radius:14px;padding:10px;border:2px solid rgba(201,168,76,0.2);margin-bottom:10px;}
-.expert-dealer-row{text-align:center;margin-bottom:8px;}
-.expert-label{font-size:0.44rem;letter-spacing:2px;text-transform:uppercase;color:rgba(240,236,224,0.3);margin-bottom:5px;}
-.expert-cards{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;min-height:72px;align-items:center;}
-.expert-player-row{text-align:center;}
-.expert-total{font-size:0.65rem;color:rgba(240,236,224,0.5);margin-top:5px;letter-spacing:1px;}
-.expert-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px;}
+
 .expert-btn{padding:11px;border-radius:11px;text-align:center;font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
 .expert-btn:active{transform:scale(0.95);opacity:0.8;}
 .expert-btn.hit{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;}
@@ -65,29 +59,13 @@ body.fs-large .adecision{font-size:2rem;}
 .expert-btn.spl{background:rgba(56,189,248,0.15);border-color:rgba(56,189,248,0.4);color:#38bdf8;}
 .expert-btn.sur{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:#ef4444;}
 .expert-btn.disabled{opacity:0.3;pointer-events:none;}
-.expert-result{border-radius:12px;padding:12px;text-align:center;margin-bottom:10px;display:none;}
-.expert-result.win{background:rgba(34,197,94,0.15);border:2px solid rgba(34,197,94,0.35);}
-.expert-result.lose{background:rgba(239,68,68,0.15);border:2px solid rgba(239,68,68,0.35);}
-.expert-result.push{background:rgba(148,163,184,0.15);border:2px solid rgba(148,163,184,0.35);}
-.expert-result.bj{background:rgba(201,168,76,0.15);border:2px solid rgba(201,168,76,0.5);}
-.expert-result-txt{font-size:1.1rem;font-weight:900;letter-spacing:2px;}
-.expert-result.win .expert-result-txt{color:#22c55e;}
-.expert-result.lose .expert-result-txt{color:#ef4444;}
-.expert-result.push .expert-result-txt{color:#94a3b8;}
-.expert-result.bj .expert-result-txt{color:#c9a84c;}
-.expert-result-sub{font-size:0.62rem;color:rgba(240,236,224,0.5);margin-top:4px;}
-.expert-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
-.expert-stat{background:rgba(0,0,0,0.2);border-radius:8px;padding:6px 4px;text-align:center;}
-.expert-stat-val{font-size:0.85rem;font-weight:900;}
-.expert-stat-lbl{font-size:0.4rem;letter-spacing:0.8px;text-transform:uppercase;color:rgba(240,236,224,0.35);margin-top:1px;}
-.expert-hilo-bar{background:rgba(0,0,0,0.2);border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
-.expert-deck-info{font-size:0.58rem;color:rgba(240,236,224,0.4);letter-spacing:1px;}
+
+
 .expert-new-btn{width:100%;padding:11px;border-radius:11px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.8rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;}
 @keyframes flyOut{
   0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1;}
   100%{transform:translateY(-120px) rotate(var(--rot,15deg)) scale(0.5);opacity:0;}
 }
-.cv.fly{animation:flyOut 0.35s ease-in forwards;}
 
 /* STRATEGY TABLE POPUP */
 .strat-popup{background:#0a1f10;border-radius:20px 20px 0 0;border-top:1px solid rgba(201,168,76,0.2);padding:14px 10px 24px;width:100%;max-width:430px;animation:slideUp 0.25s ease;max-height:88vh;display:flex;flex-direction:column;}
@@ -100,11 +78,7 @@ body.fs-large .adecision{font-size:2rem;}
 .strat-grid.pairs{grid-template-columns:repeat(11,1fr);}
 .sg-cell{display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:800;padding:5px 2px;border-radius:2px;letter-spacing:0.5px;}
 .sg-hdr{background:rgba(0,0,0,0.4);color:rgba(240,236,224,0.5);font-size:0.44rem;font-weight:600;}
-.sg-H{background:rgba(34,197,94,0.25);color:#22c55e;}
-.sg-S{background:rgba(249,115,22,0.25);color:#f97316;}
-.sg-D,.sg-Ds{background:rgba(201,168,76,0.25);color:#c9a84c;}
-.sg-P{background:rgba(56,189,248,0.25);color:#38bdf8;}
-.sg-R,.sg-Rs{background:rgba(239,68,68,0.2);color:#ef4444;}
+
 .strat-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center;flex-shrink:0;}
 .strat-leg-item{display:flex;align-items:center;gap:3px;font-size:0.48rem;color:rgba(240,236,224,0.5);}
 .strat-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
@@ -127,7 +101,7 @@ body.fs-large .adecision{font-size:2rem;}
 .mic-btn.listening{background:rgba(239,68,68,0.35);border-color:#ef4444;animation:pulse-mic 0.8s infinite;}
 .cam-btn-pill{}
 .cam-btn-pill.on{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);}
-.hilo-label{font-size:0.38rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,236,224,0.42);font-weight:700;}
+
 .hilo-val{font-size:0.62rem;font-weight:900;line-height:1;}
 .hilo-val.pos{color:#22c55e;}.hilo-val.neg{color:#ef4444;}.hilo-val.neu{color:rgba(240,236,224,0.6);}
 .mic-btn:active{transform:scale(0.95);}
@@ -228,7 +202,7 @@ body.pip-mode #mic-help-fab{display:none!important;}
 .toggle.on{background:#22c55e;}
 .toggle::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:white;top:3px;left:3px;transition:transform 0.2s;}
 .toggle.on::after{transform:translateX(18px);}
-.setting-btn-sm{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:8px;color:#c9a84c;font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;cursor:pointer;}
+
 .hilo-big{text-align:center;font-size:3rem;font-weight:900;padding:10px 0;}
 .hilo-big.pos{color:#22c55e;}.hilo-big.neg{color:#ef4444;}.hilo-big.neu{color:rgba(240,236,224,0.4);}
 .hilo-advice{text-align:center;font-size:0.7rem;color:rgba(240,236,224,0.5);letter-spacing:1px;text-transform:uppercase;}
@@ -321,11 +295,9 @@ body.pip-mode #mic-help-fab{display:none!important;}
 .explain-content strong{color:#f0ece0;}
 .explain-rule{background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:0.68rem;color:rgba(240,236,224,0.5);line-height:1.5;}
 /* TUT */
-.tut-item{background:rgba(255,255,255,0.05);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
-.tut-ico{font-size:1.8rem;flex-shrink:0;}
-.tut-txt{text-align:left;}
+
 .tut-title{font-size:0.75rem;font-weight:700;color:#f0ece0;}
-.tut-desc{font-size:0.62rem;color:rgba(240,236,224,0.45);margin-top:1px;}
+
 .cta-btn{width:100%;padding:13px;border-radius:12px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.85rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;}
 /* BURGER MENU */
 .burger-btn{width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;background:rgba(0,0,0,0.2);border-radius:9px;padding:6px;position:absolute;top:4px;right:0;z-index:2;}
@@ -351,14 +323,9 @@ body.pip-mode #mic-help-fab{display:none!important;}
 .ditem-txt{flex:1;}
 .ditem-label{font-size:0.72rem;font-weight:600;color:#f0ece0;}
 .ditem-sub{font-size:0.52rem;color:rgba(240,236,224,0.3);margin-top:1px;}
-.dtoggle{width:38px;height:21px;border-radius:11px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
-.dtoggle.on{background:#22c55e;}
-.dtoggle::after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:white;top:3px;left:3px;transition:transform 0.2s;}
-.dtoggle.on::after{transform:translateX(17px);}
 .lang-btns{display:flex;gap:3px;}
 .lbtn{padding:4px 7px;border-radius:5px;font-size:0.6rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:rgba(240,236,224,0.4);border:1px solid transparent;}
 .lbtn.on{background:rgba(201,168,76,0.15);color:#c9a84c;border-color:rgba(201,168,76,0.3);}
-.ddiv{height:1px;background:rgba(255,255,255,0.05);margin:6px 16px;}
 
 /* ── PRO / PAYWALL ── */
 /* Indicateurs cadenas sur features Pro (visibles seulement en mode Lite) */
@@ -370,9 +337,7 @@ body.lite .stat-btns{flex:0 0 auto;grid-template-columns:1fr;width:62px;}
 /* Le bouton Pro prend la place des 3 stats verrouillées (lose/bust/push) à droite. */
 .stats-pro-lock{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,rgba(201,168,76,0.10),rgba(138,96,32,0.16));border:1px solid rgba(201,168,76,0.28);border-radius:8px;padding:6px 8px;cursor:pointer;font-size:0.5rem;color:rgba(201,168,76,0.85);letter-spacing:0.8px;text-transform:uppercase;font-weight:700;line-height:1.2;text-align:center;align-self:stretch;white-space:normal;}
 .stats-pro-lock:active{transform:scale(0.97);}
-.stats-pro-ico{font-size:0.85rem;}
-.stats-pro-txt{font-size:0.55rem;font-weight:700;color:#c9a84c;letter-spacing:0.8px;text-transform:uppercase;line-height:1.2;}
-.stats-pro-sub{font-size:0.4rem;color:rgba(201,168,76,0.7);letter-spacing:0.5px;text-transform:uppercase;}
+
 /* Cadenas sur le toggle mode discret */
 .pro-row-lock{font-size:0.55rem;color:#c9a84c;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:5px;padding:2px 6px;letter-spacing:1px;font-weight:800;margin-right:6px;}
 body.lite .setting-row.pro-locked .toggle{opacity:0.4;pointer-events:none;}
@@ -428,8 +393,7 @@ body.lite .ts-expert-card{position:relative;}
 #tuto-bubble-features:empty{display:none;}
 .tuto-feat-item{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:7px 10px;margin-bottom:5px;font-size:0.62rem;color:rgba(240,236,224,0.85);}
 .tuto-feat-item.pro{background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(138,96,32,0.12));border:1px solid rgba(201,168,76,0.25);}
-.tuto-feat-ico{font-size:0.95rem;flex-shrink:0;width:22px;text-align:center;}
-.tuto-feat-pro-tag{background:#c9a84c;color:#1a1000;font-size:0.45rem;font-weight:900;padding:2px 5px;border-radius:4px;letter-spacing:1px;margin-left:auto;flex-shrink:0;}
+
 #tuto-bubble-cta-final{padding:13px;border-radius:11px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.78rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-align:center;margin-bottom:10px;box-shadow:0 4px 12px rgba(201,168,76,0.25);}
 #tuto-bubble-cta-final:active{transform:scale(0.98);}
 #tuto-bubble-actions{display:flex;align-items:center;gap:6px;}
@@ -647,7 +611,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div id="rotate-overlay">
   <div class="ro-inner">
     <div class="ro-icon">📱↻</div>
-    <div class="ro-title" id="ro-title">Tourne ton téléphone</div>
+    <div class="ro-title" id="ro-title">Tournez votre téléphone</div>
     <div class="ro-sub" id="ro-sub">BJ Genius s'utilise en mode portrait.</div>
   </div>
 </div>
@@ -664,7 +628,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.30</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.1</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -823,7 +787,7 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="welcome-icon">♠♥♦♣</div>
     <div class="popup-title" id="tut-title" style="text-align:center;margin-top:0;">👋 Bienvenue sur BJ Genius !</div>
     <div class="welcome-tagline" id="tut-tagline">Ton coach de blackjack dans la poche.</div>
-    <div class="welcome-intro" id="tut-intro">Joue au casino, en ligne ou entre amis. Saisis tes cartes, BJ Genius te dit la meilleure décision en 1 seconde.</div>
+    <div class="welcome-intro" id="tut-intro">Jouez au casino, en ligne ou entre amis. Saisissez vos cartes, BJ Genius vous dit la meilleure décision en 1 seconde.</div>
     <div class="welcome-bullets">
       <div class="welcome-bullet"><span class="wb-ico">🎯</span><span id="tut-b1">Décision optimale calculée mathématiquement</span></div>
       <div class="welcome-bullet"><span class="wb-ico">📚</span><span id="tut-b2">Apprends les règles et la stratégie</span></div>
@@ -841,8 +805,8 @@ body.pip-mode #pip-display{display:flex!important;}
   <div class="popup">
     <div style="text-align:center;margin-bottom:16px;">
       <div style="font-size:2rem;margin-bottom:6px;">🎯</div>
-      <div style="font-size:0.95rem;font-weight:900;color:#d4b863;letter-spacing:2px;margin-bottom:4px;" id="lvl-title">Tu connais le blackjack ?</div>
-      <div style="font-size:0.65rem;color:rgba(240,236,224,0.6);line-height:1.5;" id="lvl-sub">On adapte la suite à ton niveau.</div>
+      <div style="font-size:0.95rem;font-weight:900;color:#d4b863;letter-spacing:2px;margin-bottom:4px;" id="lvl-title">Vous connaissez le blackjack ?</div>
+      <div style="font-size:0.65rem;color:rgba(240,236,224,0.6);line-height:1.5;" id="lvl-sub">On adapte la suite à votre niveau.</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div onclick="selectLevel('beginner')" class="lvl-card" style="background:rgba(56,189,248,0.07);border:1.5px solid rgba(56,189,248,0.3);border-radius:12px;padding:15px;cursor:pointer;display:flex;gap:13px;align-items:center;transition:all 0.2s;">
@@ -1102,7 +1066,7 @@ body.pip-mode #pip-display{display:flex!important;}
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
       <div onclick="closePopup('popup-train-select');openBasicTraining();" style="background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.3);border-radius:14px;padding:16px;cursor:pointer;">
         <div id="ts-classic-t" style="font-size:0.85rem;font-weight:900;color:#22c55e;margin-bottom:5px;">🎯 Mode Classique</div>
-        <div id="ts-classic-d" style="font-size:0.65rem;color:rgba(240,236,224,0.55);line-height:1.6">Mains aléatoires — choisis Tirer/Rester/Doubler/Splitter. L'app corrige et explique. Idéal pour apprendre la stratégie de base.</div>
+        <div id="ts-classic-d" style="font-size:0.65rem;color:rgba(240,236,224,0.55);line-height:1.6">Mains aléatoires — choisissez Tirer/Rester/Doubler/Splitter. L'app corrige et explique. Idéal pour apprendre la stratégie de base.</div>
       </div>
       <div class="ts-expert-card" onclick="onTrainExpertTap()" style="background:rgba(201,168,76,0.1);border:2px solid rgba(201,168,76,0.3);border-radius:14px;padding:16px;cursor:pointer;">
         <div class="pro-card-lock">🔒 PRO</div>
@@ -1199,9 +1163,9 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="strat-mini-tuto" id="strat-mini-tuto" onclick="event.stopPropagation()">
       <div class="strat-mini-ico">📋</div>
       <div class="strat-mini-title" id="smt-title">Comment lire le tableau</div>
-      <div class="strat-mini-row"><div class="num">1</div><div class="txt" id="smt-p1"><strong>Lignes</strong> = ta main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.</div></div>
+      <div class="strat-mini-row"><div class="num">1</div><div class="txt" id="smt-p1"><strong>Lignes</strong> = votre main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.</div></div>
       <div class="strat-mini-row"><div class="num">2</div><div class="txt" id="smt-p2">Chaque <strong>couleur</strong> indique l'action optimale. La légende est en bas du tableau.</div></div>
-      <div class="strat-mini-row"><div class="num">3</div><div class="txt" id="smt-p3">Bascule entre <strong>Hard / Soft / Paires</strong> selon ta main.</div></div>
+      <div class="strat-mini-row"><div class="num">3</div><div class="txt" id="smt-p3">Basculez entre <strong>Hard / Soft / Paires</strong> selon votre main.</div></div>
       <div class="strat-mini-cta" id="smt-cta" onclick="dismissStratMiniTuto()">OK, j'ai compris</div>
     </div>
     <div class="popup-handle"></div>
@@ -1274,7 +1238,7 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="popup-handle"></div>
     <div style="font-size:2.6rem;margin-bottom:4px;">🎤</div>
     <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;" id="intro-mic-title">Commande vocale</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-mic-sub">Annonce les cartes à voix haute, BJ Genius calcule la décision en direct.</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-mic-sub">Annoncez les cartes à voix haute, BJ Genius calcule la décision en direct.</div>
 
     <!-- Démo visuelle : "as quatre cinq" → 3 cartes affichées -->
     <div style="background:rgba(0,0,0,0.28);border:1px solid rgba(212,184,99,0.18);border-radius:12px;padding:13px 10px;margin-bottom:10px;">
@@ -1305,7 +1269,7 @@ body.pip-mode #pip-display{display:flex!important;}
 
     <!-- v1.24 — Mention du DL Whisper integree ici (toggle moteur retire des
          parametres). On previent l'user qu'au 1er usage il y aura un DL. -->
-    <div style="background:rgba(127,170,255,0.07);border:1px solid rgba(127,170,255,0.22);border-radius:11px;padding:9px 11px;margin-bottom:12px;text-align:left;font-size:0.62rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-mic-whisper-info">🧠 <strong>Premier usage :</strong> téléchargement automatique d'un moteur vocal offline (~40 Mo). Mets-toi en <strong>Wi-Fi</strong>. Ensuite : reconnaissance sans coupure, sans réseau.</div>
+    <div style="background:rgba(127,170,255,0.07);border:1px solid rgba(127,170,255,0.22);border-radius:11px;padding:9px 11px;margin-bottom:12px;text-align:left;font-size:0.62rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-mic-whisper-info">🧠 <strong>Premier usage :</strong> téléchargement automatique d'un moteur vocal offline (~40 Mo). Mettez-vous en <strong>Wi-Fi</strong>. Ensuite : reconnaissance sans coupure, sans réseau.</div>
 
     <div onclick="closePopup('popup-intro-mic')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-mic-ok">Compris ✓</div>
   </div>
@@ -1406,16 +1370,16 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="popup-handle"></div>
     <div style="font-size:2.6rem;margin-bottom:6px;">🪟</div>
     <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-pip-title">Mode bulle débloqué</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-pip-sub">BJ Genius reste visible en bulle flottante par-dessus tes autres apps.</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-pip-sub">BJ Genius reste visible en bulle flottante par-dessus vos autres apps.</div>
     <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.3);border-radius:11px;padding:11px;margin-bottom:10px;text-align:left;">
       <div style="font-size:0.55rem;letter-spacing:2px;color:#22c55e;text-transform:uppercase;font-weight:800;margin-bottom:7px;" id="intro-pip-howh">Comment l'activer</div>
       <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.7;" id="intro-pip-howl">
-        <div><strong>1.</strong> Active le micro 🎤</div>
-        <div><strong>2.</strong> Appuie sur <strong>Home</strong></div>
+        <div><strong>1.</strong> Activez le micro 🎤</div>
+        <div><strong>2.</strong> Appuyez sur <strong>Home</strong></div>
         <div><strong>3.</strong> La bulle apparaît automatiquement</div>
       </div>
     </div>
-    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-pip-tip">💡 <strong>Le mic continue de capter</strong> en mode bulle. Dis tes cartes, vois la décision s'afficher en gros, sans quitter ton autre app.</div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-pip-tip">💡 <strong>Le mic continue de capter</strong> en mode bulle. Dites vos cartes, voyez la décision s'afficher en gros, sans quitter votre autre app.</div>
     <div onclick="closePopup('popup-intro-pip')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-pip-ok">Compris ✓</div>
   </div>
 </div>
@@ -1437,7 +1401,7 @@ body.pip-mode #pip-display{display:flex!important;}
     <div class="popup-handle"></div>
     <div style="font-size:2.5rem;margin-bottom:6px;">📅</div>
     <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;" id="dprmpt-title">Défi du jour</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.7);margin-bottom:14px;line-height:1.5;" id="dprmpt-msg">Une nouvelle main, une décision. Tu relèves le défi ?</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.7);margin-bottom:14px;line-height:1.5;" id="dprmpt-msg">Une nouvelle main, une décision. Vous relevez le défi ?</div>
     <div style="display:flex;gap:8px;">
       <div onclick="dailyPromptLater()" id="dprmpt-later" style="flex:1;padding:11px;border-radius:11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(240,236,224,0.7);font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;">Plus tard</div>
       <div onclick="dailyPromptYes()" id="dprmpt-yes" style="flex:2;padding:11px;border-radius:11px;background:linear-gradient(135deg,#8a6020,#c9a84c);color:#1a1000;font-size:0.78rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;">Jouer maintenant</div>
@@ -1698,7 +1662,7 @@ const LANGS={
     sub:"Tableau standard",
     tutTitle:"👋 Bienvenue sur BJ Genius !",
     tutSwipeT:"Swipe gauche", tutSwipeD:"Nouvelle main — réinitialise tout",
-    tutVoiceT:"Commande vocale", tutVoiceD:"Active le micro et dis les cartes dans l'ordre : « As trois dix »",
+    tutVoiceT:"Commande vocale", tutVoiceD:"Activez le micro et dites les cartes dans l'ordre : « As trois dix »",
     tutHelpT:"Bouton ?", tutHelpD:"Explication de la décision affichée",
     tutHiloT:"Badge Hi-Lo", tutHiloD:"Compteur de cartes — tap pour voir les détails",
     tutSettingsT:"Paramètres", tutSettingsD:"Mode casino, grande police, entraînement…",
@@ -1735,7 +1699,7 @@ const LANGS={
     // ── Mode entraînement (sélecteur) ──
     trainSelectTitle:"🎯 Mode Entraînement",
     trainSelectClassicTitle:"🎯 Mode Classique",
-    trainSelectClassicDesc:"Mains aléatoires — choisis Tirer/Rester/Doubler/Splitter. L'app corrige et explique. Idéal pour apprendre la stratégie de base.",
+    trainSelectClassicDesc:"Mains aléatoires — choisissez Tirer/Rester/Doubler/Splitter. L'app corrige et explique. Idéal pour apprendre la stratégie de base.",
     trainSelectExpertTitle:"⚡ Mode Expert — Simulation",
     trainSelectExpertDesc:"Vraie partie simulée avec un sabot de 6 jeux. Tire des cartes, le croupier joue selon les vraies règles. Statistiques en temps réel + compteur Hi-Lo du sabot.",
     // ── Mode expert (simulation) ──
@@ -1814,7 +1778,7 @@ const LANGS={
     quizOk:"Pas mal. La pratique fera la différence.",
     quizLow:"À retravailler. Le mode entraînement va t'aider.",
     tutoInstr_pickDealer:"Touche une carte du croupier",
-    tutoInstr_pickHand:"Ajoute 2 cartes à ta main",
+    tutoInstr_pickHand:"Ajoutez 2 cartes à votre main",
     tutoInstr_pickHandLast:"Plus qu'une carte !",
     tutoInstr_reset:"Swipe vers la gauche pour effacer",
     // ── Partager l'app ──
@@ -1845,39 +1809,39 @@ const LANGS={
     dailyWeekdays:["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
     dailyMonths:["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
     dailyExplains:{
-      HIT_LOW:"Avec %TOTAL%, tu n'es pas en danger de bust en tirant. Le croupier avec %D% peut faire un total fort, donc on tente d'améliorer.",
+      HIT_LOW:"Avec %TOTAL%, vous n'êtes pas en danger de bust en tirant. Le croupier avec %D% peut faire un total fort, donc on tente d'améliorer.",
       HIT_HIGH:"%TOTAL% est fragile, mais le croupier a une carte forte (%D%). Mieux vaut tirer et risquer le bust que de rester sur une main faible.",
       STAND_LOW:"Le croupier avec %D% a 35-42 % de chances de bust avec sa carte faible. Mieux vaut rester avec %TOTAL% et le laisser se planter.",
       STAND_HIGH:"%TOTAL% est suffisamment haut pour être compétitif. On reste.",
       DOUBLE_HARD:"%TOTAL% contre %D% : situation très favorable. Doubler maximise le gain attendu.",
       DOUBLE_SOFT:"Avec un soft %TOTAL%, doubler contre %D% est rentable : pas de risque de bust, et belle espérance.",
       SPLIT_GOOD:"Splitter cette paire transforme une main moyenne en deux mains plus fortes. Ne jamais hésiter.",
-      SPLIT_BAD:"Cette paire face à %D% : ne pas splitter ! Tu doublerais ton risque pour rien.",
+      SPLIT_BAD:"Cette paire face à %D% : ne pas splitter ! Vous doubleriez votre risque pour rien.",
       HIGH:"Cette main est trop forte pour être splittée. On reste, c'est largement gagnant."
     },
     // ── Tutoriel step-by-step ──
     tutoSkip:"Passer", tutoNext:"Suivant →", tutoFinish:"Terminer ✓", tutoStartPlay:"Commencer à jouer 🃏",
     learnSkipToTuto:"Passer le tuto →",
     setSecDisplay:"Affichage", setSecVoice:"Voix & Caméra", setSecAccount:"Compte & Langue",
-    rotateTitle:"Tourne ton téléphone", rotateSub:"BJ Genius s'utilise en mode portrait.",
+    rotateTitle:"Tournez votre téléphone", rotateSub:"BJ Genius s'utilise en mode portrait.",
     tutoSeePro:"Voir l'offre Pro 👑",
     // Étape 1
     tutoS1Title:"Ta décision en 1 seconde ⚡",
-    tutoS1Sub:"BJ Genius te dit instantanément quoi faire au blackjack. Plus jamais besoin d'hésiter.",
+    tutoS1Sub:"BJ Genius vous dit instantanément quoi faire au blackjack. Plus jamais besoin d'hésiter.",
     tutoS1Dealer:"Croupier",
     tutoS1Hand:"Ta main",
     tutoS1Caption:"Exemple : K + 6 contre 10 → Rester",
     // Étape 2
     tutoS2Title:"3 étapes simples 🎮",
-    tutoS2Sub:"L'app fait tout le boulot. Tu n'as qu'à dire ce que tu vois sur la table.",
-    tutoS2Step1:"<strong>Tape la carte du croupier</strong> dans la grille du haut",
-    tutoS2Step2:"<strong>Tape tes cartes</strong> dans la grille du bas (au moins 2)",
+    tutoS2Sub:"L'app fait tout le boulot. Vous n'avez qu'à dire ce que vous voyez sur la table.",
+    tutoS2Step1:"<strong>Tapez la carte du croupier</strong> dans la grille du haut",
+    tutoS2Step2:"<strong>Tapez vos cartes</strong> dans la grille du bas (au moins 2)",
     tutoS2Step3:"<strong>La décision s'affiche</strong> en gros, avec la couleur correspondante",
     // Étape 3
     tutoS3Title:"Les gestes essentiels ✋",
     tutoS3Sub:"Quelques raccourcis qui changent la vie pendant une partie.",
     tutoS3G1:"<strong>Swipe vers la gauche</strong> n'importe où sur l'écran → nouvelle main",
-    tutoS3G2:"<strong>Tap sur une carte</strong> de ta main → la retirer",
+    tutoS3G2:"<strong>Tap sur une carte</strong> de votre main → la retirer",
     tutoS3G3:"<strong>Bouton ☰ en haut à droite</strong> → tous les outils",
     tutoS3G4:"<strong>Bouton ?</strong> à côté de la décision → comprendre pourquoi",
     // Étape 4
@@ -1886,16 +1850,16 @@ const LANGS={
     tutoS4F1T:"📋 Tableau de stratégie",
     tutoS4F1S:"Toutes les décisions optimales : Hard, Soft, Paires. En couleurs, lisible d'un coup d'œil.",
     tutoS4F2T:"🎯 Mode entraînement",
-    tutoS4F2S:"L'app te lance des mains aléatoires, tu choisis, elle corrige et explique.",
+    tutoS4F2S:"L'app vous lance des mains aléatoires, vous choisissez, elle corrige et explique.",
     tutoS4F3T:"📚 Apprendre le blackjack",
     tutoS4F3S:"Tutoriel complet pour les débutants : règles, vocabulaire, stratégie de base.",
     // Étape 5
-    tutoS5Title:"Tu peux aller encore plus loin ✨",
+    tutoS5Title:"Vous pouvez aller encore plus loin ✨",
     tutoS5Sub:"5 features avancées pour les joueurs sérieux. Disponibles avec BJ Genius Pro.",
     tutoS5F1T:"Commande vocale",
-    tutoS5F1S:"Annonce les cartes à voix haute, l'app les reconnaît",
+    tutoS5F1S:"Annoncez les cartes à voix haute, l'app les reconnaît",
     tutoS5F2T:"Compteur Hi-Lo",
-    tutoS5F2S:"Suis le sabot en temps réel pour adapter ta mise",
+    tutoS5F2S:"Suivez le sabot en temps réel pour adapter votre mise",
     tutoS5F3T:"Stats détaillées",
     tutoS5F3S:"% de gain, perte, bust et égalité pour chaque main",
     tutoS5F4T:"Mode Expert",
@@ -1914,21 +1878,21 @@ const LANGS={
     tutoS6Cta:"Découvrir Pro 👑",
     // ── Tuto SPOTLIGHT (overlay sur écran principal) ──
     tutoSpT1:"Carte du croupier",
-    tutoSpD1:"C'est ici que tu indiques la carte que le croupier a retournée. <strong>Tape sur la carte</strong> qui apparaît sur la table.",
+    tutoSpD1:"C'est ici que vous indiquez la carte que le croupier a retournée. <strong>Tapez sur la carte</strong> qui apparaît sur la table.",
     tutoSpT2:"Tes cartes",
-    tutoSpD2:"Et ici, tu indiques tes propres cartes. <strong>Tape au moins 2 cartes</strong> pour obtenir une décision.",
+    tutoSpD2:"Et ici, vous indiquez vos propres cartes. <strong>Tapez au moins 2 cartes</strong> pour obtenir une décision.",
     tutoSpT3:"La décision optimale",
-    tutoSpD3:"Une fois tes cartes choisies, la décision apparaît ici en gros, avec sa <strong>couleur</strong> : tirer, rester, doubler, splitter ou abandonner.",
-    tutoSpT4:"Modifier ta main",
-    tutoSpD4:"Tu t'es trompé ? <strong>Tape sur une carte de ta main</strong> pour la retirer. Tu peux aussi <strong>swiper l'écran vers la gauche</strong> pour repartir à zéro.",
+    tutoSpD3:"Une fois vos cartes choisies, la décision apparaît ici en gros, avec sa <strong>couleur</strong> : tirer, rester, doubler, splitter ou abandonner.",
+    tutoSpT4:"Modifier votre main",
+    tutoSpD4:"Vous vous êtes trompé ? <strong>Tapez sur une carte de votre main</strong> pour la retirer. Vous pouvez aussi <strong>swiper l'écran vers la gauche</strong> pour repartir à zéro.",
     tutoSpT5:"Tous les outils",
     tutoSpD5:"Le menu burger te donne accès à <strong>tous les outils gratuits</strong> : tableau de stratégie, mode entraînement, et tutoriel pour apprendre le blackjack.",
     tutoSpT6:"Compteur Hi-Lo",
-    tutoSpD6:"Compte automatiquement les cartes du sabot pour savoir quand le jeu est en ta faveur. <strong>Disponible avec Pro</strong>.",
+    tutoSpD6:"Compte automatiquement les cartes du sabot pour savoir quand le jeu est en votre faveur. <strong>Disponible avec Pro</strong>.",
     tutoSpT7:"Commande vocale",
-    tutoSpD7:"Annonce les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
+    tutoSpD7:"Annoncez les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
     tutoSpTcam:"Scan caméra",
-    tutoSpDcam:"Pointe la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>ta main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
+    tutoSpDcam:"Pointez la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>votre main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -1938,7 +1902,7 @@ const LANGS={
     tutoSpFinalMeta:"Achat unique • À vie • Sans abonnement",
     // ── Welcome popup (refondue) ──
     tutTagline:"Ton coach de blackjack dans la poche.",
-    tutIntro:"Joue au casino, en ligne ou entre amis. Saisis tes cartes, BJ Genius te dit la meilleure décision en 1 seconde.",
+    tutIntro:"Jouez au casino, en ligne ou entre amis. Saisissez vos cartes, BJ Genius vous dit la meilleure décision en 1 seconde.",
     tutB1:"Décision optimale calculée mathématiquement",
     tutB2:"Apprends les règles et la stratégie",
     tutB3:"Hors-ligne, sans pub, sans tracking",
@@ -1946,9 +1910,9 @@ const LANGS={
     // ── v1.5 — Bouton indice + mini-tuto stratégie ──
     hintBtn:"Indice",
     smtTitle:"Comment lire le tableau",
-    smtP1:"<strong>Lignes</strong> = ta main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.",
+    smtP1:"<strong>Lignes</strong> = votre main (total ou paire). <strong>Colonnes</strong> = la carte visible du croupier.",
     smtP2:"Chaque <strong>couleur</strong> indique l'action optimale. La légende est en bas du tableau.",
-    smtP3:"Bascule entre <strong>Hard / Soft / Paires</strong> selon ta main.",
+    smtP3:"Basculez entre <strong>Hard / Soft / Paires</strong> selon votre main.",
     smtCta:"OK, j'ai compris",
     // ── v1.6 — Résumé scan amélioré + mode debug ──
     camSumDealer:"Croupier",
@@ -1971,7 +1935,7 @@ const LANGS={
     swUpdate:"🔄 Nouvelle version dispo — Toucher pour recharger",
     // ── v2.0 — Popup invitation défi du jour ──
     dprmptTitle:"Défi du jour",
-    dprmptMsg:"Une nouvelle main, une décision. Tu relèves le défi ?",
+    dprmptMsg:"Une nouvelle main, une décision. Vous relevez le défi ?",
     dprmptLater:"Plus tard",
     dprmptYes:"Jouer maintenant",
   },
@@ -2620,7 +2584,7 @@ function applyLang(){
   // Sélecteur de niveau (1er lancement) — traductions inline pour rester compact
   if(document.getElementById('lvl-title')){
     const lvlTexts={
-      fr:["Tu connais le blackjack ?","On adapte la suite à ton niveau.","Je découvre le blackjack","Règles → simulation → entraînement → tour de l'app.","Je connais le jeu","On te montre l'app en 1 minute."],
+      fr:["Vous connaissez le blackjack ?","On adapte la suite à votre niveau.","Je découvre le blackjack","Règles → simulation → entraînement → tour de l'app.","Je connais le jeu","On te montre l'app en 1 minute."],
       en:["Do you know blackjack?","We adapt the next steps to your level.","I'm new to blackjack","Rules → simulation → training → app tour.","I know the game","Quick 1-minute app tour."],
       es:["¿Conoces el blackjack?","Adaptamos lo siguiente a tu nivel.","Descubro el blackjack","Reglas → simulación → entrenamiento → tour de la app.","Conozco el juego","Tour rápido de la app en 1 minuto."]
     };
@@ -2912,7 +2876,7 @@ function openSettingsPopup(){
     if(localStorage.getItem('bjg_whisper_ready')==='1'&&!whisperReady){
       // Note: on ne peut pas savoir si le modele est REELLEMENT toujours en cache
       // navigateur, mais on lui fait confiance. Si echec au prochain usage, on
-      // bascule sur Web Speech via le catch dans loadWhisper.
+      // basculez sur Web Speech via le catch dans loadWhisper.
       whisperReady=true; // optimiste, sera revalide au prochain start
     }
   }catch(e){}
@@ -3505,7 +3469,7 @@ function openStrategy(){
     }
   }catch(e){}
 }
-// v1.5 — Ferme le mini-tuto et marque comme vu
+// v1.5 — Fermez le mini-tuto et marque comme vu
 function dismissStratMiniTuto(){
   const o=document.getElementById('strat-mini-tuto');
   if(o)o.classList.remove('show');
@@ -3554,7 +3518,7 @@ function closePopup(id){
     pendingTutoAfterTraining=false;
     setTimeout(()=>startTutoSpotlight(true),250);
   }
-  // v1.28 — Idem pour le mode expert : si l'user PRO a lance le tuto initial,
+  // v1.28 — Idem pour le mode expert : si l'user PRO a lancé le tuto initial,
   // choisi Expert, puis ferme popup-expert, on doit aussi lancer le tuto.
   if(id==='popup-expert' && pendingTutoAfterTraining){
     pendingTutoAfterTraining=false;
@@ -3564,7 +3528,7 @@ function closePopup(id){
 
 // v1.28 — Tap-exterieur sur le selecteur de mode entrainement (popup-train-select).
 // Avant ce fix, ce tap fermait juste le popup et le tuto spotlight n'etait jamais
-// lance (le check au closePopup ciblait 'popup-training' mais pas 'popup-train-select').
+// lancé (le check au closePopup ciblait 'popup-training' mais pas 'popup-train-select').
 // L'user reportait : "quand on atteint le pop up mode entraînement, si on ne clique
 // pas sur l'entraînement mais sur la page d'app, ça ne lance pas le tuto de l'app".
 function onTrainSelectOverlayClose(event){
@@ -3642,7 +3606,7 @@ function tutoCheckAutoAdvance(actionType){
 }
 
 function closeTutorial(){
-  // Ferme la welcome + enchaîne sur le spotlight
+  // Fermez la welcome + enchaîne sur le spotlight
   document.getElementById("popup-tutorial").classList.remove("show");
   startTutoSpotlight(tutoIsFirstLaunch);
 }
@@ -3693,7 +3657,7 @@ if(!localStorage.getItem("bjg_tut_seen")){
 function startTutoSpotlight(isFirstLaunch){
   tutoIsFirstLaunch=isFirstLaunch;
   tutoCurrentStep=0;
-  // Ferme le drawer s'il est ouvert (sinon il masque les zones)
+  // Fermez le drawer s'il est ouvert (sinon il masque les zones)
   closeDrawer();
   document.getElementById("tuto-spotlight-overlay").classList.add("show");
   // Petit délai pour laisser le drawer se fermer avant de positionner le spotlight
@@ -3893,7 +3857,7 @@ function positionSpotlight(step){
   if(bx+bw>W-8)bx=W-bw-8;
   bubble.style.left=bx+"px";
   bubble.style.top=by+"px";
-  // Position de la flèche : pointe le centre de la zone éclairée
+  // Position de la flèche : pointez le centre de la zone éclairée
   arrow.classList.remove("below","above","hidden");
   arrow.classList.add(arrowPos);
   const arrowX=fx+fw/2-bx-7; // coordonnée X relative à la bulle
@@ -4002,7 +3966,7 @@ function showTrainHint(){
   if(!choices)return;
   // Retire les éventuels glows précédents
   choices.querySelectorAll(".train-btn.hint-glow").forEach(b=>b.classList.remove("hint-glow"));
-  // Ajoute le glow sur le bon bouton
+  // Ajoutez le glow sur le bon bouton
   choices.querySelectorAll(".train-btn").forEach(b=>{
     if(b.dataset.lkey===correctLabelKey){
       b.classList.add("hint-glow");
@@ -4084,12 +4048,12 @@ function getLearnSlides(){
   // Default: français
   return [
     {title:"🎯 Le but du jeu",content:`<div style="display:flex;justify-content:center;align-items:center;gap:8px;margin:6px 0 14px;">${_lcard('A','♠')}${_lcard('K','♥')}<div style="font-size:0.7rem;color:rgba(240,236,224,0.35);letter-spacing:3px;font-weight:800;align-self:center;padding:0 4px;">VS</div>${_lcard('Q','♦')}${_lcardback()}</div><div style="background:linear-gradient(135deg,rgba(201,168,76,0.10),rgba(138,96,32,0.16));border:1px solid rgba(201,168,76,0.32);border-radius:14px;padding:16px 14px 14px;text-align:center;margin-bottom:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);"><div style="font-size:0.5rem;letter-spacing:3px;color:rgba(212,184,99,0.7);text-transform:uppercase;margin-bottom:8px;font-weight:800">L'objectif</div><div style="font-size:0.8rem;font-weight:600;color:#f0ece0;line-height:1.45;margin-bottom:6px;">Battre le croupier en t'approchant le plus possible de</div><div style="font-size:3rem;font-weight:900;color:#d4b863;letter-spacing:6px;line-height:1;text-shadow:0 0 22px rgba(212,184,99,0.45);margin:8px 0 6px">21</div><div style="font-size:0.65rem;color:rgba(240,236,224,0.55);font-style:italic;">…sans jamais le dépasser.</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div style="background:rgba(34,197,94,0.08);border:1.5px solid rgba(34,197,94,0.32);border-radius:11px;padding:11px 10px;"><div style="font-size:0.5rem;font-weight:800;color:#22c55e;margin-bottom:8px;letter-spacing:2.5px;text-align:center;">VICTOIRE</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.72);line-height:1.7;">• Plus proche de 21<br>• Le croupier dépasse<br>• Blackjack naturel</div></div><div style="background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.32);border-radius:11px;padding:11px 10px;"><div style="font-size:0.5rem;font-weight:800;color:#ef4444;margin-bottom:8px;letter-spacing:2.5px;text-align:center;">DÉFAITE</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.72);line-height:1.7;">• Tu dépasses 21<br>• Le croupier est plus haut<br>• Tu abandonnes</div></div></div>`},
-    {title:"🂡 La valeur des cartes",content:`<div style="font-size:0.65rem;color:rgba(240,236,224,0.55);margin-bottom:14px;text-align:center;font-style:italic;">Trois règles, et tu sais tout compter.</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;align-items:center;gap:12px;background:rgba(34,197,94,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #22c55e;"><div style="font-size:0.55rem;font-weight:900;color:#22c55e;letter-spacing:2px;flex-shrink:0;width:32px;text-align:center;">2 → 9</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Leur valeur affichée</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Le 7 vaut 7. Le 4 vaut 4. Simple.</div></div></div><div style="display:flex;align-items:center;gap:12px;background:rgba(212,184,99,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #d4b863;"><div style="font-size:0.55rem;font-weight:900;color:#d4b863;letter-spacing:1.5px;flex-shrink:0;width:32px;text-align:center;">10<br>J Q K</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Toutes les figures = 10</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Valet, Dame, Roi, et le Dix valent tous 10.</div></div></div><div style="display:flex;align-items:center;gap:12px;background:rgba(239,68,68,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #ef4444;"><div style="font-size:0.85rem;font-weight:900;color:#ef4444;letter-spacing:1px;flex-shrink:0;width:32px;text-align:center;">A</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">L'As = 1 ou 11</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Il choisit la valeur la plus avantageuse.</div></div></div></div><div style="background:rgba(0,0,0,0.25);border:1px dashed rgba(212,184,99,0.25);border-radius:12px;padding:11px 12px;"><div style="font-size:0.5rem;letter-spacing:2.5px;color:rgba(212,184,99,0.65);text-transform:uppercase;text-align:center;margin-bottom:8px;font-weight:800;">Exemple</div><div style="display:flex;align-items:center;justify-content:center;gap:8px;">${_lcard('K','♣')}<div style="font-size:1rem;color:rgba(240,236,224,0.5);font-weight:700">+</div>${_lcard('7','♥')}<div style="font-size:1rem;color:rgba(240,236,224,0.5);font-weight:700">=</div><div style="font-size:1.6rem;font-weight:900;color:#d4b863;letter-spacing:1px;text-shadow:0 0 12px rgba(212,184,99,0.4)">17</div></div></div>`},
-    {title:"🎬 Le déroulement d'une main",content:`<div style="display:flex;flex-direction:column;gap:0;"><div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:1rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;">1</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">La donne</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Tu reçois 2 cartes face visible. Le croupier reçoit 1 carte visible et 1 cachée.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Ton tour de jouer</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Tirer, rester, doubler, splitter ou abandonner — c'est toi qui décides.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Le croupier joue</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Il révèle sa carte cachée et tire jusqu'à atteindre 17. Sans choix possible.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(212,184,99,0.10),rgba(138,96,32,0.16));border:1px solid rgba(212,184,99,0.4);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#1a1000;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#d4b863;display:flex;align-items:center;justify-content:center;">4</div><div><div style="font-size:0.72rem;font-weight:800;color:#d4b863">Verdict</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Le total le plus proche de 21 l'emporte. Égalité = mise rendue.</div></div></div></div>`},
+    {title:"🂡 La valeur des cartes",content:`<div style="font-size:0.65rem;color:rgba(240,236,224,0.55);margin-bottom:14px;text-align:center;font-style:italic;">Trois règles, et vous savez tout compter.</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;align-items:center;gap:12px;background:rgba(34,197,94,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #22c55e;"><div style="font-size:0.55rem;font-weight:900;color:#22c55e;letter-spacing:2px;flex-shrink:0;width:32px;text-align:center;">2 → 9</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Leur valeur affichée</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Le 7 vaut 7. Le 4 vaut 4. Simple.</div></div></div><div style="display:flex;align-items:center;gap:12px;background:rgba(212,184,99,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #d4b863;"><div style="font-size:0.55rem;font-weight:900;color:#d4b863;letter-spacing:1.5px;flex-shrink:0;width:32px;text-align:center;">10<br>J Q K</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Toutes les figures = 10</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Valet, Dame, Roi, et le Dix valent tous 10.</div></div></div><div style="display:flex;align-items:center;gap:12px;background:rgba(239,68,68,0.08);border-radius:11px;padding:11px 13px;border-left:3px solid #ef4444;"><div style="font-size:0.85rem;font-weight:900;color:#ef4444;letter-spacing:1px;flex-shrink:0;width:32px;text-align:center;">A</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">L'As = 1 ou 11</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Il choisit la valeur la plus avantageuse.</div></div></div></div><div style="background:rgba(0,0,0,0.25);border:1px dashed rgba(212,184,99,0.25);border-radius:12px;padding:11px 12px;"><div style="font-size:0.5rem;letter-spacing:2.5px;color:rgba(212,184,99,0.65);text-transform:uppercase;text-align:center;margin-bottom:8px;font-weight:800;">Exemple</div><div style="display:flex;align-items:center;justify-content:center;gap:8px;">${_lcard('K','♣')}<div style="font-size:1rem;color:rgba(240,236,224,0.5);font-weight:700">+</div>${_lcard('7','♥')}<div style="font-size:1rem;color:rgba(240,236,224,0.5);font-weight:700">=</div><div style="font-size:1.6rem;font-weight:900;color:#d4b863;letter-spacing:1px;text-shadow:0 0 12px rgba(212,184,99,0.4)">17</div></div></div>`},
+    {title:"🎬 Le déroulement d'une main",content:`<div style="display:flex;flex-direction:column;gap:0;"><div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:1rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;">1</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">La donne</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Vous recevez 2 cartes face visible. Le croupier reçoit 1 carte visible et 1 cachée.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Ton tour de jouer</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Tirer, rester, doubler, splitter ou abandonner — c'est toi qui décides.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(212,184,99,0.18);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#d4b863;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(212,184,99,0.12);border:1.5px solid rgba(212,184,99,0.5);display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:0.72rem;font-weight:800;color:#f0ece0">Le croupier joue</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.55);margin-top:2px">Il révèle sa carte cachée et tire jusqu'à atteindre 17. Sans choix possible.</div></div></div>${_arrowDown()}<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(212,184,99,0.10),rgba(138,96,32,0.16));border:1px solid rgba(212,184,99,0.4);border-radius:11px;padding:11px 13px;"><div style="font-size:0.7rem;font-weight:900;color:#1a1000;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#d4b863;display:flex;align-items:center;justify-content:center;">4</div><div><div style="font-size:0.72rem;font-weight:800;color:#d4b863">Verdict</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Le total le plus proche de 21 l'emporte. Égalité = mise rendue.</div></div></div></div>`},
     {title:"🃏 Les 5 actions du joueur",content:`<div style="display:flex;flex-direction:column;gap:7px;"><div style="border-radius:11px;padding:10px 12px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.3);border-left:3px solid #22c55e;display:flex;gap:11px;align-items:center;"><div style="font-size:1.3rem;flex-shrink:0;width:28px;text-align:center;">👆</div><div style="flex:1;"><div style="font-size:0.72rem;font-weight:900;color:#22c55e;letter-spacing:1.5px;">TIRER</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Demander une carte de plus pour s'approcher de 21.</div></div></div><div style="border-radius:11px;padding:10px 12px;background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.3);border-left:3px solid #f97316;display:flex;gap:11px;align-items:center;"><div style="font-size:1.3rem;flex-shrink:0;width:28px;text-align:center;">✋</div><div style="flex:1;"><div style="font-size:0.72rem;font-weight:900;color:#f97316;letter-spacing:1.5px;">RESTER</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Garder la main telle quelle. Le tour passe au croupier.</div></div></div><div style="border-radius:11px;padding:10px 12px;background:rgba(212,184,99,0.07);border:1px solid rgba(212,184,99,0.3);border-left:3px solid #d4b863;display:flex;gap:11px;align-items:center;"><div style="font-size:1.3rem;flex-shrink:0;width:28px;text-align:center;">💰</div><div style="flex:1;"><div style="font-size:0.72rem;font-weight:900;color:#d4b863;letter-spacing:1.5px;">DOUBLER</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Doubler la mise et recevoir <strong>une seule</strong> carte supplémentaire.</div></div></div><div style="border-radius:11px;padding:10px 12px;background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.3);border-left:3px solid #38bdf8;display:flex;gap:11px;align-items:center;"><div style="font-size:1.3rem;flex-shrink:0;width:28px;text-align:center;">✌️</div><div style="flex:1;"><div style="font-size:0.72rem;font-weight:900;color:#38bdf8;letter-spacing:1.5px;">SPLITTER</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">En cas de paire, séparer les deux cartes en deux mains distinctes.</div></div></div><div style="border-radius:11px;padding:10px 12px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-left:3px solid #ef4444;display:flex;gap:11px;align-items:center;"><div style="font-size:1.3rem;flex-shrink:0;width:28px;text-align:center;">🏳️</div><div style="flex:1;"><div style="font-size:0.72rem;font-weight:900;color:#ef4444;letter-spacing:1.5px;">ABANDONNER</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:2px">Renoncer à la main et récupérer la moitié de la mise.</div></div></div></div>`},
     {title:"✨ Le Blackjack naturel",content:`<div style="text-align:center;margin:6px 0 14px;"><div style="display:flex;justify-content:center;gap:14px;margin-bottom:14px;">${_lcard('A','♥')}${_lcard('K','♠')}</div><div style="font-size:1.7rem;font-weight:900;color:#d4b863;letter-spacing:5px;text-shadow:0 0 24px rgba(212,184,99,0.6);margin-bottom:4px;">BLACKJACK</div><div style="font-size:0.55rem;color:rgba(240,236,224,0.5);letter-spacing:2px;text-transform:uppercase;font-weight:700;">As + carte à 10 dès la donne</div></div><div style="display:flex;flex-direction:column;gap:8px;"><div style="background:linear-gradient(135deg,rgba(212,184,99,0.10),rgba(138,96,32,0.16));border:1px solid rgba(212,184,99,0.35);border-radius:11px;padding:11px 13px;display:flex;gap:12px;align-items:center;"><div style="font-size:1.4rem;flex-shrink:0">🏆</div><div style="font-size:0.66rem;color:rgba(240,236,224,0.78);line-height:1.55">Bat <strong style="color:#d4b863">toutes</strong> les autres mains, y compris un 21 obtenu en plusieurs cartes.</div></div><div style="background:linear-gradient(135deg,rgba(212,184,99,0.10),rgba(138,96,32,0.16));border:1px solid rgba(212,184,99,0.35);border-radius:11px;padding:11px 13px;display:flex;gap:12px;align-items:center;"><div style="font-size:1.4rem;flex-shrink:0">💸</div><div style="font-size:0.66rem;color:rgba(240,236,224,0.78);line-height:1.55">Payé <strong style="color:#d4b863">3 contre 2</strong> — une mise de 10 € rapporte <strong>15 €</strong>.</div></div></div>`},
     {title:"🎬 Simulation",isSimulation:true,content:""},
-    {title:"🚀 Prêt à passer à la pratique ?",content:`<div style="text-align:center;margin-bottom:14px;"><div style="font-size:2.6rem;margin-bottom:8px;filter:drop-shadow(0 4px 14px rgba(212,184,99,0.4))">🎰</div><div style="font-size:1rem;font-weight:900;color:#d4b863;letter-spacing:3px;margin-bottom:8px;text-shadow:0 0 14px rgba(212,184,99,0.3)">FÉLICITATIONS</div><div style="font-size:0.68rem;color:rgba(240,236,224,0.65);line-height:1.6;">Tu connais maintenant les bases du blackjack.<br>Choisis comment continuer :</div></div><div style="display:flex;flex-direction:column;gap:10px;"><div onclick="goToTraining()" style="background:linear-gradient(135deg,rgba(34,197,94,0.10),rgba(34,197,94,0.18));border:1.5px solid rgba(34,197,94,0.4);border-radius:13px;padding:14px;cursor:pointer;display:flex;gap:13px;align-items:center;"><div style="font-size:1.7rem;flex-shrink:0">🎯</div><div style="flex:1;text-align:left;"><div style="font-size:0.78rem;font-weight:900;color:#22c55e;letter-spacing:1px;">Mode entraînement</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:3px;line-height:1.4;">Mains aléatoires, corrections détaillées.</div></div></div></div></div>`}
+    {title:"🚀 Prêt à passer à la pratique ?",content:`<div style="text-align:center;margin-bottom:14px;"><div style="font-size:2.6rem;margin-bottom:8px;filter:drop-shadow(0 4px 14px rgba(212,184,99,0.4))">🎰</div><div style="font-size:1rem;font-weight:900;color:#d4b863;letter-spacing:3px;margin-bottom:8px;text-shadow:0 0 14px rgba(212,184,99,0.3)">FÉLICITATIONS</div><div style="font-size:0.68rem;color:rgba(240,236,224,0.65);line-height:1.6;">Vous connaissez maintenant les bases du blackjack.<br>Choisissez comment continuer :</div></div><div style="display:flex;flex-direction:column;gap:10px;"><div onclick="goToTraining()" style="background:linear-gradient(135deg,rgba(34,197,94,0.10),rgba(34,197,94,0.18));border:1.5px solid rgba(34,197,94,0.4);border-radius:13px;padding:14px;cursor:pointer;display:flex;gap:13px;align-items:center;"><div style="font-size:1.7rem;flex-shrink:0">🎯</div><div style="flex:1;text-align:left;"><div style="font-size:0.78rem;font-weight:900;color:#22c55e;letter-spacing:1px;">Mode entraînement</div><div style="font-size:0.6rem;color:rgba(240,236,224,0.65);margin-top:3px;line-height:1.4;">Mains aléatoires, corrections détaillées.</div></div></div></div></div>`}
   ];
 }
 
@@ -4287,18 +4251,18 @@ const SIM_STEPS={
   fr:[
     {dealer:["10"],dealerSuits:["♠"],player:["8","5"],playerSuits:["♥","♣"],hidden:true,
      title:"1. La donne",
-     text:"<strong>Le croupier distribue 4 cartes.</strong><br>Tu reçois 2 cartes <strong>visibles</strong>. Le croupier reçoit 1 carte visible et 1 carte <strong>cachée</strong>."},
+     text:"<strong>Le croupier distribue 4 cartes.</strong><br>Vous recevez 2 cartes <strong>visibles</strong>. Le croupier reçoit 1 carte visible et 1 carte <strong>cachée</strong>."},
     {dealer:["10"],dealerSuits:["♠"],player:["8","5"],playerSuits:["♥","♣"],hidden:true,
      title:"2. On compte les points",
-     text:"Tu as <strong>8 + 5 = 13</strong>.<br>Le croupier montre <strong>10</strong>.<br>Le but : <strong>se rapprocher de 21</strong> sans le dépasser, et battre le croupier.",
+     text:"Vous avez <strong>8 + 5 = 13</strong>.<br>Le croupier montre <strong>10</strong>.<br>Le but : <strong>se rapprocher de 21</strong> sans le dépasser, et battre le croupier.",
      highlight:"player",totalShow:true},
     {dealer:["10"],dealerSuits:["♠"],player:["8","5"],playerSuits:["♥","♣"],hidden:true,
      title:"3. À toi de décider",
      text:"Avec <strong>13</strong> face à un <strong>10</strong> du croupier, c'est risqué de rester. On va <strong>tirer</strong> une carte de plus.",
      highlight:"player",totalShow:true,decision:"HIT"},
     {dealer:["10"],dealerSuits:["♠"],player:["8","5","6"],playerSuits:["♥","♣","♦"],hidden:true,
-     title:"4. Tu reçois un 6 !",
-     text:"<strong>8 + 5 + 6 = 19</strong>. Excellente main ! Tu décides de <strong>rester</strong>. Le tour passe au croupier.",
+     title:"4. Vous recevez un 6 !",
+     text:"<strong>8 + 5 + 6 = 19</strong>. Excellente main ! Vous décidez de <strong>rester</strong>. Le tour passe au croupier.",
      highlight:"player",totalShow:true,decision:"STAND",animateNew:2},
     {dealer:["10","7"],dealerSuits:["♠","♦"],player:["8","5","6"],playerSuits:["♥","♣","♦"],hidden:false,
      title:"5. Le croupier joue",
@@ -4306,7 +4270,7 @@ const SIM_STEPS={
      highlight:"dealer",totalShow:true,reveal:true},
     {dealer:["10","7"],dealerSuits:["♠","♦"],player:["8","5","6"],playerSuits:["♥","♣","♦"],hidden:false,
      title:"6. Verdict",
-     text:"<strong>Toi 19 vs Croupier 17.</strong><br>Tu es <strong>plus proche de 21</strong> sans dépasser : <strong style=\"color:#22c55e\">tu gagnes !</strong> 🎉",
+     text:"<strong>Toi 19 vs Croupier 17.</strong><br>Vous êtes <strong>plus proche de 21</strong> sans dépasser : <strong style=\"color:#22c55e\">vous gagnez !</strong> 🎉",
      win:true,totalShow:true}
   ],
   en:[
@@ -5315,7 +5279,7 @@ function onWhisperDLTap(event){
     setTimeout(hideVoiceToast,1500);
     return;
   }
-  // Lance le DL en background, l'user peut continuer a utiliser l'app
+  // Lancez le DL en background, l'user peut continuer a utiliser l'app
   loadWhisper();
 }
 
@@ -6044,7 +6008,7 @@ function onCamRowTap(e){
 function onCamRowAction(e){
   e.stopPropagation();
   if(!isPremium){openPaywall("camera");return;}
-  // Ferme le popup paramètres pour que la caméra ait l'écran complet
+  // Fermez le popup paramètres pour que la caméra ait l'écran complet
   if(typeof closePopup==="function")closePopup("popup-settings-modal");
   setTimeout(camOpen,250);
 }
@@ -6052,7 +6016,7 @@ function onCamRowAction(e){
 // ═══════════════════════════════════════════════════════════════════
 // ══ CODES PROMO ══
 // ═══════════════════════════════════════════════════════════════════
-// Pour ajouter un nouveau code, ajoute simplement une entrée ci-dessous.
+// Pour ajouter un nouveau code, ajoutez simplement une entrée ci-dessous.
 // Actions disponibles : "unlock_pro" (active Pro à vie).
 // La comparaison est sensible à la casse (Q1adminponchy ≠ q1adminponchy).
 
@@ -6453,14 +6417,14 @@ function getDailyExplain(scenario,tr){
   const action=scenario.c;
   // Templates de messages selon l'action et la situation
   const T=tr.dailyExplains||{
-    HIT_LOW:'Avec %TOTAL%, tu n\'es pas en danger de bust en tirant. Le croupier avec %D% a de bonnes chances de faire un total fort, donc on tente d\'améliorer.',
+    HIT_LOW:'Avec %TOTAL%, vous n\'êtes pas en danger de bust en tirant. Le croupier avec %D% a de bonnes chances de faire un total fort, donc on tente d\'améliorer.',
     HIT_HIGH:'%TOTAL% est fragile, mais le croupier a une carte forte (%D%). Statistiquement, mieux vaut tirer et risquer le bust que de rester sur une main faible.',
     STAND_LOW:'Le croupier avec %D% a 35-42 % de chances de bust avec sa carte faible. Mieux vaut rester avec %TOTAL% et le laisser se planter.',
     STAND_HIGH:'%TOTAL% est suffisamment haut pour être compétitif. On reste.',
     DOUBLE_HARD:'%TOTAL% contre %D% : situation très favorable. Doubler maximise le gain attendu.',
     DOUBLE_SOFT:'Avec un soft %TOTAL%, doubler contre %D% est rentable : pas de risque de bust, et belle espérance.',
     SPLIT_GOOD:'Splitter cette paire transforme une main moyenne en deux mains plus fortes. Ne jamais hésiter.',
-    SPLIT_BAD:'Cette paire face à %D% : ne pas splitter ! Tu doublerais ton risque pour rien. Joue-la comme un %TOTAL% normal.',
+    SPLIT_BAD:'Cette paire face à %D% : ne pas splitter ! Vous doubleriez votre risque pour rien. Jouez-la comme un %TOTAL% normal.',
     HIGH:'Cette main est trop forte pour être splittée. On reste, c\'est largement gagnant.'
   };
   let key;
@@ -6629,7 +6593,7 @@ function restorePurchase(){
   // PHASE 2 (Capacitor) : remplacer par window.CdvPurchase.store.restorePurchases()
   // puis vérifier si bjg_pro est owned, et appeler setPremium(true) si oui.
   const tr=LANGS[currentLang]||LANGS.fr;
-  // Ferme le popup paramètres pour que le résultat soit visible par-dessus
+  // Fermez le popup paramètres pour que le résultat soit visible par-dessus
   closePopup("popup-settings-modal");
   // Petit délai pour la transition visuelle
   setTimeout(()=>{

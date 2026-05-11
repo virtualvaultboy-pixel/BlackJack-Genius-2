@@ -1,7 +1,7 @@
 {
   "name": "bj-genius",
-  "version": "1.8.0",
-  "description": "BJ Genius — Blackjack helper PWA (Deponchy Studio)",
+  "version": "1.1.0",
+  "description": "BJ Genius \u2014 Blackjack helper PWA (Deponchy Studio)",
   "private": true,
   "scripts": {
     "sync": "cap sync android"

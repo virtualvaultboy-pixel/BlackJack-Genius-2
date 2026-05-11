@@ -9,7 +9,11 @@
   "background_color": "#0a1f10",
   "theme_color": "#c9a84c",
   "lang": "fr",
-  "categories": ["games", "education", "entertainment"],
+  "categories": [
+    "games",
+    "education",
+    "entertainment"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
@@ -35,5 +39,6 @@
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "version": "1.1.0"
 }
