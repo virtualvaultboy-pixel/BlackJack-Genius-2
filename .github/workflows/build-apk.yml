@@ -1,1 +1,438 @@
+name: Build Android APK (Debug)
 
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'service-worker.js'
+      - 'privacy.html'
+      - 'manifest.json'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - '.github/workflows/build-apk.yml'
+      # v1.2.7 — Inclure les sources natives Android pour que les modifs
+      # de la bulle flottante (Kotlin/Java) declenchent un rebuild.
+      - 'android-native/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare web assets
+        run: |
+          mkdir -p www
+          cp index.html www/
+          [ -f service-worker.js ] && cp service-worker.js www/ || echo "no service-worker.js"
+          [ -f privacy.html ] && cp privacy.html www/ || echo "no privacy.html"
+          [ -f manifest.json ] && cp manifest.json www/ || echo "no manifest.json"
+          shopt -s nullglob
+          for f in icon*.png favicon*.png favicon*.ico *.svg apple-touch-icon*.png; do
+            cp "$f" www/ 2>/dev/null && echo "copied $f"
+          done
+          echo "=== Contents of www/ ==="
+          ls -la www/
+
+      - name: Download Whisper-tiny model (bundle in APK)
+        # v1.30 — Telecharge le modele Whisper-tiny quantized depuis HuggingFace
+        # et le place dans www/models/ pour qu'il soit bundle dans l'APK Android.
+        # Resultat : ~40 Mo de plus dans l'APK, mais l'user a Whisper pret a l'usage
+        # des l'installation, sans DL reseau au runtime.
+        # transformers.js cherche les modeles a env.localModelPath + "Xenova/whisper-tiny/"
+        # On utilise les .onnx quantized (8-bit) pour limiter la taille.
+        run: |
+          set -e
+          MODEL_DIR="www/models/Xenova/whisper-tiny"
+          ONNX_DIR="$MODEL_DIR/onnx"
+          mkdir -p "$ONNX_DIR"
+          BASE="https://huggingface.co/Xenova/whisper-tiny/resolve/main"
+          echo "→ Downloading config & tokenizer files..."
+          for f in config.json generation_config.json preprocessor_config.json \
+                   tokenizer.json tokenizer_config.json added_tokens.json \
+                   special_tokens_map.json vocab.json normalizer.json; do
+            # Some files may not exist; -f makes curl fail on 404 but we want to continue
+            curl -sL "$BASE/$f" -o "$MODEL_DIR/$f" || echo "  (skip $f, not present)"
+            # Si le fichier telecharge est en fait une page d'erreur HTML, on le supprime
+            if [ -f "$MODEL_DIR/$f" ]; then
+              if head -c 200 "$MODEL_DIR/$f" | grep -qi "<html\|not found\|error"; then
+                echo "  (removed $f, was HTML error page)"
+                rm -f "$MODEL_DIR/$f"
+              else
+                echo "  ✓ $f ($(stat -c %s "$MODEL_DIR/$f") bytes)"
+              fi
+            fi
+          done
+          echo "→ Downloading ONNX quantized models (~40 MB total)..."
+          curl -fsSL "$BASE/onnx/encoder_model_quantized.onnx" -o "$ONNX_DIR/encoder_model_quantized.onnx"
+          echo "  ✓ encoder_model_quantized.onnx ($(stat -c %s "$ONNX_DIR/encoder_model_quantized.onnx") bytes)"
+          curl -fsSL "$BASE/onnx/decoder_model_merged_quantized.onnx" -o "$ONNX_DIR/decoder_model_merged_quantized.onnx"
+          echo "  ✓ decoder_model_merged_quantized.onnx ($(stat -c %s "$ONNX_DIR/decoder_model_merged_quantized.onnx") bytes)"
+          echo "=== Final www/models/ tree ==="
+          find www/models -type f -exec ls -lh {} \;
+          echo "=== Total size ==="
+          du -sh www/models/
+
+      - name: Install Capacitor
+        run: npm install --no-fund --no-audit
+
+      - name: Add Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Adding Android platform"
+            npx cap add android
+          else
+            echo "Syncing existing Android platform"
+            npx cap sync android
+          fi
+
+      - name: Enable Kotlin in Android Gradle build
+        # v1.2 — La bulle flottante est implementee en Kotlin. Le projet Capacitor
+        # initial ne configure pas Kotlin par defaut. On l'ajoute idempotemment.
+        # Imprime les fichiers gradle apres patch pour faciliter le debug.
+        run: |
+          python3 << 'PYEOF'
+          import re
+
+          # ── 1) Top-level build.gradle : classpath kotlin ──────────
+          path_top = "android/build.gradle"
+          with open(path_top, "r", encoding="utf-8") as f:
+              c = f.read()
+          print("=== android/build.gradle (BEFORE) ===")
+          print(c)
+
+          if "kotlin-gradle-plugin" not in c:
+              # ext.kotlin_version au tout debut du buildscript
+              if "kotlin_version" not in c:
+                  c = re.sub(
+                      r'(buildscript\s*\{)',
+                      r'\1\n    ext.kotlin_version = "1.9.22"',
+                      c, count=1
+                  )
+              # classpath dans dependencies du buildscript
+              c = re.sub(
+                  r'(buildscript\s*\{(?:[^{}]|\{[^{}]*\})*?dependencies\s*\{)',
+                  r'\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"',
+                  c, count=1, flags=re.DOTALL
+              )
+              with open(path_top, "w", encoding="utf-8") as f:
+                  f.write(c)
+              print("✓ Kotlin classpath added to top-level build.gradle")
+          else:
+              print("  Kotlin classpath already present")
+
+          print("=== android/build.gradle (AFTER) ===")
+          with open(path_top, "r", encoding="utf-8") as f:
+              print(f.read())
+
+          # ── 2) Module build.gradle : appliquer kotlin-android ─────
+          path_mod = "android/app/build.gradle"
+          with open(path_mod, "r", encoding="utf-8") as f:
+              c = f.read()
+          print("=== android/app/build.gradle (BEFORE) ===")
+          print(c)
+
+          if "kotlin-android" not in c:
+              # Capacitor utilise le format apply plugin: 'com.android.application'
+              # On ajoute kotlin-android JUSTE APRES, avant le bloc android { }
+              c = re.sub(
+                  r"(apply plugin:\s*['\"]com\.android\.application['\"])",
+                  r"\1\napply plugin: 'kotlin-android'",
+                  c, count=1
+              )
+              with open(path_mod, "w", encoding="utf-8") as f:
+                  f.write(c)
+              print("✓ kotlin-android plugin applied to app/build.gradle")
+          else:
+              print("  kotlin-android plugin already applied")
+
+          # ── 3) FILET DE SECURITE : compileSdkVersion ──────────────
+          # Capacitor sait normalement gerer compileSdkVersion via variables.gradle.
+          # Mais Kotlin parfois s'evalue avant. Si le bloc android n'a pas
+          # compileSdkVersion ni compileSdk, on l'injecte en dur.
+          with open(path_mod, "r", encoding="utf-8") as f:
+              c = f.read()
+          # Cherche android { ... compileSdk... } ou compileSdkVersion ...
+          android_block_match = re.search(r'android\s*\{', c)
+          if android_block_match:
+              # Verifie si compileSdk est deja defini dans le bloc
+              # On regarde dans un rayon de 500 chars apres "android {"
+              after_android = c[android_block_match.end():android_block_match.end()+1500]
+              if 'compileSdk' not in after_android:
+                  print("⚠ compileSdk not found in android{} — injecting fallback")
+                  insertion = "\n    compileSdkVersion rootProject.ext.compileSdkVersion\n"
+                  c = c[:android_block_match.end()] + insertion + c[android_block_match.end():]
+                  with open(path_mod, "w", encoding="utf-8") as f:
+                      f.write(c)
+                  print("✓ compileSdkVersion fallback injected")
+              else:
+                  print("  compileSdk already defined in android{}")
+
+          print("=== android/app/build.gradle (AFTER) ===")
+          with open(path_mod, "r", encoding="utf-8") as f:
+              print(f.read())
+
+          # ── 4) Verif variables.gradle a bien les Sdk versions ─────
+          path_vars = "android/variables.gradle"
+          try:
+              with open(path_vars, "r", encoding="utf-8") as f:
+                  vars_content = f.read()
+              print("=== android/variables.gradle ===")
+              print(vars_content)
+          except FileNotFoundError:
+              print("⚠ android/variables.gradle not found (unusual)")
+          PYEOF
+
+      - name: Copy native Android sources (BJGeniusBubble v1.2)
+        # v1.2 — Copie les fichiers Kotlin et Java de la bulle flottante depuis
+        # android-native/ vers le projet Android. Le package est studio.deponchy.bjgenius.
+        # Diagnostic enrichi : on log le contenu de chaque fichier copie pour pouvoir
+        # repondre vite si le build plante en compile (pas besoin de re-pusher juste
+        # pour voir ce qui a ete compile).
+        run: |
+          set -e
+          SRC_DIR="android-native"
+          DEST_PKG="studio/deponchy/bjgenius"
+          DEST_DIR="android/app/src/main/java/${DEST_PKG}"
+          if [ ! -d "$SRC_DIR" ]; then
+            echo "WARN: $SRC_DIR not found. Bubble feature won't be built."
+            exit 0
+          fi
+          mkdir -p "$DEST_DIR"
+          for f in "$SRC_DIR"/*.kt "$SRC_DIR"/*.java; do
+            if [ -f "$f" ]; then
+              cp "$f" "$DEST_DIR/"
+              echo "  ✓ Copied $(basename $f) → $DEST_DIR/"
+            fi
+          done
+          echo ""
+          echo "=== Native files in place ==="
+          ls -la "$DEST_DIR/"
+          echo ""
+          echo "=== Verification : MainActivity location & package ==="
+          find android/app/src/main/java -name "MainActivity.java" -exec sh -c 'echo "  Path: {}"; head -1 "{}"' \;
+          echo ""
+          echo "=== Sources Kotlin/Java prises en compte par Gradle ==="
+          find android/app/src/main/java -name "*.kt" -o -name "*.java" | sort
+
+      - name: Patch AndroidManifest.xml (idempotent)
+        run: |
+          python3 << 'PYEOF'
+          import re, sys
+          import xml.etree.ElementTree as ET
+          path = "android/app/src/main/AndroidManifest.xml"
+          with open(path, "r", encoding="utf-8") as f:
+              content = f.read()
+          print("=== Original AndroidManifest.xml ===")
+          print(content)
+          print("=== End Original ===")
+
+          # 1) Permissions camera + micro (ajoute seulement si absent)
+          new_perms = (
+              '    <uses-permission android:name="android.permission.CAMERA" />\n'
+              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+              '    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n'
+              '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
+              '    <uses-feature android:name="android.hardware.microphone" android:required="false" />\n'
+          )
+          if "android.permission.CAMERA" not in content:
+              content = content.replace("</manifest>", new_perms + "</manifest>")
+              print("Permissions injected")
+          else:
+              print("Permissions already present")
+
+          # 1b) v1.2 — Permissions pour la bulle flottante BJ Genius Live :
+          #     SYSTEM_ALERT_WINDOW = afficher par-dessus les autres apps
+          #     FOREGROUND_SERVICE  = maintenir le service en background
+          #     POST_NOTIFICATIONS  = notification permanente (Android 13+)
+          #
+          # v1.3.14 — REVERT du patch v1.3.13 : retire WAKE_LOCK et
+          # FOREGROUND_SERVICE_MICROPHONE qui cassaient le pipeline mic
+          # de la WebView (Android attribuait le micro au service au lieu
+          # de la WebView, resultat : capture qui s'arretait apres 1 mot).
+          bubble_perms = (
+              '    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n'
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n'
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />\n'
+              '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
+          )
+          if "SYSTEM_ALERT_WINDOW" not in content:
+              content = content.replace("</manifest>", bubble_perms + "</manifest>")
+              print("v1.2 Bubble permissions injected")
+          else:
+              # v1.3.14 — Nettoyage : retire les permissions v1.3.13 si presentes,
+              # car elles cassaient le mic. Le service revient a un foreground
+              # service simple "specialUse" qui ne capture pas l'audio.
+              if "android.permission.WAKE_LOCK" in content:
+                  content = content.replace(
+                      '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n',
+                      ''
+                  )
+                  print("v1.3.14 WAKE_LOCK removed (was breaking the mic)")
+              if "FOREGROUND_SERVICE_MICROPHONE" in content:
+                  content = content.replace(
+                      '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n',
+                      ''
+                  )
+                  print("v1.3.14 FOREGROUND_SERVICE_MICROPHONE removed (was breaking the mic)")
+              print("v1.2 Bubble permissions already present (v1.3.13 perms removed if any)")
+
+          # 1c) v1.2 — Declaration du service BJGeniusBubbleService dans <application>.
+          #     foregroundServiceType="specialUse" est obligatoire depuis Android 14.
+          #     v1.3.14 — On revient a "specialUse" seul (sans |microphone) car
+          #     le service ne capture pas l'audio (c'est la WebView qui le fait).
+          service_decl = (
+              '        <service\n'
+              '            android:name="studio.deponchy.bjgenius.BJGeniusBubbleService"\n'
+              '            android:exported="false"\n'
+              '            android:foregroundServiceType="specialUse">\n'
+              '            <property\n'
+              '                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"\n'
+              '                android:value="floating_assistant_bubble" />\n'
+              '        </service>\n'
+          )
+          if "BJGeniusBubbleService" not in content:
+              # Inserer juste avant </application>
+              content = content.replace("</application>", service_decl + "    </application>")
+              print("v1.2 Bubble service declared")
+          else:
+              # v1.3.14 — Downgrade : si le service est en specialUse|microphone, on revient
+              # a specialUse seul pour ne pas perturber le pipeline mic de la WebView.
+              if 'foregroundServiceType="specialUse|microphone"' in content:
+                  content = content.replace(
+                      'android:foregroundServiceType="specialUse|microphone"',
+                      'android:foregroundServiceType="specialUse"'
+                  )
+                  print("v1.3.14 foregroundServiceType downgraded to specialUse (was specialUse|microphone)")
+              else:
+                  print("v1.2 Bubble service already declared")
+
+          # 2) Attributs sur <activity> ajoutes idempotemment, un par un.
+          # Pour chaque attr : on cherche s'il est deja present dans la balise
+          # opening <activity ...>, et on ne l'ajoute que si absent.
+          def add_activity_attr(content, attr_name, attr_value):
+              m = re.search(r'<activity\b[^>]*>', content)
+              if not m:
+                  print(f"  WARN: no <activity> tag found, skipping {attr_name}")
+                  return content
+              tag = m.group(0)
+              if f'android:{attr_name}=' in tag:
+                  print(f"  android:{attr_name} already present")
+                  return content
+              new_tag = tag.replace('<activity', f'<activity android:{attr_name}="{attr_value}"', 1)
+              content = content.replace(tag, new_tag, 1)
+              print(f"  Injected android:{attr_name}")
+              return content
+
+          # Portrait lock (v1.14)
+          content = add_activity_attr(content, 'screenOrientation', 'portrait')
+          # configChanges pour eviter le restart de l'activity en rotation/clavier.
+          # Note v1.2.5 : on garde l'attribut (utile pour gerer les transitions)
+          # mais on a retire le support PiP du flow (la bulle systeme remplace).
+          content = add_activity_attr(content, 'configChanges',
+              'screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden')
+          # v1.2.5 — supportsPictureInPicture RETIRE : la bulle systeme draggable
+          # remplace entierement le PiP 1/4 d'ecran qui faisait doublon visuel.
+
+          # 3) Validation : le manifest doit etre du XML valide avant ecriture
+          try:
+              ET.fromstring(content)
+              print("XML validation: OK")
+          except ET.ParseError as e:
+              print(f"FATAL: XML validation FAILED: {e}")
+              print("=== Broken content ===")
+              print(content)
+              sys.exit(1)
+
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(content)
+          print("=== Final AndroidManifest.xml ===")
+          print(content)
+          print("=== End Final ===")
+          PYEOF
+
+      - name: Patch MainActivity.java (register Bubble plugin)
+        run: |
+          python3 << 'PYEOF'
+          import os, glob, re, textwrap
+          # v1.2.5 — Patch de MainActivity.java pour enregistrer le plugin
+          # BJGeniusBubble. Le PiP automatique au Home a ete RETIRE en v1.2.5
+          # car il faisait doublon avec la bulle systeme draggable.
+          #
+          # v1.3.14 — REVERT du patch v1.3.13 qui ajoutait un override onPause()
+          # et de la config WebView. Ces modifs cassaient le pipeline Whisper
+          # (le AudioContext de la WebView etait suspendu apres le 1er chunk).
+          # On revient au patch v1.2.5 propre.
+          matches = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
+          if not matches:
+              print("WARN: MainActivity.java not found, skipping patch")
+          else:
+              path = matches[0]
+              print(f"Patching {path}")
+              with open(path, "r", encoding="utf-8") as f:
+                  content = f.read()
+              print("=== Original MainActivity.java ===")
+              print(content)
+              m = re.match(r'package\s+([^;]+);', content)
+              if not m:
+                  print("WARN: package declaration not found, skipping")
+              elif 'BJGeniusBubblePlugin' in content and 'pauseTimers' not in content and 'onPause' not in content:
+                  print("Already patched v1.3.14 (simple, no onPause override), skipping")
+              else:
+                  package = m.group(1)
+                  new_content = textwrap.dedent(f"""\
+                      package {package};
+
+                      import android.os.Bundle;
+                      import com.getcapacitor.BridgeActivity;
+                      import studio.deponchy.bjgenius.BJGeniusBubblePlugin;
+
+                      public class MainActivity extends BridgeActivity {{
+                          @Override
+                          public void onCreate(Bundle savedInstanceState) {{
+                              // v1.2 — Enregistre le plugin BJGeniusBubble AVANT super.onCreate
+                              // pour que Capacitor le decouvre au demarrage.
+                              registerPlugin(BJGeniusBubblePlugin.class);
+                              super.onCreate(savedInstanceState);
+                          }}
+                      }}
+                      """)
+                  with open(path, "w", encoding="utf-8") as f:
+                      f.write(new_content)
+                  print("MainActivity.java patched (v1.3.14 : simple, no onPause override)")
+                  print("=== New MainActivity.java ===")
+                  print(new_content)
+          PYEOF
+
+      - name: Build Debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bjgenius-debug-apk-${{ github.run_number }}-${{ github.run_attempt }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: true
