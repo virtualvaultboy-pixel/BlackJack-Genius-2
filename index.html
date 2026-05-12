@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.15 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.16 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.15</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.16</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -6014,19 +6014,101 @@ async function startWhisperRecognition(){
     const CHUNK_SAMPLES=Math.floor(WHISPER_SAMPLE_RATE*WHISPER_CHUNK_SECONDS);
     whisperAudioBuf=[];
 
-    // v1.3.12 — Rollback a la logique d'origine (avant v1.3.8) : on attend
-    // qu'un chunk de 2.5s soit plein, puis on le transcrit. Pas de VAD precoce.
-    // Whisper a besoin de ce contexte audio complet pour bien reconnaitre les
-    // mots isoles (sans contexte, il sort des marqueurs "(musique)" / "[noise]"
-    // au lieu de transcrire).
+    // v1.3.16 — VAD INTELLIGENT : on ne transcrit QUE quand l'user parle.
+    //
+    // Probleme avec l'ancienne approche (transcription continue toutes les 2.5s) :
+    //   - CPU charge en permanence -> lag
+    //   - Whisper hallucine sur les chunks de silence
+    //   - Si l'user parle a cheval sur 2 chunks, sa phrase est coupee en deux
+    //
+    // Nouvelle approche : machine a etats audio.
+    //   1) IDLE  : on detecte le niveau audio. Si bas, on jette tout en continu.
+    //   2) VOICE : des qu'on detecte du son fort (>RMS_START), on enregistre
+    //              tout dans whisperAudioBuf en gardant 240ms de pre-buffer
+    //              pour ne pas couper l'attaque du 1er mot.
+    //   3) SILENCE: quand le silence dure 700ms apres avoir entendu de la voix,
+    //              on envoie le chunk capture a Whisper et retour a IDLE.
+    //
+    // Garde-fous :
+    //   - Chunk trop court (<400ms de voix nette) : ignore (souffle, claquement).
+    //   - Chunk trop long (>5s) : on envoie quand meme, securite.
+    //
+    // Une frame onaudioprocess fait 4096 samples a 16kHz = 256ms.
+    const FRAME_MS = 256;                    // duree d'une frame (4096/16000*1000)
+    const RMS_START = 0.025;                 // seuil pour entrer en VOICE (au-dessus du bruit ambiant)
+    const RMS_END = 0.012;                   // seuil pour considerer comme silence (hysteresis : RMS_END < RMS_START)
+    const SILENCE_TAIL_MS = 700;             // duree de silence apres parole avant flush
+    const SILENCE_TAIL_FRAMES = Math.ceil(SILENCE_TAIL_MS / FRAME_MS);
+    const PRE_BUFFER_FRAMES = 1;             // garde 1 frame avant la voix (~256ms) pour ne pas couper l'attaque
+    const MIN_VOICE_FRAMES = 2;              // minimum 2 frames de voix nette (~512ms) pour qu'on envoie a Whisper
+    const MAX_CHUNK_FRAMES = Math.ceil(5000 / FRAME_MS); // safety : flush meme si user n'arrete pas de parler
+
+    // Etat de la machine
+    let vadState = 'IDLE';                   // 'IDLE' | 'VOICE'
+    let preBuffer = [];                      // rolling buffer des frames recentes en IDLE (Array<Float32Array>)
+    let voiceBufferFrames = [];              // frames enregistrees en VOICE (Array<Float32Array>)
+    let voiceFrameCount = 0;                 // nb de frames effectivement parolees (RMS>RMS_END) dans le chunk courant
+    let silenceFrameCount = 0;               // nb de frames de silence consecutives en mode VOICE
+
+    function flushVoiceChunk(){
+      if(voiceFrameCount<MIN_VOICE_FRAMES){
+        // Pas assez de voix nette, c'etait un bruit -> on jette.
+        voiceBufferFrames=[]; voiceFrameCount=0; silenceFrameCount=0;
+        return;
+      }
+      // Concatenation des frames en un seul Float32Array pour Whisper.
+      let totalLen=0;
+      for(const f of voiceBufferFrames)totalLen+=f.length;
+      const chunk=new Float32Array(totalLen);
+      let offset=0;
+      for(const f of voiceBufferFrames){chunk.set(f,offset);offset+=f.length;}
+      voiceBufferFrames=[]; voiceFrameCount=0; silenceFrameCount=0;
+      processWhisperChunk(chunk);
+    }
+
     whisperProcessor.onaudioprocess=(e)=>{
       if(!whisperActive)return;
       const input=e.inputBuffer.getChannelData(0);
-      for(let i=0;i<input.length;i++)whisperAudioBuf.push(input[i]);
-      if(whisperAudioBuf.length>=CHUNK_SAMPLES){
-        const chunk=new Float32Array(whisperAudioBuf.slice(0,CHUNK_SAMPLES));
-        whisperAudioBuf=whisperAudioBuf.slice(CHUNK_SAMPLES);
-        processWhisperChunk(chunk);
+      // RMS de la frame
+      let sumSq=0;
+      for(let i=0;i<input.length;i++)sumSq+=input[i]*input[i];
+      const rms=Math.sqrt(sumSq/input.length);
+      // On clone la frame car le buffer interne du browser peut etre reutilise
+      const frameCopy=new Float32Array(input);
+
+      if(vadState==='IDLE'){
+        // En idle, on garde un rolling pre-buffer (1 frame) pour ne pas couper
+        // le tout debut du 1er mot quand l'user commence a parler.
+        preBuffer.push(frameCopy);
+        while(preBuffer.length>PRE_BUFFER_FRAMES)preBuffer.shift();
+
+        if(rms>=RMS_START){
+          // L'user vient de commencer a parler. On bascule en VOICE.
+          // On part avec le pre-buffer (pour ne pas couper l'attaque).
+          vadState='VOICE';
+          voiceBufferFrames=preBuffer.slice();
+          voiceBufferFrames.push(frameCopy);
+          voiceFrameCount=1;
+          silenceFrameCount=0;
+          preBuffer=[];
+        }
+      } else { // VOICE
+        voiceBufferFrames.push(frameCopy);
+        if(rms>=RMS_END){
+          voiceFrameCount++;
+          silenceFrameCount=0;
+        } else {
+          silenceFrameCount++;
+        }
+        // Conditions de flush :
+        //   a) silence dure assez longtemps -> fin de phrase
+        //   b) chunk devient trop long (user parle 5s+ sans s'arreter)
+        const isEndOfPhrase = silenceFrameCount>=SILENCE_TAIL_FRAMES;
+        const isTooLong = voiceBufferFrames.length>=MAX_CHUNK_FRAMES;
+        if(isEndOfPhrase||isTooLong){
+          flushVoiceChunk();
+          vadState='IDLE';
+        }
       }
     };
 
@@ -6063,13 +6145,9 @@ function stopWhisperRecognition(){
 async function processWhisperChunk(audioData){
   if(!whisperActive||!whisperPipeline)return;
 
-  // VAD simple : skip si quasi-silence (économise CPU)
-  let maxAmp=0;
-  for(let i=0;i<audioData.length;i+=200){
-    const a=Math.abs(audioData[i]);
-    if(a>maxAmp)maxAmp=a;
-  }
-  if(maxAmp<0.015)return; // seuil bas mais évite le bruit ambiant
+  // v1.3.16 — Plus besoin du filtre VAD ici : la machine a etats VAD dans
+  // onaudioprocess garantit qu'on ne recoit ici que des segments de parole
+  // detectes activement (silence deja exclu, attaque preservee).
 
   try{
     const lang=currentLang==='en'?'english':currentLang==='es'?'spanish':'french';
