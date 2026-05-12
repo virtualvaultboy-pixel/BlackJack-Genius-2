@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.2.7 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.0 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.7</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.0</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -3212,6 +3212,40 @@ function syncPipDisplay(){
   else if(cls.includes(' dbl'))pipDisp.classList.add('pip-double');
   else if(cls.includes(' spl'))pipDisp.classList.add('pip-split');
   else if(cls.includes(' srr'))pipDisp.classList.add('pip-surrender');
+  // v1.3 — Push aussi la decision vers la bulle native (Android)
+  syncBubbleDecision();
+}
+
+// v1.3 — Synchronise le rectangle decision de la bulle native Android.
+// Appele apres chaque updateAll() pour que l'user voit la decision en temps reel
+// dans la bulle quand il est sur son casino par-dessus l'app.
+// Etat de la bulle declare ici (avant son usage) pour eviter une TDZ error.
+let bubbleOn = false;
+
+function syncBubbleDecision(){
+  if(!bubbleOn)return; // pas la peine si la bulle n'est pas active
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin||!plugin.setDecision)return;
+  const azone=document.getElementById('azone');
+  const adecision=document.getElementById('adecision');
+  const aph=document.getElementById('aph');
+  // Pas de decision active : vider le rectangle
+  if(!azone||!adecision||(aph&&aph.style.display!=='none')){
+    plugin.setDecision({ text: '', color: '#c9a84c' }).catch(()=>{});
+    return;
+  }
+  const text=(adecision.textContent||'').slice(0,12);
+  // Couleur selon la classe de azone (mapping CSS -> hex)
+  const cls=azone.className||'';
+  let color='#c9a84c'; // dore par defaut
+  if(cls.includes(' hit'))color='#22c55e';      // vert
+  else if(cls.includes(' sta'))color='#f97316'; // orange (rester)
+  else if(cls.includes(' dbl'))color='#c9a84c'; // dore (doubler)
+  else if(cls.includes(' spl'))color='#38bdf8'; // bleu
+  else if(cls.includes(' sur'))color='#ef4444'; // rouge
+  else if(cls.includes(' bst'))color='#ef4444'; // rouge (bust)
+  else if(cls.includes(' bj'))color='#c9a84c';  // dore (blackjack)
+  plugin.setDecision({ text, color }).catch(e=>console.warn('[BJG] setDecision failed',e));
 }
 
 function speak(text){
@@ -5046,6 +5080,85 @@ function toggleMic(){
     hideVoiceToast();
     // v1.2.5 — DECOUPLAGE : couper le micro ne coupe plus la bulle (cf. ci-dessus).
   }
+  // v1.3 — Push l'etat mic vers la sous-bulle pour qu'elle change de couleur
+  // (rouge pulse si actif). No-op si la bulle native n'est pas active.
+  syncBubbleMicState();
+}
+
+/**
+ * v1.3 — Synchronise la sous-bulle mic native avec l'etat micOn du JS.
+ * Appele apres chaque toggleMic et apres activation de la bulle (pour rattraper
+ * l'etat si le mic etait deja actif avant qu'on n'active la bulle).
+ */
+function syncBubbleMicState(){
+  if(!bubbleOn)return;
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin||!plugin.setMicState)return;
+  plugin.setMicState({ active: !!micOn }).catch(()=>{});
+}
+
+// v1.3 — Flag pour eviter d'installer le listener plusieurs fois si l'user
+// active/desactive la bulle plusieurs fois dans une session.
+let bubbleListenerInstalled = false;
+
+/**
+ * v1.3 — Installe le listener qui ecoute les taps sur les sous-bulles de la
+ * bulle native (mic / scan / close). Le service Kotlin emet un broadcast pour
+ * chaque tap, le plugin Java le relaie via notifyListeners('bubbleEvent'),
+ * et ici on declenche l'action JS correspondante.
+ *
+ * Idempotent : safe a appeler plusieurs fois.
+ */
+function installBubbleEventListener(){
+  if(bubbleListenerInstalled)return;
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin||!plugin.addListener)return;
+  try {
+    plugin.addListener('bubbleEvent', (evt) => {
+      const type=evt&&evt.type;
+      console.log('[BJG] Bubble event from native:',type);
+      switch(type){
+        case 'mic_tap':
+          // L'user a tape sur la sous-bulle mic -> bascule le mic
+          if(!isPremium){
+            // Pas premium : pas de mic. On affiche un toast plutot que
+            // d'ouvrir le paywall (l'user est en mode bulle, on ne va pas
+            // l'arracher de son casino pour ca).
+            showVoiceToast('Mic Pro requis');
+            setTimeout(hideVoiceToast, 1500);
+            return;
+          }
+          toggleMic();
+          break;
+        case 'scan_tap':
+          // v1.7 (a venir) : ouvrira la selection de zone d'ecran.
+          // Pour v1.3 : toast d'info.
+          showVoiceToast('Scan zone : bientôt');
+          setTimeout(hideVoiceToast, 1500);
+          break;
+        case 'close_tap':
+          // L'user a tape sur la croix de la bulle -> on coupe la bulle
+          // depuis le JS pour synchroniser l'etat de la pill du header.
+          if(bubbleOn){
+            bubbleOn=false;
+            const btn=document.getElementById("bubble-btn");
+            const lbl=document.getElementById("bubble-label");
+            const tr=LANGS[currentLang]||LANGS.fr;
+            if(btn)btn.classList.remove("on");
+            if(lbl)lbl.innerHTML=tr.bubbleLabel;
+          }
+          break;
+        case 'bubble_tap':
+          // L'user a tape sur la bulle centrale -> le service a deja toggle
+          // l'expand cote natif. Rien a faire cote JS.
+          break;
+      }
+    });
+    bubbleListenerInstalled = true;
+    console.log('[BJG] Bubble event listener installed');
+  } catch(e){
+    console.warn('[BJG] Failed to install bubble event listener:',e);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -5057,7 +5170,8 @@ function toggleMic(){
 // "🫧 Bulle" dans le header. La bulle ne fonctionne que sur Android Capacitor.
 // Sur web ou si le plugin n'est pas dispo : popup expliquant l'indispo.
 
-let bubbleOn = false;
+// v1.3 — let bubbleOn = false est declare plus haut (avant syncBubbleDecision)
+// pour eviter une erreur Temporal Dead Zone.
 
 /**
  * Handler du tap sur la pill "🫧 Bulle" dans le header.
@@ -5101,6 +5215,13 @@ async function toggleBubble(){
       btn.classList.add("on");
       lbl.innerHTML = tr.bubbleLabelOn;
       console.log('[BJG] Bulle activee');
+      // v1.3 — Installation du listener pour les taps sur les sous-bulles
+      // (mic / scan / close). Idempotent : si deja installe, ne fait rien.
+      installBubbleEventListener();
+      // v1.3 — Sync immediate de l'etat mic et de la decision courante,
+      // au cas ou l'user les avait deja avant d'activer la bulle.
+      syncBubbleMicState();
+      syncBubbleDecision();
       // Intro contextuel a la 1ere activation
       showIntroOnce('bubble');
     } catch(e){
