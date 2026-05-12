@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.2.4 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.2.6 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -93,14 +93,60 @@ body.fs-large .adecision{font-size:2rem;}
 .hdr-pill:active{transform:scale(0.95);}
 .hdr-pill .pill-ico{font-size:0.85rem;line-height:1;}
 .hdr-pill .pill-txt{font-size:0.5rem;color:rgba(240,236,224,0.55);letter-spacing:0.6px;text-transform:uppercase;line-height:1;font-weight:700;white-space:nowrap;}
-.hilo-badge{}
-.hilo-badge .hilo-val{font-size:0.62rem;font-weight:900;}
+/* v1.2.6 — Bande Hi-Lo dediee, sous le header. Style "indicateur de score"
+   clairement different des pills d'action (mic/scan/bulle) :
+   - Forme : rectangle horizontal large, pas rond
+   - Couleur : dore sobre, fond noir vitreux
+   - Position : full-width avec margin laterale, sous le header
+   - Comportement : tap = onHiloBadgeTap (paywall si non-PRO) */
+.hilo-bar{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:6px 12px 4px;padding:7px 14px;
+  background:linear-gradient(135deg,rgba(15,28,20,0.65),rgba(20,38,28,0.55));
+  border:1px solid rgba(201,168,76,0.32);
+  border-radius:12px;
+  cursor:pointer;
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.3);
+  transition:transform 0.15s ease, border-color 0.2s ease;
+}
+.hilo-bar:active{transform:scale(0.98);}
+.hilo-bar-ico{font-size:1rem;line-height:1;}
+.hilo-bar-lbl{
+  font-size:0.55rem;letter-spacing:1.8px;text-transform:uppercase;
+  color:rgba(240,236,224,0.55);font-weight:700;
+}
+.hilo-bar-val{
+  font-size:0.95rem;font-weight:900;letter-spacing:0.5px;
+  min-width:30px;text-align:center;
+}
+/* Couleurs valeur compteur selon avantage joueur (cohérent avec ancien .hilo-val) */
+.hilo-bar-val.neu{color:rgba(240,236,224,0.85);}
+.hilo-bar-val.pos{color:#22c55e;text-shadow:0 0 6px rgba(34,197,94,0.4);}
+.hilo-bar-val.neg{color:#ef4444;text-shadow:0 0 6px rgba(239,68,68,0.35);}
+.hilo-bar-lock{
+  position:absolute;top:-6px;right:8px;
+  background:rgba(201,168,76,0.85);color:#1a1000;
+  border-radius:50%;width:14px;height:14px;
+  font-size:0.5rem;font-weight:900;
+  /* v1.2.6 — Pas de display:none ici : le CSS global
+     body:not(.lite) .lock-ind { display:none !important; } gere
+     deja le masquage automatique pour les users PRO. */
+}
+body.discrete .hilo-bar{opacity:0.5;}
 .mic-btn{}
 .mic-btn.on{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.5);}
 .mic-btn.on .pill-txt{color:#ef4444;}
 .mic-btn.listening{background:rgba(239,68,68,0.35);border-color:#ef4444;animation:pulse-mic 0.8s infinite;}
 .cam-btn-pill{}
 .cam-btn-pill.on{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.5);}
+.cam-btn-pill.on .pill-txt{color:#22c55e;}
+/* v1.2.5 — Style pill bulle. Or dore comme la bulle native, coherent visuellement. */
+.bubble-btn{}
+.bubble-btn.on{background:rgba(201,168,76,0.22);border-color:rgba(201,168,76,0.55);}
+.bubble-btn.on .pill-txt{color:#c9a84c;}
+.bubble-btn.on .pill-ico{animation:bubble-pulse 2s infinite ease-in-out;}
+@keyframes bubble-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
 
 .hilo-val{font-size:0.62rem;font-weight:900;line-height:1;}
 .hilo-val.pos{color:#22c55e;}.hilo-val.neg{color:#ef4444;}.hilo-val.neu{color:rgba(240,236,224,0.6);}
@@ -628,15 +674,14 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.6</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
-      <div class="hdr-pill hilo-badge" id="hilo-badge" onclick="onHiloBadgeTap()">
-        <span class="pill-ico">🔢</span>
-        <span class="pill-txt"><span class="hilo-val neu" id="hilo-val">0</span></span>
-        <div class="lock-ind">🔒</div>
-      </div>
+      <!-- v1.2.6 — hilo-badge SORTI d'ici : il etait visuellement noye avec
+           les 3 boutons actifs (mic, scan, bulle). Maintenant place dans
+           sa propre bande "hilo-bar" juste sous le header pour le rendre
+           plus visible et le distinguer clairement des controles d'action. -->
       <div class="hdr-pill mic-btn" id="mic-btn" onclick="onMicBtnTap()">
         <span class="pill-ico">🎤</span>
         <span id="mic-label" class="pill-txt">OFF</span>
@@ -647,12 +692,32 @@ body.pip-mode #pip-display{display:flex!important;}
         <span id="cam-label" class="pill-txt">Scan</span>
         <div class="lock-ind">🔒</div>
       </div>
+      <!-- v1.2.5 — Toggle bulle flottante BJ Genius Live (Android). Decouple
+           du micro depuis cette version : la bulle est un mode d'affichage
+           independant, l'user peut l'activer pour suivre le jeu en ouvrant
+           le casino par-dessus, avec ou sans dictee vocale. -->
+      <div class="hdr-pill bubble-btn" id="bubble-btn" onclick="onBubbleBtnTap()">
+        <span class="pill-ico">🫧</span>
+        <span id="bubble-label" class="pill-txt">Bulle</span>
+        <div class="lock-ind">🔒</div>
+      </div>
     </div>
     <div class="burger-btn" id="burger-btn" onclick="toggleDrawer()">
       <div class="burger-line"></div>
       <div class="burger-line"></div>
       <div class="burger-line"></div>
     </div>
+  </div>
+
+  <!-- v1.2.6 — Bande Hi-Lo dediee. Visuellement distincte des pills d'action
+       (mic/scan/bulle), placee juste sous le header pour rester toujours
+       visible sur la page d'accueil. Garde id="hilo-badge" pour rester
+       compatible avec le tuto et onHiloBadgeTap(). -->
+  <div class="hilo-bar" id="hilo-badge" onclick="onHiloBadgeTap()">
+    <span class="hilo-bar-ico">🔢</span>
+    <span class="hilo-bar-lbl" id="hilo-bar-lbl">Compteur Hi-Lo</span>
+    <span class="hilo-bar-val neu" id="hilo-val">0</span>
+    <div class="lock-ind hilo-bar-lock">🔒</div>
   </div>
 
   <div class="azone" id="azone">
@@ -1365,22 +1430,26 @@ body.pip-mode #pip-display{display:flex!important;}
      pertinente (~40 Mo de DL au 1er usage) est integree au popup intro mic. -->
 
 <!-- INTRO BULLE PIP : 1ère sortie du mode PiP -->
-<div class="popup-overlay" id="popup-intro-pip" onclick="closePopup('popup-intro-pip')">
+<!-- v1.2.5 — Popup intro Bulle BJ Genius Live. Renomme depuis popup-intro-pip
+     (l'ancien mode PiP 1/4 d'ecran a ete retire en v1.2.5 au profit de la
+     bulle systeme draggable, controllee par son propre toggle "🫧 Bulle"). -->
+<div class="popup-overlay" id="popup-intro-bubble" onclick="closePopup('popup-intro-bubble')">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
     <div class="popup-handle"></div>
-    <div style="font-size:2.6rem;margin-bottom:6px;">🪟</div>
-    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-pip-title">Mode bulle débloqué</div>
-    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-pip-sub">BJ Genius reste visible en bulle flottante par-dessus vos autres apps.</div>
-    <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.3);border-radius:11px;padding:11px;margin-bottom:10px;text-align:left;">
-      <div style="font-size:0.55rem;letter-spacing:2px;color:#22c55e;text-transform:uppercase;font-weight:800;margin-bottom:7px;" id="intro-pip-howh">Comment l'activer</div>
-      <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.7;" id="intro-pip-howl">
-        <div><strong>1.</strong> Activez le micro 🎤</div>
-        <div><strong>2.</strong> Appuyez sur <strong>Home</strong></div>
-        <div><strong>3.</strong> La bulle apparaît automatiquement</div>
+    <div style="font-size:2.6rem;margin-bottom:6px;">🫧</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" id="intro-bubble-title">Bulle flottante activée</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.55;margin-bottom:12px;" id="intro-bubble-sub">BJ Genius reste visible en bulle dorée par-dessus toutes vos autres apps.</div>
+    <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.3);border-radius:11px;padding:11px;margin-bottom:10px;text-align:left;">
+      <div style="font-size:0.55rem;letter-spacing:2px;color:#c9a84c;text-transform:uppercase;font-weight:800;margin-bottom:7px;" id="intro-bubble-howh">Comment l'utiliser</div>
+      <div style="font-size:0.7rem;color:#f0ecdf;line-height:1.7;" id="intro-bubble-howl">
+        <div><strong>1.</strong> Ouvrez votre casino ou autre app</div>
+        <div><strong>2.</strong> La bulle reste visible par-dessus</div>
+        <div><strong>3.</strong> Glissez-la où vous voulez sur l'écran</div>
+        <div><strong>4.</strong> Croix rouge ou re-tap 🫧 pour la fermer</div>
       </div>
     </div>
-    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-pip-tip">💡 <strong>Le mic continue de capter</strong> en mode bulle. Dites vos cartes, voyez la décision s'afficher en gros, sans quitter votre autre app.</div>
-    <div onclick="closePopup('popup-intro-pip')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-pip-ok">Compris ✓</div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:11px;padding:9px 11px;margin-bottom:14px;text-align:left;font-size:0.66rem;color:rgba(240,236,224,0.85);line-height:1.55;" id="intro-bubble-tip">💡 <strong>Indépendant du micro</strong> : la bulle peut tourner seule, ou avec le micro pour dicter vos cartes en parallèle.</div>
+    <div onclick="closePopup('popup-intro-bubble')" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-bubble-ok">Compris ✓</div>
   </div>
 </div>
 
@@ -1590,7 +1659,9 @@ function renderHilo(){
   const el=document.getElementById("hilo-val"),big=document.getElementById("hilo-big"),adv=document.getElementById("hilo-advice");
   const cls=hiloCount>0?"pos":hiloCount<0?"neg":"neu";
   const txt=hiloCount>0?"+"+hiloCount:String(hiloCount);
-  el.textContent=txt;el.className="hilo-val "+cls;
+  // v1.2.6 — Classe hilo-bar-val au lieu de hilo-val (nouveau style bande dediee).
+  // Les regles CSS .hilo-bar-val.pos/.neg/.neu gerent la couleur.
+  el.textContent=txt;el.className="hilo-bar-val "+cls;
   if(big){big.textContent=txt;big.className="hilo-big "+cls;}
   if(adv){if(hiloCount>=4)adv.textContent=T("hiloFav4");else if(hiloCount>=2)adv.textContent=T("hiloFav2");else if(hiloCount<=-4)adv.textContent=T("hiloDef4");else if(hiloCount<=-2)adv.textContent=T("hiloDef2");else adv.textContent=T("hiloNeu");}
 }
@@ -1893,6 +1964,26 @@ const LANGS={
     tutoSpD7:"Annoncez les cartes à voix haute, l'app les reconnaît et calcule la décision. <strong>Disponible avec Pro</strong>.",
     tutoSpTcam:"Scan caméra",
     tutoSpDcam:"Pointez la caméra vers la table avec le <strong>croupier en haut</strong> et <strong>votre main en bas</strong>. Une seule photo, l'app détecte les cartes et applique automatiquement. Re-scan après chaque tirage. <strong>Disponible avec Pro</strong>.",
+    // v1.2.6 — Tuto bulle flottante
+    tutoSpTbubble:"Bulle flottante",
+    tutoSpDbubble:"Gardez BJ Genius visible <strong>par-dessus toutes vos autres apps</strong> (casino en ligne, etc.) grâce à une bulle dorée draggable. Activez-la, ouvrez votre casino, la bulle reste à l'écran. <strong>Disponible avec Pro</strong>.",
+    // v1.2.6 — Labels et messages bulle (utilises par toggleBubble)
+    bubbleLabel:"Bulle",
+    bubbleLabelOn:"ON",
+    bubbleFailToast:"Échec activation bulle",
+    bubbleUnavailable:"La bulle flottante n'est disponible que sur l'app Android.\n\nInstallez l'app depuis le Play Store pour utiliser cette fonctionnalité.",
+    // v1.2.6 — Popup intro bulle (renomme depuis intro-pip)
+    introBubbleTitle:"Bulle flottante activée",
+    introBubbleSub:"BJ Genius reste visible en bulle dorée par-dessus toutes vos autres apps.",
+    introBubbleHowH:"Comment l'utiliser",
+    introBubbleHow1:"Ouvrez votre casino ou autre app",
+    introBubbleHow2:"La bulle reste visible par-dessus",
+    introBubbleHow3:"Glissez-la où vous voulez sur l'écran",
+    introBubbleHow4:"Croix rouge ou re-tap 🫧 pour la fermer",
+    introBubbleTip:"💡 <strong>Indépendante du micro</strong> : la bulle peut tourner seule, ou avec le micro pour dicter vos cartes en parallèle.",
+    introBubbleOk:"Compris ✓",
+    // v1.2.6 — Bande Hi-Lo (label sous le header)
+    hiloBarLabel:"Compteur Hi-Lo",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
     tutoSpD8:"Débloque toutes les fonctionnalités Pro pour <strong>4,99 €</strong> à vie. Achat unique, sans abonnement.",
     tutoSpFinal1:"5 fonctionnalités Pro à vie",
@@ -2210,6 +2301,26 @@ const LANGS={
     tutoSpD7:"Speak the cards out loud, the app recognizes them and computes the decision. <strong>Available with Pro</strong>.",
     tutoSpTcam:"Camera scan",
     tutoSpDcam:"Point your camera at the table with the <strong>dealer on top</strong> and <strong>your hand on bottom</strong>. One photo, the app detects cards and applies automatically. Re-scan after each hit. <strong>Available with Pro</strong>.",
+    // v1.2.6 — Bubble tutorial
+    tutoSpTbubble:"Floating bubble",
+    tutoSpDbubble:"Keep BJ Genius visible <strong>over all your other apps</strong> (online casino, etc.) with a draggable golden bubble. Enable it, open your casino, the bubble stays on screen. <strong>Available with Pro</strong>.",
+    // v1.2.6 — Bubble labels and messages
+    bubbleLabel:"Bubble",
+    bubbleLabelOn:"ON",
+    bubbleFailToast:"Failed to start bubble",
+    bubbleUnavailable:"The floating bubble is only available on the Android app.\n\nInstall the app from the Play Store to use this feature.",
+    // v1.2.6 — Bubble intro popup
+    introBubbleTitle:"Floating bubble enabled",
+    introBubbleSub:"BJ Genius stays visible as a golden bubble over all your other apps.",
+    introBubbleHowH:"How to use it",
+    introBubbleHow1:"Open your casino or another app",
+    introBubbleHow2:"The bubble stays visible on top",
+    introBubbleHow3:"Drag it anywhere on the screen",
+    introBubbleHow4:"Red cross or re-tap 🫧 to close it",
+    introBubbleTip:"💡 <strong>Independent from the mic</strong>: the bubble can run alone, or with the mic to dictate your cards alongside.",
+    introBubbleOk:"Got it ✓",
+    // v1.2.6 — Hi-Lo bar label under header
+    hiloBarLabel:"Hi-Lo Counter",
     tutoSpT8:"Ready to level up?",
     tutoSpD8:"Unlock all Pro features for <strong>$4.99</strong> for life. One-time purchase, no subscription.",
     tutoSpFinal1:"5 Pro features for life",
@@ -2527,6 +2638,26 @@ const LANGS={
     tutoSpD7:"Di las cartas en voz alta, la app las reconoce y calcula la decisión. <strong>Disponible con Pro</strong>.",
     tutoSpTcam:"Escaneo cámara",
     tutoSpDcam:"Apunta la cámara a la mesa con el <strong>crupier arriba</strong> y <strong>tu mano abajo</strong>. Una foto, la app detecta las cartas y aplica automáticamente. Re-escan después de cada robo. <strong>Disponible con Pro</strong>.",
+    // v1.2.6 — Tutorial burbuja
+    tutoSpTbubble:"Burbuja flotante",
+    tutoSpDbubble:"Mantén BJ Genius visible <strong>sobre todas tus otras apps</strong> (casino online, etc.) con una burbuja dorada arrastrable. Actívala, abre tu casino, la burbuja se queda en pantalla. <strong>Disponible con Pro</strong>.",
+    // v1.2.6 — Etiquetas y mensajes de la burbuja
+    bubbleLabel:"Burbuja",
+    bubbleLabelOn:"ON",
+    bubbleFailToast:"Fallo al iniciar la burbuja",
+    bubbleUnavailable:"La burbuja flotante solo está disponible en la app Android.\n\nInstala la app desde Play Store para usar esta función.",
+    // v1.2.6 — Popup intro burbuja
+    introBubbleTitle:"Burbuja flotante activada",
+    introBubbleSub:"BJ Genius se queda visible como burbuja dorada sobre todas tus otras apps.",
+    introBubbleHowH:"Cómo usarla",
+    introBubbleHow1:"Abre tu casino u otra app",
+    introBubbleHow2:"La burbuja se queda visible encima",
+    introBubbleHow3:"Arrástrala donde quieras en la pantalla",
+    introBubbleHow4:"Cruz roja o re-tap 🫧 para cerrarla",
+    introBubbleTip:"💡 <strong>Independiente del micro</strong>: la burbuja puede funcionar sola, o con el micro para dictar tus cartas en paralelo.",
+    introBubbleOk:"Entendido ✓",
+    // v1.2.6 — Etiqueta de la barra Hi-Lo bajo el header
+    hiloBarLabel:"Contador Hi-Lo",
     tutoSpT8:"¿Listo para subir de nivel?",
     tutoSpD8:"Desbloquea todas las funciones Pro por <strong>4,99 €</strong> de por vida. Compra única, sin suscripción.",
     tutoSpFinal1:"5 funciones Pro de por vida",
@@ -2675,6 +2806,28 @@ function applyLang(){
   // Voice mic label (état courant)
   const ml=document.getElementById("mic-label");
   if(ml)ml.innerHTML=micOn?t.voiceLabelOn:t.voiceLabelOff;
+  // v1.2.6 — Bubble label (etat courant) + popup intro bulle + bande Hi-Lo
+  const bl=document.getElementById("bubble-label");
+  if(bl)bl.innerHTML=bubbleOn?t.bubbleLabelOn:t.bubbleLabel;
+  // Bande Hi-Lo sous le header
+  const hbl=document.getElementById("hilo-bar-lbl");
+  if(hbl)hbl.textContent=t.hiloBarLabel;
+  // Popup intro bulle (renomme depuis intro-pip en v1.2.5)
+  const ib=(id,k,html)=>{const e=document.getElementById(id);if(e){if(html)e.innerHTML=t[k];else e.textContent=t[k];}};
+  ib("intro-bubble-title","introBubbleTitle");
+  ib("intro-bubble-sub","introBubbleSub");
+  ib("intro-bubble-howh","introBubbleHowH");
+  ib("intro-bubble-tip","introBubbleTip",true);
+  ib("intro-bubble-ok","introBubbleOk");
+  // Etapes du "Comment l'utiliser" (4 lignes)
+  const ibhow=document.getElementById("intro-bubble-howl");
+  if(ibhow){
+    ibhow.innerHTML =
+      "<div><strong>1.</strong> "+t.introBubbleHow1+"</div>"+
+      "<div><strong>2.</strong> "+t.introBubbleHow2+"</div>"+
+      "<div><strong>3.</strong> "+t.introBubbleHow3+"</div>"+
+      "<div><strong>4.</strong> "+t.introBubbleHow4+"</div>";
+  }
   // Drawer items
   const dsec=document.querySelectorAll(".dsec-title");
   const labels=[t.drawerTools,t.drawerDisplay,t.drawerSound,t.drawerLang];
@@ -3574,7 +3727,11 @@ const TUTO_STEPS=[
   {target:"#burger-btn",icon:"☰",titleKey:"tutoSpT5",descKey:"tutoSpD5"},
   {target:"#hilo-badge",icon:"🔢",titleKey:"tutoSpT6",descKey:"tutoSpD6",pro:true},
   {target:"#mic-btn",icon:"🎤",titleKey:"tutoSpT7",descKey:"tutoSpD7",pro:true},
-  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true}
+  {target:"#cam-btn",icon:"📷",titleKey:"tutoSpTcam",descKey:"tutoSpDcam",pro:true},
+  // v1.2.6 — Etape bulle ajoutee. Decrit a l'user la bulle flottante systeme
+  // qui remplace le PiP, permet de garder BJ Genius visible par-dessus son
+  // casino en ligne. PRO comme les autres features avancees du header.
+  {target:"#bubble-btn",icon:"🫧",titleKey:"tutoSpTbubble",descKey:"tutoSpDbubble",pro:true}
 ];
 
 // Vérifie si la condition d'une étape interactive est remplie
@@ -4873,9 +5030,10 @@ function toggleMic(){
     startActiveRecognition();
     // v1.20 — Intro contextuel a la 1ere activation du micro
     showIntroOnce('mic');
-    // v1.2 — Active la bulle flottante BJ Genius Live (Android natif)
-    // Si la permission overlay n'est pas accordee, on l'a demande.
-    maybeEnableBubble();
+    // v1.2.5 — DECOUPLAGE : la bulle n'est plus activee/desactivee par le micro.
+    // Elle a son propre toggle dans le header. Cela evite que les transitions
+    // d'etat micro (listening/transcribing/idle) declenchent des restarts de
+    // bulle qui faisaient buguer l'overlay quand la voix etait detectee.
   } else {
     btn.classList.remove("on","listening");
     document.getElementById("mic-label").innerHTML=tr.voiceLabelOff;
@@ -4886,48 +5044,117 @@ function toggleMic(){
     voiceBuffer=[];
     if(voiceTimer)clearTimeout(voiceTimer);
     hideVoiceToast();
-    // v1.2 — Coupe la bulle quand on coupe le mic
-    maybeDisableBubble();
+    // v1.2.5 — DECOUPLAGE : couper le micro ne coupe plus la bulle (cf. ci-dessus).
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // ══ v1.2 — BULLE FLOTTANTE BJ GENIUS LIVE (plugin Capacitor natif) ══
 // ═══════════════════════════════════════════════════════════════════
-// Remplace progressivement le PiP par une vraie bulle systeme draggable,
-// visible par-dessus toutes les autres apps (casinos en ligne, etc.).
-// La bulle ne fonctionne que sur Android Capacitor. Sur web, no-op silencieux.
-async function maybeEnableBubble(){
+// Remplace le PiP par une vraie bulle systeme draggable visible par-dessus
+// toutes les autres apps (casinos en ligne, etc.).
+// v1.2.5 — Maintenant decouplee du micro, controlee via son propre toggle
+// "🫧 Bulle" dans le header. La bulle ne fonctionne que sur Android Capacitor.
+// Sur web ou si le plugin n'est pas dispo : popup expliquant l'indispo.
+
+let bubbleOn = false;
+
+/**
+ * Handler du tap sur la pill "🫧 Bulle" dans le header.
+ * Verrouille en PRO (comme mic et cam), demande la permission overlay si
+ * besoin, puis bascule l'etat bulle.
+ */
+function onBubbleBtnTap(){
+  // v1.2.5 — PRO-lock comme les autres fonctionnalites avancees du header
+  if(!isPremium){ openPaywall('bubble'); return; }
+  // Plugin dispo ? (Android Capacitor uniquement)
   const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
   if(!plugin){
-    // Web ou ancien build : on tombe dans le fallback PiP existant via onUserLeaveHint
+    showBubbleUnavailablePopup();
     return;
   }
-  try {
-    const check=await plugin.checkOverlayPermission();
-    if(!check.granted){
-      // Premier usage : demander la permission via popup explicatif
-      showBubblePermissionPopup();
-      return;
+  toggleBubble();
+}
+
+/**
+ * Bascule l'etat de la bulle (on/off) avec gestion de la permission overlay.
+ * Met a jour l'UI de la pill ainsi que l'etat persistant.
+ */
+async function toggleBubble(){
+  const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
+  if(!plugin)return;
+  const btn=document.getElementById("bubble-btn");
+  const lbl=document.getElementById("bubble-label");
+  const tr=LANGS[currentLang]||LANGS.fr;
+
+  if(!bubbleOn){
+    // ON : verifier permission, demander si necessaire, puis demarrer
+    try {
+      const check=await plugin.checkOverlayPermission();
+      if(!check.granted){
+        // Premier usage : popup expliquant la permission
+        showBubblePermissionPopup();
+        return; // l'user revient apres avoir donne la permission, re-tap
+      }
+      await plugin.start();
+      bubbleOn = true;
+      btn.classList.add("on");
+      lbl.innerHTML = tr.bubbleLabelOn;
+      console.log('[BJG] Bulle activee');
+      // Intro contextuel a la 1ere activation
+      showIntroOnce('bubble');
+    } catch(e){
+      console.warn('[BJG] Bubble start failed:',e);
+      showVoiceToast(tr.bubbleFailToast);
+      setTimeout(hideVoiceToast, 2000);
     }
-    // Permission OK, on lance la bulle
-    await plugin.start();
-    console.log('[BJG] Bulle flottante demarree');
-  } catch(e){
-    console.warn('[BJG] Bubble start failed, fallback PiP:',e);
+  } else {
+    // OFF : arreter la bulle
+    try {
+      await plugin.stop();
+      bubbleOn = false;
+      btn.classList.remove("on");
+      lbl.innerHTML = tr.bubbleLabel;
+      console.log('[BJG] Bulle desactivee');
+    } catch(e){
+      console.warn('[BJG] Bubble stop failed:',e);
+    }
   }
 }
 
-async function maybeDisableBubble(){
+/**
+ * Popup quand le plugin n'est pas disponible (web, ancien build, etc.).
+ */
+function showBubbleUnavailablePopup(){
+  const tr=LANGS[currentLang]||LANGS.fr;
+  alert(tr.bubbleUnavailable);
+}
+
+/**
+ * Synchronise l'etat UI de la pill bulle au demarrage en interrogeant
+ * le service natif (au cas ou la bulle tournerait deja en background).
+ */
+async function syncBubbleStateOnStartup(){
   const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
   if(!plugin)return;
   try {
-    await plugin.stop();
-    console.log('[BJG] Bulle flottante arretee');
+    const r=await plugin.isRunning();
+    if(r && r.running){
+      bubbleOn = true;
+      const btn=document.getElementById("bubble-btn");
+      const lbl=document.getElementById("bubble-label");
+      const tr=LANGS[currentLang]||LANGS.fr;
+      if(btn) btn.classList.add("on");
+      if(lbl) lbl.innerHTML = tr.bubbleLabelOn;
+    }
   } catch(e){
-    console.warn('[BJG] Bubble stop failed:',e);
+    console.warn('[BJG] isRunning check failed:',e);
   }
 }
+
+// v1.2.5 — maybeDisableBubble() RETIREE : la bulle a maintenant son propre
+// toggle (onBubbleBtnTap → toggleBubble). Couper le micro ne coupe plus la
+// bulle, donc cette fonction n'est plus appelee.
 
 // Popup pour expliquer et demander la permission "Display over other apps"
 function showBubblePermissionPopup(){
@@ -4987,11 +5214,20 @@ async function recheckBubblePermOnResume(){
   if(!plugin)return;
   try {
     const check=await plugin.checkOverlayPermission();
-    if(check.granted&&micOn){
-      // L'user a accorde la permission et le mic est toujours ON, on lance la bulle
+    if(check.granted){
+      // v1.2.5 — Decouple du micro : on lance la bulle des que la permission
+      // est accordee (l'user vient de revenir des params Android apres avoir
+      // tape sur 🫧 BULLE puis "Autoriser" dans le popup permission).
       await plugin.start();
+      bubbleOn = true;
+      const btn=document.getElementById("bubble-btn");
+      const lbl=document.getElementById("bubble-label");
+      const tr=LANGS[currentLang]||LANGS.fr;
+      if(btn) btn.classList.add("on");
+      if(lbl) lbl.innerHTML = tr.bubbleLabelOn;
       console.log('[BJG] Bulle demarree apres autorisation');
       document.removeEventListener('visibilitychange',recheckBubblePermOnResume);
+      showIntroOnce('bubble');
     }
   } catch(e){}
 }
@@ -5267,22 +5503,11 @@ function renderMicCommandsDetail(){
   document.getElementById('intro-micD-ok').textContent=lang==='en'?'Close ✓':lang==='es'?'Cerrar ✓':'Fermer ✓';
 }
 
-// v1.20 — Detection de la sortie du mode PiP via MutationObserver sur body.pip-mode.
-// MainActivity.java natif appelle document.body.classList.toggle('pip-mode',isInPip).
-// On observe le retour a "no pip-mode" et on affiche l'intro PiP UNE fois.
-(function setupPipIntroWatcher(){
-  if(typeof MutationObserver==='undefined')return;
-  let wasInPip=false;
-  const obs=new MutationObserver(()=>{
-    const isInPip=document.body.classList.contains('pip-mode');
-    if(wasInPip&&!isInPip){
-      // L'user vient de sortir du mode bulle : il revient dans l'app, moment ideal
-      showIntroOnce('pip');
-    }
-    wasInPip=isInPip;
-  });
-  obs.observe(document.body,{attributes:true,attributeFilter:['class']});
-})();
+// v1.2.5 — setupPipIntroWatcher() RETIRE : le mode PiP a ete supprime en
+// v1.2.5 au profit de la bulle systeme draggable. MainActivity.java ne pose
+// plus la classe "pip-mode" sur body, donc l'observer est devenu dead code.
+// L'intro de la bulle (showIntroOnce('bubble')) est maintenant declenche
+// directement dans toggleBubble() au premier succes d'activation.
 
 // v1.26 — toggleVoiceEngine() retire (code mort) : le toggle UI a ete supprime
 // en v1.24, et la fonction reference des elements DOM (#dt-whisper) et popups
@@ -6858,6 +7083,10 @@ renderHand();updateAll();applyLang();applyPremiumState();
       loadWhisper().then(ok=>{
         console.log('[BJG] Whisper preload:',ok?'READY':'failed');
       });
+      // v1.2.5 — Synchronise l'etat UI de la pill bulle. Si le service tournait
+      // deja en background (app reouverte alors que la bulle est active), la
+      // pill doit s'afficher en mode ON.
+      syncBubbleStateOnStartup();
     } else if(isPremium){
       // Sur web, on prefetch seulement si premium (l'user a achete l'app, autant
       // que ce soit pret quand il en aura besoin)
