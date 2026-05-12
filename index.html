@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.6 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.7 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.6</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.7</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -3222,29 +3222,43 @@ function syncPipDisplay(){
 // Etat de la bulle declare ici (avant son usage) pour eviter une TDZ error.
 let bubbleOn = false;
 
+// v1.3.7 — Cache pour throttle de syncBubbleDecision.
+// updateAll() est appele tres souvent en mode vocal (chaque tick, chaque carte),
+// et chaque appel a plugin.setDecision() declenche une chaine couteuse cote natif
+// (bridge -> runOnUiThread -> updateViewLayout). Sans throttle, ca saturait le
+// main thread Android et ralentissait drastiquement Whisper et l'UI.
+let lastBubbleDecisionPayload = '';
+let lastBubbleDecisionTime = 0;
+
 function syncBubbleDecision(){
-  if(!bubbleOn)return; // pas la peine si la bulle n'est pas active
+  if(!bubbleOn)return;
   const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
   if(!plugin||!plugin.setDecision)return;
   const azone=document.getElementById('azone');
   const adecision=document.getElementById('adecision');
   const aph=document.getElementById('aph');
-  // Pas de decision active : vider le rectangle
-  if(!azone||!adecision||(aph&&aph.style.display!=='none')){
-    plugin.setDecision({ text: '', color: '#c9a84c' }).catch(()=>{});
-    return;
+  // Determine la decision a envoyer (texte + couleur)
+  let text='', color='#c9a84c';
+  if(azone&&adecision&&(!aph||aph.style.display==='none')){
+    text=(adecision.textContent||'').slice(0,12);
+    const cls=azone.className||'';
+    if(cls.includes(' hit'))color='#22c55e';
+    else if(cls.includes(' sta'))color='#f97316';
+    else if(cls.includes(' dbl'))color='#c9a84c';
+    else if(cls.includes(' spl'))color='#38bdf8';
+    else if(cls.includes(' sur'))color='#ef4444';
+    else if(cls.includes(' bst'))color='#ef4444';
+    else if(cls.includes(' bj'))color='#c9a84c';
   }
-  const text=(adecision.textContent||'').slice(0,12);
-  // Couleur selon la classe de azone (mapping CSS -> hex)
-  const cls=azone.className||'';
-  let color='#c9a84c'; // dore par defaut
-  if(cls.includes(' hit'))color='#22c55e';      // vert
-  else if(cls.includes(' sta'))color='#f97316'; // orange (rester)
-  else if(cls.includes(' dbl'))color='#c9a84c'; // dore (doubler)
-  else if(cls.includes(' spl'))color='#38bdf8'; // bleu
-  else if(cls.includes(' sur'))color='#ef4444'; // rouge
-  else if(cls.includes(' bst'))color='#ef4444'; // rouge (bust)
-  else if(cls.includes(' bj'))color='#c9a84c';  // dore (blackjack)
+  // v1.3.7 — Skip si rien n'a change (le plus gros gain : 90% des updateAll()
+  // ne changent pas la decision affichee).
+  const payload=text+'|'+color;
+  if(payload===lastBubbleDecisionPayload)return;
+  // Throttle minimum 250ms pour limiter les transitions rapides
+  const now=Date.now();
+  if(now-lastBubbleDecisionTime<250)return;
+  lastBubbleDecisionPayload=payload;
+  lastBubbleDecisionTime=now;
   plugin.setDecision({ text, color }).catch(e=>console.warn('[BJG] setDecision failed',e));
 }
 
@@ -5120,9 +5134,6 @@ function installBubbleEventListener(){
     plugin.addListener('bubbleEvent', (evt) => {
       const type=evt&&evt.type;
       console.log('[BJG] Bubble event from native:',type);
-      // v1.3.6 — Toast de debug : confirme visuellement que l'event arrive
-      // du natif vers JS. A retirer une fois la fonctionnalite stable.
-      try { showVoiceToast('🫧 '+type); setTimeout(hideVoiceToast, 800); } catch(_){}
       switch(type){
         case 'mic_tap':
           // L'user a tape sur la sous-bulle mic -> bascule le mic
