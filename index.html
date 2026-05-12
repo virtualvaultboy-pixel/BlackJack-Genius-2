@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.14 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.15 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.14</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.15</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5158,11 +5158,18 @@ function processBuffer(){
   // Gestion des répétitions (7 7 7, 8 8...) : si tous les mots du transcript mappent
   // à la même carte, Android Chrome a probablement coupé en mots dédupliqués → on
   // retourne autant de copies que de mots prononcés.
+  // v1.3.14 — PROTECTION ANTI-HALLUCINATION WHISPER : le modele peut entrer
+  // en boucle de repetition et sortir "10 10 10 10 10 10 10 10 10 10".
+  // Sans protection, cette logique amplifierait l'hallucination en injectant
+  // 10 cartes "10" d'un coup. On cap a 4 cartes max (cas realiste : "as 2 3 4").
+  // Au-dela de 4, c'est forcement du bruit, on garde une seule occurrence.
   let finalCards=cards;
   const uniqueCardWords=[...new Set(norm(fullText).split(/\s+/).filter(w=>isRealCard(bestMatch(w))))];
   if(uniqueCardWords.length===1&&norm(fullText).trim().split(/\s+/).length>=2){
     const cnt=norm(fullText).trim().split(/\s+/).filter(w=>bestMatch(w)===cards[0]).length;
-    if(cnt>1)finalCards=Array(cnt).fill(cards[0]);
+    // v1.3.14 — Cap a 4 pour eviter les hallucinations Whisper en boucle.
+    const cappedCnt=Math.min(cnt,4);
+    if(cappedCnt>1)finalCards=Array(cappedCnt).fill(cards[0]);
   }
 
   if(finalCards.length>=1){
@@ -6038,6 +6045,9 @@ async function startWhisperRecognition(){
 function stopWhisperRecognition(){
   whisperActive=false;
   whisperAudioBuf=[];
+  // v1.3.14 — Reset du dedup anti-hallucination pour que la prochaine
+  // session vocale ne soit pas bloquee par le dernier texte de la precedente.
+  window.__lastWhisperText='';
   if(whisperProcessor){try{whisperProcessor.disconnect();}catch(e){}whisperProcessor=null;}
   if(whisperSource){try{whisperSource.disconnect();}catch(e){}whisperSource=null;}
   if(whisperAudioContext&&whisperAudioContext.state!=='closed'){
@@ -6059,60 +6069,39 @@ async function processWhisperChunk(audioData){
     const a=Math.abs(audioData[i]);
     if(a>maxAmp)maxAmp=a;
   }
-  // v1.3.14 — Debug : log toujours le maxAmp pour identifier les problemes
-  // de captation mic. Si maxAmp est tres bas (<0.01) quand l'user parle,
-  // le mic est mal configure ou le signal est trop faible.
-  console.log('[BJG] Whisper chunk maxAmp:', maxAmp.toFixed(4));
-  if(maxAmp<0.015){
-    // Mode debug : si activé, on signale visuellement que le chunk est silence
-    if(window.whisperDebug){
-      showVoiceToast('🔇 silence (' + maxAmp.toFixed(3) + ')');
-      setTimeout(hideVoiceToast, 1200);
-    }
-    return; // seuil bas mais évite le bruit ambiant
-  }
+  if(maxAmp<0.015)return; // seuil bas mais évite le bruit ambiant
 
   try{
     const lang=currentLang==='en'?'english':currentLang==='es'?'spanish':'french';
     const result=await whisperPipeline(audioData,{
       language:lang,
       task:'transcribe',
-      // Désactive timestamps (gain perf, pas besoin pour notre usage)
       return_timestamps:false,
     });
     const text=((result&&result.text)||'').trim();
-    // v1.3.14 — Debug : log toujours le texte brut transcrit par Whisper.
-    // Permet d'identifier pourquoi des cartes ne sont pas detectees :
-    // (musique), texte vide, "...", ou mots non reconnus comme cartes.
-    console.log('[BJG] Whisper raw:', JSON.stringify(text));
-    if(window.whisperDebug){
-      showVoiceToast('📝 "' + text.slice(0,40) + '"');
-      setTimeout(hideVoiceToast, 1500);
-    }
     if(!text||text.length<1)return;
-    // Anti-doublon basique (Whisper peut hallucine des "Sous-titres faits par..." sur silence)
+
+    // Anti-hallucinations Whisper sur silence (sous-titres bidons connus du modele)
     if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text))return;
 
-    // v1.3.12 — Filtre des MARQUEURS PARASITES Whisper. Quand Whisper recoit
-    // un chunk audio avec peu/pas de parole intelligible (bruit ambiant,
-    // musique, silence), il sort des marqueurs entre parentheses/crochets :
-    //   "(musique)", "[Musique]", "(bruit de fond)", "[Music]", "(silence)",
-    //   "[Applause]", "(rires)", "[chuckles]", etc.
-    // On nettoie ces marqueurs du texte. Si le texte ENTIER est un marqueur,
-    // on skip completement (rien a injecter dans le buffer).
-    const MARKER_RE = /[\(\[]\s*(musique|music|bruit|noise|silence|applaud|rires?|laugh|chuckle|sigh|breath|cough|inaudible|crosstalk|background|musik|m[uú]sica|ruido|risas?)[^\)\]]*[\)\]]/gi;
-    let cleanedText = text.replace(MARKER_RE, '').replace(/\s+/g, ' ').trim();
-    // v1.3.14 — Si le texte resultant ne contient AUCUNE lettre/chiffre, c'est
-    // du bruit pur ("...", ponctuation seule). Skip silencieusement.
-    if(cleanedText && !/[a-zA-ZàâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ0-9]/.test(cleanedText)){
-      console.log('[BJG] Whisper non-alpha noise filtered:', text);
+    // v1.3.12 — Filtre des marqueurs entre parentheses/crochets ("(musique)",
+    // "[noise]", "(silence)"...). Whisper en sort quand le chunk audio n'a
+    // pas de parole intelligible. Si le texte est UNIQUEMENT un marqueur,
+    // on skip ; sinon on nettoie et on garde le reste.
+    const MARKER_RE=/[\(\[]\s*(musique|music|bruit|noise|silence|applaud|rires?|laugh|chuckle|sigh|breath|cough|inaudible|crosstalk|background|musik|m[uú]sica|ruido|risas?)[^\)\]]*[\)\]]/gi;
+    const cleanedText=text.replace(MARKER_RE,'').replace(/\s+/g,' ').trim();
+    if(!cleanedText)return;
+
+    // v1.3.14 — Anti-hallucination INTER-CHUNKS : Whisper peut entrer en boucle
+    // et repeter le meme texte sur plusieurs chunks consecutifs (le mic capte
+    // un bruit ambiant repetitif type ventilo, le modele s'accroche dessus).
+    // Si le chunk courant est IDENTIQUE au precedent, on skip pour eviter
+    // d'accumuler 10x "10" dans le buffer.
+    if(cleanedText===window.__lastWhisperText){
+      // On a deja ce texte du chunk precedent, c'est une hallucination en boucle.
       return;
     }
-    if(!cleanedText||cleanedText.length<1){
-      // Le texte etait UNIQUEMENT du marqueur parasite. Skip silencieusement.
-      console.log('[BJG] Whisper marker filtered out:', text);
-      return;
-    }
+    window.__lastWhisperText=cleanedText;
 
     // Injection dans le buffer comme Web Speech
     voiceBuffer.push(cleanedText);
@@ -7427,9 +7416,6 @@ function onVersionTap(){
 // v1.6 — Long-press sur version-badge (≥700 ms) → toggle mode debug scan caméra
 let camDebugMode=false;
 try{camDebugMode=localStorage.getItem('bjg_cam_debug')==='1';}catch(e){}
-// v1.3.14 — Le flag whisperDebug est partage avec camDebugMode : meme bouton,
-// active ces 2 modes de debug (scan + voix) en meme temps.
-window.whisperDebug = camDebugMode;
 let versionLongPressTimer=null,versionLongPressFired=false;
 function onVersionLongPressStart(ev){
   versionLongPressFired=false;
@@ -7444,17 +7430,13 @@ function onVersionLongPressEnd(){
 }
 function toggleCamDebug(){
   camDebugMode=!camDebugMode;
-  // v1.3.14 — Le mode debug active AUSSI la trace verbale Whisper :
-  // chaque chunk audio sortira son maxAmp et le texte brut transcrit
-  // dans un toast (debug rapide sans console externe).
-  window.whisperDebug = camDebugMode;
   try{localStorage.setItem('bjg_cam_debug',camDebugMode?'1':'0');}catch(e){}
   if(navigator.vibrate)navigator.vibrate([30,40,30]);
   // Met à jour le tag affiché dans le modal cam (visible si scan ouvert)
   const tag=document.getElementById('cam-debug-tag');
   if(tag)tag.style.display=camDebugMode?'':'none';
   const tr=LANGS[currentLang]||LANGS.fr;
-  const msg=camDebugMode?"🐞 Debug ACTIVÉ (scan + voix)":"🐞 Debug désactivé";
+  const msg=camDebugMode?(tr.camDebugOn||"🐞 Debug scan ACTIVÉ"):(tr.camDebugOff||"🐞 Debug scan désactivé");
   showVoiceToast(msg);
   setTimeout(hideVoiceToast,2000);
 }
