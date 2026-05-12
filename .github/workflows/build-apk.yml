@@ -263,44 +263,47 @@ jobs:
           #     SYSTEM_ALERT_WINDOW = afficher par-dessus les autres apps
           #     FOREGROUND_SERVICE  = maintenir le service en background
           #     POST_NOTIFICATIONS  = notification permanente (Android 13+)
-          #     WAKE_LOCK (v1.3.13) = garder le CPU actif pendant que la bulle
-          #                          tourne, sinon Android suspend la WebView
-          #                          et le mic ne capte plus rien en background
-          #     FOREGROUND_SERVICE_MICROPHONE (v1.3.13) = autoriser la capture
-          #                          audio par le service foreground (Android 14+)
+          #
+          # v1.3.14 — REVERT du patch v1.3.13 : retire WAKE_LOCK et
+          # FOREGROUND_SERVICE_MICROPHONE qui cassaient le pipeline mic
+          # de la WebView (Android attribuait le micro au service au lieu
+          # de la WebView, resultat : capture qui s'arretait apres 1 mot).
           bubble_perms = (
               '    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n'
               '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n'
               '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />\n'
-              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n'
               '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
-              '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n'
           )
           if "SYSTEM_ALERT_WINDOW" not in content:
               content = content.replace("</manifest>", bubble_perms + "</manifest>")
               print("v1.2 Bubble permissions injected")
           else:
-              # v1.3.13 — Ajout incremental de WAKE_LOCK et FOREGROUND_SERVICE_MICROPHONE
-              # si on a deja un manifest mais sans ces 2 permissions recentes.
-              if "WAKE_LOCK" not in content:
-                  content = content.replace("</manifest>",
-                      '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>')
-                  print("v1.3.13 WAKE_LOCK injected")
-              if "FOREGROUND_SERVICE_MICROPHONE" not in content:
-                  content = content.replace("</manifest>",
-                      '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n</manifest>')
-                  print("v1.3.13 FOREGROUND_SERVICE_MICROPHONE injected")
-              print("v1.2 Bubble permissions already present")
+              # v1.3.14 — Nettoyage : retire les permissions v1.3.13 si presentes,
+              # car elles cassaient le mic. Le service revient a un foreground
+              # service simple "specialUse" qui ne capture pas l'audio.
+              if "android.permission.WAKE_LOCK" in content:
+                  content = content.replace(
+                      '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n',
+                      ''
+                  )
+                  print("v1.3.14 WAKE_LOCK removed (was breaking the mic)")
+              if "FOREGROUND_SERVICE_MICROPHONE" in content:
+                  content = content.replace(
+                      '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n',
+                      ''
+                  )
+                  print("v1.3.14 FOREGROUND_SERVICE_MICROPHONE removed (was breaking the mic)")
+              print("v1.2 Bubble permissions already present (v1.3.13 perms removed if any)")
 
           # 1c) v1.2 — Declaration du service BJGeniusBubbleService dans <application>.
-          #     foregroundServiceType="specialUse|microphone" (v1.3.13) est obligatoire
-          #     depuis Android 14. On combine specialUse (bulle flottante) avec
-          #     microphone (capture audio en background pour Whisper).
+          #     foregroundServiceType="specialUse" est obligatoire depuis Android 14.
+          #     v1.3.14 — On revient a "specialUse" seul (sans |microphone) car
+          #     le service ne capture pas l'audio (c'est la WebView qui le fait).
           service_decl = (
               '        <service\n'
               '            android:name="studio.deponchy.bjgenius.BJGeniusBubbleService"\n'
               '            android:exported="false"\n'
-              '            android:foregroundServiceType="specialUse|microphone">\n'
+              '            android:foregroundServiceType="specialUse">\n'
               '            <property\n'
               '                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"\n'
               '                android:value="floating_assistant_bubble" />\n'
@@ -311,13 +314,14 @@ jobs:
               content = content.replace("</application>", service_decl + "    </application>")
               print("v1.2 Bubble service declared")
           else:
-              # v1.3.13 — Si service deja declare mais sans le type microphone, on patche
-              if 'foregroundServiceType="specialUse"' in content and '|microphone' not in content:
+              # v1.3.14 — Downgrade : si le service est en specialUse|microphone, on revient
+              # a specialUse seul pour ne pas perturber le pipeline mic de la WebView.
+              if 'foregroundServiceType="specialUse|microphone"' in content:
                   content = content.replace(
-                      'android:foregroundServiceType="specialUse"',
-                      'android:foregroundServiceType="specialUse|microphone"'
+                      'android:foregroundServiceType="specialUse|microphone"',
+                      'android:foregroundServiceType="specialUse"'
                   )
-                  print("v1.3.13 foregroundServiceType upgraded to specialUse|microphone")
+                  print("v1.3.14 foregroundServiceType downgraded to specialUse (was specialUse|microphone)")
               else:
                   print("v1.2 Bubble service already declared")
 
@@ -371,14 +375,12 @@ jobs:
           import os, glob, re, textwrap
           # v1.2.5 — Patch de MainActivity.java pour enregistrer le plugin
           # BJGeniusBubble. Le PiP automatique au Home a ete RETIRE en v1.2.5
-          # car il faisait doublon avec la bulle systeme draggable. La bulle
-          # remplace entierement le PiP pour le cas d'usage "voir BJ Genius
-          # par-dessus une autre app".
+          # car il faisait doublon avec la bulle systeme draggable.
           #
-          # v1.3.13 — Ajout config WebView qui empeche Android de suspendre
-          # le JS et le mic quand l'app passe en background. Sans ca, la
-          # WebView (et Whisper, et le listener bubbleEvent) gele des qu'on
-          # est sur le casino en ligne.
+          # v1.3.14 — REVERT du patch v1.3.13 qui ajoutait un override onPause()
+          # et de la config WebView. Ces modifs cassaient le pipeline Whisper
+          # (le AudioContext de la WebView etait suspendu apres le 1er chunk).
+          # On revient au patch v1.2.5 propre.
           matches = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
           if not matches:
               print("WARN: MainActivity.java not found, skipping patch")
@@ -392,17 +394,14 @@ jobs:
               m = re.match(r'package\s+([^;]+);', content)
               if not m:
                   print("WARN: package declaration not found, skipping")
-              elif 'pauseTimers' in content and 'BJGeniusBubblePlugin' in content:
-                  print("Already patched v1.3.13 (with WebView anti-suspension), skipping")
+              elif 'BJGeniusBubblePlugin' in content and 'pauseTimers' not in content and 'onPause' not in content:
+                  print("Already patched v1.3.14 (simple, no onPause override), skipping")
               else:
                   package = m.group(1)
-                  # textwrap.dedent retire l'indentation commune pour produire
-                  # du Java propre malgre l'indent de notre heredoc YAML.
                   new_content = textwrap.dedent(f"""\
                       package {package};
 
                       import android.os.Bundle;
-                      import android.webkit.WebSettings;
                       import com.getcapacitor.BridgeActivity;
                       import studio.deponchy.bjgenius.BJGeniusBubblePlugin;
 
@@ -413,43 +412,12 @@ jobs:
                               // pour que Capacitor le decouvre au demarrage.
                               registerPlugin(BJGeniusBubblePlugin.class);
                               super.onCreate(savedInstanceState);
-
-                              // v1.3.13 — Empeche Android de suspendre le JS de la WebView
-                              // (timers, fetch, audio context) quand l'app passe en background.
-                              // Sans ca, Whisper et le listener bubbleEvent gelent des que
-                              // l'user passe sur son casino en ligne.
-                              if (bridge != null && bridge.getWebView() != null) {{
-                                  WebSettings ws = bridge.getWebView().getSettings();
-                                  // Garde le media (audio/video) actif meme en background
-                                  ws.setMediaPlaybackRequiresUserGesture(false);
-                                  // Note : on ne peut pas appeler pauseTimers/resumeTimers
-                                  // directement, c'est Android qui le fait sur l'activity.
-                                  // Ce qui evite vraiment la suspension est :
-                                  //   1) le WAKE_LOCK acquis par le service de bulle
-                                  //   2) le foregroundServiceType=microphone du service
-                              }}
-                          }}
-
-                          // v1.3.13 — onPause/onResume override pour ne PAS appeler
-                          // pauseTimers() qui geleraient la WebView. Par defaut, BridgeActivity
-                          // appelle webView.onPause() qui suspend tout. On override pour ne
-                          // PAS suspendre quand la bulle est active (le mic doit continuer).
-                          @Override
-                          public void onPause() {{
-                              super.onPause();
-                              // Si la bulle tourne en service foreground, on resume
-                              // immediatement la WebView pour que Whisper continue d'ecouter.
-                              if (studio.deponchy.bjgenius.BJGeniusBubbleService.isRunning()
-                                      && bridge != null && bridge.getWebView() != null) {{
-                                  bridge.getWebView().onResume();
-                                  bridge.getWebView().resumeTimers();
-                              }}
                           }}
                       }}
                       """)
                   with open(path, "w", encoding="utf-8") as f:
                       f.write(new_content)
-                  print("MainActivity.java patched (v1.3.13 : Bubble plugin + WebView anti-suspension)")
+                  print("MainActivity.java patched (v1.3.14 : simple, no onPause override)")
                   print("=== New MainActivity.java ===")
                   print(new_content)
           PYEOF
