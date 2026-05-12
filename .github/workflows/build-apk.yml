@@ -15,6 +15,8 @@ on:
       # v1.2.7 — Inclure les sources natives Android pour que les modifs
       # de la bulle flottante (Kotlin/Java) declenchent un rebuild.
       - 'android-native/**'
+      # v1.3.18 — Un changement d'icone declenche un rebuild (mipmaps regeneres).
+      - 'icon-*.png'
 
 jobs:
   build:
@@ -103,6 +105,33 @@ jobs:
             echo "Syncing existing Android platform"
             npx cap sync android
           fi
+
+      - name: Generate Android icons from icon-512.png
+        # v1.3.18 — Genere les 5 tailles mipmap (mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi)
+        # depuis icon-512.png (icone D2 v5 a la racine du repo). Supprime aussi
+        # le dossier mipmap-anydpi-v26 (adaptive icons XML) qui aurait priorite
+        # sur nos PNG legacy. ImageMagick "convert" est pre-installe sur ubuntu-latest.
+        run: |
+          if [ ! -f icon-512.png ]; then
+            echo "✗ icon-512.png not found at repo root"
+            exit 1
+          fi
+          # Les adaptive icons XML (mipmap-anydpi-v26) auraient priorite sur nos PNG :
+          # on les retire pour forcer Android a utiliser nos PNG legacy.
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          for entry in "mdpi:48" "hdpi:72" "xhdpi:96" "xxhdpi:144" "xxxhdpi:192"; do
+            dpi="${entry%:*}"
+            size="${entry#*:}"
+            mkdir -p "android/app/src/main/res/mipmap-$dpi"
+            convert icon-512.png -filter Lanczos -resize ${size}x${size} \
+              "android/app/src/main/res/mipmap-$dpi/ic_launcher.png"
+            cp "android/app/src/main/res/mipmap-$dpi/ic_launcher.png" \
+               "android/app/src/main/res/mipmap-$dpi/ic_launcher_round.png"
+            echo "  ✓ mipmap-$dpi (${size}x${size})"
+          done
+          echo ""
+          echo "=== mipmap-*/ content after generation ==="
+          ls -la android/app/src/main/res/mipmap-*/
 
       - name: Enable Kotlin in Android Gradle build
         # v1.2 — La bulle flottante est implementee en Kotlin. Le projet Capacitor
