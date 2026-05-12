@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.18 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.19 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.18</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.19</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5286,9 +5286,20 @@ function installBubbleEventListener(){
   const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BJGeniusBubble;
   if(!plugin||!plugin.addListener)return;
   try {
-    plugin.addListener('bubbleEvent', (evt) => {
+    plugin.addListener('bubbleEvent', async (evt) => {
       const type=evt&&evt.type;
       console.log('[BJG] Bubble event from native:',type);
+      // v1.3.19 — FIX UX : pour les events qui declenchent un popup/dialog UI
+      // (intro mic, intro scan, ou demande de permission micro Android), on
+      // ramene BJ Genius au premier plan AVANT toute action JS. Sinon l'user
+      // ne voit rien jusqu'a ce qu'il rouvre manuellement l'app, ce qui n'est
+      // pas du tout fluide pour un client premium.
+      // PAS de bringToFront pour bubble_tap (expand/collapse, l'user reste
+      // dans l'autre app) ni close_tap (l'user veut fermer la bulle).
+      if(type==='mic_tap' || type==='scan_tap'){
+        try { await plugin.bringToFront(); }
+        catch(e){ console.warn('[BJG] bringToFront failed:',e); }
+      }
       switch(type){
         case 'mic_tap':
           // v1.3.11 — Si le mic n'a jamais ete configure (1ere utilisation
