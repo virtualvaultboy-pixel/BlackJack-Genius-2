@@ -158,6 +158,11 @@ class BubbleOverlayView(context: Context) : View(context) {
     private enum class HitZone { NONE, BUBBLE, MIC, SCAN, CLOSE, DECISION }
     private var hitZone = HitZone.NONE
 
+    // v1.3.10 — Reference a l'animation de resize en cours pour pouvoir
+    // l'annuler si un autre resize est demande avant la fin (par exemple
+    // un updateDecision qui arrive pendant une animation d'expand).
+    private var resizeAnimator: android.animation.ValueAnimator? = null
+
     // ── Note importante : pas de bloc init {} faisant des calculs ───
     // Les valeurs par defaut de currentViewW/H et bubbleCx/Cy sont deja
     // correctes pour l'etat collapsed-sans-decision.
@@ -314,39 +319,103 @@ class BubbleOverlayView(context: Context) : View(context) {
 
     /**
      * Applique le nouveau layout au WindowManager si on est attache.
+     *
+     * v1.3.10 — Transition animee entre l'ancienne et la nouvelle taille
+     * de la View pour eliminer le "surbond" visuel a l'expand/collapse.
+     * L'animation interpole width/height/x/y simultanement pendant 160ms,
+     * en preservant la position visuelle du centre de la BJ.
      */
     private fun applyResize() {
         val lp = layoutParams as? WindowManager.LayoutParams
-        // Avant de recompute, on sauvegarde la position visuelle screen-coord
-        // de la BJ pour pouvoir la preserver apres le resize.
-        val canPreservePos = lp != null && windowManager != null && hasLaidOutOnce
-        val oldBubbleScreenX = if (canPreservePos) lp!!.x + bubbleCx.toInt() else 0
-        val oldBubbleScreenY = if (canPreservePos) lp!!.y + bubbleCy.toInt() else 0
+        val canAnimate = lp != null && windowManager != null && hasLaidOutOnce
+
+        if (!canAnimate) {
+            // Premier resize (pas encore attache) : on applique direct sans animer.
+            recomputeLayout()
+            if (lp != null && windowManager != null) {
+                lp.width = currentViewW
+                lp.height = currentViewH
+                try {
+                    windowManager?.updateViewLayout(this, lp)
+                } catch (e: Exception) {
+                    Log.w("BubbleView", "applyResize initial updateViewLayout failed", e)
+                }
+            }
+            invalidate()
+            return
+        }
+
+        // Sauvegarde l'etat AVANT recompute pour calcul des deltas
+        val oldW = lp!!.width
+        val oldH = lp.height
+        val oldX = lp.x
+        val oldY = lp.y
+        val oldBubbleScreenX = lp.x + bubbleCx.toInt()
+        val oldBubbleScreenY = lp.y + bubbleCy.toInt()
 
         recomputeLayout()
 
-        if (lp != null && windowManager != null) {
-            lp.width = currentViewW
-            lp.height = currentViewH
-            if (canPreservePos) {
-                lp.x = oldBubbleScreenX - bubbleCx.toInt()
-                lp.y = oldBubbleScreenY - bubbleCy.toInt()
-                // Clamp pour eviter de sortir de l'ecran
-                val sw = resources.displayMetrics.widthPixels
-                val sh = resources.displayMetrics.heightPixels
-                val minX = -bubbleCx.toInt() + (4 * density).toInt()
-                val maxX = sw - bubbleCx.toInt() - (4 * density).toInt() - bubbleSize / 2
-                val minY = -bubbleCy.toInt() + (4 * density).toInt()
-                val maxY = sh - bubbleCy.toInt() - (4 * density).toInt() - bubbleSize / 2
-                lp.x = max(minX, min(maxX, lp.x))
-                lp.y = max(minY, min(maxY, lp.y))
-            }
+        // Nouvelles cibles : taille = currentViewW/H, position telle que le centre
+        // de la BJ reste exactement au meme endroit visuellement.
+        val targetW = currentViewW
+        val targetH = currentViewH
+        var targetX = oldBubbleScreenX - bubbleCx.toInt()
+        var targetY = oldBubbleScreenY - bubbleCy.toInt()
+        // Clamp pour eviter sortie d'ecran
+        val sw = resources.displayMetrics.widthPixels
+        val sh = resources.displayMetrics.heightPixels
+        val minX = -bubbleCx.toInt() + (4 * density).toInt()
+        val maxX = sw - bubbleCx.toInt() - (4 * density).toInt() - bubbleSize / 2
+        val minY = -bubbleCy.toInt() + (4 * density).toInt()
+        val maxY = sh - bubbleCy.toInt() - (4 * density).toInt() - bubbleSize / 2
+        targetX = max(minX, min(maxX, targetX))
+        targetY = max(minY, min(maxY, targetY))
+
+        // Si la difference est tres petite (cas decision text qui change mais pas
+        // l'etat expand), on applique direct sans animer pour eviter une animation
+        // imperceptible mais qui pourrait spammer le WindowManager.
+        val negligible = Math.abs(targetW - oldW) < 4 && Math.abs(targetH - oldH) < 4
+        if (negligible) {
+            lp.width = targetW
+            lp.height = targetH
+            lp.x = targetX
+            lp.y = targetY
             try {
                 windowManager?.updateViewLayout(this, lp)
             } catch (e: Exception) {
-                Log.w("BubbleView", "applyResize updateViewLayout failed", e)
+                Log.w("BubbleView", "applyResize negligible updateViewLayout failed", e)
+            }
+            invalidate()
+            return
+        }
+
+        // Annule une animation precedente si elle est encore en cours
+        resizeAnimator?.cancel()
+        // Animation : interpolation lineaire sur 160ms
+        val anim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 160
+            interpolator = android.view.animation.DecelerateInterpolator(1.5f)
+        }
+        resizeAnimator = anim
+        anim.addUpdateListener { va ->
+            val t = va.animatedValue as Float
+            try {
+                lp.width = (oldW + (targetW - oldW) * t).toInt()
+                lp.height = (oldH + (targetH - oldH) * t).toInt()
+                lp.x = (oldX + (targetX - oldX) * t).toInt()
+                lp.y = (oldY + (targetY - oldY) * t).toInt()
+                windowManager?.updateViewLayout(this, lp)
+            } catch (e: Exception) {
+                Log.w("BubbleView", "applyResize anim updateViewLayout failed", e)
+                anim.cancel()
             }
         }
+        anim.addListener(object : android.animation.AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                resizeAnimator = null
+            }
+        })
+        anim.start()
         invalidate()
     }
 
