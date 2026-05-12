@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.16 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.17 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.16</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.17</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -6035,8 +6035,11 @@ async function startWhisperRecognition(){
     //
     // Une frame onaudioprocess fait 4096 samples a 16kHz = 256ms.
     const FRAME_MS = 256;                    // duree d'une frame (4096/16000*1000)
-    const RMS_START = 0.025;                 // seuil pour entrer en VOICE (au-dessus du bruit ambiant)
-    const RMS_END = 0.012;                   // seuil pour considerer comme silence (hysteresis : RMS_END < RMS_START)
+    // v1.3.17 — Seuils baisses : 0.025 etait trop eleve, le mic n'atteignait
+    // jamais ce niveau donc on restait coince en IDLE et rien n'etait transcrit.
+    // Nouveaux seuils plus permissifs.
+    const RMS_START = 0.010;                 // seuil pour entrer en VOICE
+    const RMS_END = 0.005;                   // seuil pour considerer comme silence (hysteresis)
     const SILENCE_TAIL_MS = 700;             // duree de silence apres parole avant flush
     const SILENCE_TAIL_FRAMES = Math.ceil(SILENCE_TAIL_MS / FRAME_MS);
     const PRE_BUFFER_FRAMES = 1;             // garde 1 frame avant la voix (~256ms) pour ne pas couper l'attaque
@@ -6049,6 +6052,10 @@ async function startWhisperRecognition(){
     let voiceBufferFrames = [];              // frames enregistrees en VOICE (Array<Float32Array>)
     let voiceFrameCount = 0;                 // nb de frames effectivement parolees (RMS>RMS_END) dans le chunk courant
     let silenceFrameCount = 0;               // nb de frames de silence consecutives en mode VOICE
+    // v1.3.17 — Stats RMS pour debug : on track le max RMS observe pour
+    // qu'on puisse calibrer les seuils si on n'entend rien.
+    let dbgMaxRms = 0;
+    let dbgFrameCount = 0;
 
     function flushVoiceChunk(){
       if(voiceFrameCount<MIN_VOICE_FRAMES){
@@ -6073,6 +6080,21 @@ async function startWhisperRecognition(){
       let sumSq=0;
       for(let i=0;i<input.length;i++)sumSq+=input[i]*input[i];
       const rms=Math.sqrt(sumSq/input.length);
+
+      // v1.3.17 — Debug RMS : si mode debug actif (long-press version-badge),
+      // affiche en continu le RMS max observe + l'etat VAD. Permet a l'user
+      // de voir si son mic capte assez pour declencher la transcription.
+      if(rms>dbgMaxRms)dbgMaxRms=rms;
+      dbgFrameCount++;
+      if(window.whisperDebug && dbgFrameCount%4===0){
+        // Toutes les ~1s (4 frames * 256ms), on rafraichit l'affichage
+        const dbgEl=document.getElementById('voice-toast-txt');
+        if(dbgEl){
+          dbgEl.textContent='🎚️ RMS now='+rms.toFixed(4)+' max='+dbgMaxRms.toFixed(4)+' ['+vadState+']';
+          document.getElementById('voice-toast').classList.add('show');
+        }
+      }
+
       // On clone la frame car le buffer interne du browser peut etre reutilise
       const frameCopy=new Float32Array(input);
 
