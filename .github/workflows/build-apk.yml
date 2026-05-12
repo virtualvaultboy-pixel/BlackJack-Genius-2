@@ -12,6 +12,9 @@ on:
       - 'capacitor.config.json'
       - 'package.json'
       - '.github/workflows/build-apk.yml'
+      # v1.2.7 — Inclure les sources natives Android pour que les modifs
+      # de la bulle flottante (Kotlin/Java) declenchent un rebuild.
+      - 'android-native/**'
 
 jobs:
   build:
