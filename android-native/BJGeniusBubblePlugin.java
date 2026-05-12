@@ -188,31 +188,56 @@ public class BJGeniusBubblePlugin extends Plugin {
      * Appele depuis JS chaque fois que la decision change (suite a une carte
      * dictee, un tap sur une carte dans l'app, etc.).
      *
+     * v1.3.6 — CRITIQUE : delegation au main thread car updateViewLayout()
+     * doit etre appele sur le UI thread, et Capacitor execute les PluginMethod
+     * sur un worker thread.
+     *
      * Params attendus : { text: "TIRER", color: "#22c55e" }
-     * - text vide -> cache le rectangle
-     * - color : hex string, optionnel (garde la couleur precedente sinon)
      */
     @PluginMethod
     public void setDecision(PluginCall call) {
-        String text = call.getString("text", "");
-        String color = call.getString("color"); // null si absent
-        // Delegation au service via static reference (rapide, pas d'Intent)
-        BJGeniusBubbleService.setDecision(text == null ? "" : text, color);
+        final String text = call.getString("text", "");
+        final String color = call.getString("color"); // null si absent
+        try {
+            getBridge().getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        BJGeniusBubbleService.setDecision(text == null ? "" : text, color);
+                    } catch (Exception e) {
+                        Log.w(TAG, "setDecision on UI thread failed", e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Cannot post setDecision to UI thread", e);
+        }
         JSObject ret = new JSObject();
         ret.put("ok", true);
         call.resolve(ret);
     }
 
     /**
-     * v1.3 — Met a jour la couleur de la sous-bulle mic (rouge si actif,
-     * fond sombre sinon). Appele depuis JS quand toggleMic bascule l'etat.
-     *
-     * Params attendus : { active: true }
+     * v1.3 — Met a jour la couleur de la sous-bulle mic.
+     * v1.3.6 — Idem setDecision : sur main thread.
      */
     @PluginMethod
     public void setMicState(PluginCall call) {
-        boolean active = Boolean.TRUE.equals(call.getBoolean("active", false));
-        BJGeniusBubbleService.setMicState(active);
+        final boolean active = Boolean.TRUE.equals(call.getBoolean("active", false));
+        try {
+            getBridge().getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        BJGeniusBubbleService.setMicState(active);
+                    } catch (Exception e) {
+                        Log.w(TAG, "setMicState on UI thread failed", e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Cannot post setMicState to UI thread", e);
+        }
         JSObject ret = new JSObject();
         ret.put("ok", true);
         call.resolve(ret);
