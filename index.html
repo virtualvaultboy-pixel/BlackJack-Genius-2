@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.5 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.6 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.5</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.6</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5120,24 +5120,23 @@ function installBubbleEventListener(){
     plugin.addListener('bubbleEvent', (evt) => {
       const type=evt&&evt.type;
       console.log('[BJG] Bubble event from native:',type);
+      // v1.3.6 — Toast de debug : confirme visuellement que l'event arrive
+      // du natif vers JS. A retirer une fois la fonctionnalite stable.
+      try { showVoiceToast('🫧 '+type); setTimeout(hideVoiceToast, 800); } catch(_){}
       switch(type){
         case 'mic_tap':
           // L'user a tape sur la sous-bulle mic -> bascule le mic
-          if(!isPremium){
-            // Pas premium : pas de mic. On affiche un toast plutot que
-            // d'ouvrir le paywall (l'user est en mode bulle, on ne va pas
-            // l'arracher de son casino pour ca).
-            showVoiceToast('Mic Pro requis');
-            setTimeout(hideVoiceToast, 1500);
-            return;
-          }
-          toggleMic();
+          // v1.3.6 — On retire le check isPremium ici. Si l'user a active la
+          // bulle, c'est qu'il est deja PRO (la pill bulle est verrouillee PRO).
+          // Donc inutile de re-checker, et ca elimine un cas ou le toast "Mic Pro
+          // requis" s'affichait a tort si isPremium n'etait pas encore initialise.
+          try { toggleMic(); }
+          catch(e){ console.warn('[BJG] toggleMic from bubble failed:',e); }
           break;
         case 'scan_tap':
           // v1.7 (a venir) : ouvrira la selection de zone d'ecran.
           // Pour v1.3 : toast d'info.
-          showVoiceToast('Scan zone : bientôt');
-          setTimeout(hideVoiceToast, 1500);
+          try { showVoiceToast('Scan zone : bientôt'); setTimeout(hideVoiceToast, 1500); } catch(_){}
           break;
         case 'close_tap':
           // L'user a tape sur la croix de la bulle -> on coupe la bulle
