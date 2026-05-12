@@ -10,7 +10,6 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
-import android.os.PowerManager
 import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
@@ -79,10 +78,6 @@ class BJGeniusBubbleService : Service() {
 
     private var windowManager: WindowManager? = null
     private var bubbleView: BubbleOverlayView? = null
-    // v1.3.13 — WakeLock partiel qui garde le CPU actif pendant que la bulle
-    // tourne. Sans ca, Android suspend la WebView (et donc Whisper, et le
-    // listener bubbleEvent) des que l'app passe en background.
-    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -125,11 +120,11 @@ class BJGeniusBubbleService : Service() {
                 startForeground(
                     NOTIFICATION_ID,
                     buildNotification(),
-                    // v1.3.13 — Type combine : specialUse (bulle flottante) +
-                    // microphone (autorisation capture audio en background).
-                    // Doit matcher le foregroundServiceType du manifest.
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    // v1.3.14 — REVERT : retour a specialUse seul (sans |microphone)
+                    // car la WebView capture l'audio, pas le service. Le type
+                    // microphone forcait Android a attribuer le mic au service
+                    // et la WebView ne pouvait plus capturer correctement.
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                 )
             } else {
                 startForeground(NOTIFICATION_ID, buildNotification())
@@ -212,27 +207,6 @@ class BJGeniusBubbleService : Service() {
             wm.addView(bubbleView, params)
             running = true
             Log.d(TAG, "Bubble added at x=${params.x}, y=${params.y}, w=$viewW, h=$viewH")
-
-            // v1.3.13 — Acquerir le WakeLock partiel qui garde le CPU actif.
-            // Sans ca, Android suspend la WebView Capacitor et :
-            //   - Whisper arrete d'ecouter le mic
-            //   - Le listener bubbleEvent ne recoit plus les taps mic/scan
-            // On l'acquiert seulement apres le succes du addView pour eviter
-            // de laisser un wakelock orphelin si la bulle a echoue a se creer.
-            try {
-                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                wakeLock = pm.newWakeLock(
-                    PowerManager.PARTIAL_WAKE_LOCK,
-                    "BJGenius:BubbleWakeLock"
-                ).apply {
-                    setReferenceCounted(false)
-                    acquire(8 * 60 * 60 * 1000L) // Max 8h en securite, releve manuellement avant
-                }
-                Log.d(TAG, "WakeLock acquired (CPU stays active in background)")
-            } catch (e: Exception) {
-                // Non-fatal : la bulle marchera mais le mic ne tiendra pas en background.
-                Log.w(TAG, "WakeLock acquisition failed (non-fatal)", e)
-            }
         } catch (e: Exception) {
             Log.e(TAG, "addView failed (fatal)", e)
             bubbleView = null
@@ -259,15 +233,6 @@ class BJGeniusBubbleService : Service() {
 
     private fun stopBubble() {
         Log.d(TAG, "Stopping bubble")
-        // v1.3.13 — Release du WakeLock pour laisser Android suspendre normalement
-        // l'app. Important pour la batterie : sans ca, le CPU resterait reveille
-        // meme apres la fermeture de la bulle.
-        try {
-            wakeLock?.let { if (it.isHeld) it.release() }
-            wakeLock = null
-        } catch (e: Exception) {
-            Log.w(TAG, "WakeLock release failed", e)
-        }
         try {
             bubbleView?.let { windowManager?.removeView(it) }
         } catch (e: Exception) {
@@ -287,12 +252,6 @@ class BJGeniusBubbleService : Service() {
     override fun onDestroy() {
         Log.d(TAG, "Service onDestroy")
         instance = null
-        // v1.3.13 — Safety net : release du WakeLock meme si stopBubble n'a pas
-        // ete appele proprement (cas ou Android tue le service brutalement).
-        try {
-            wakeLock?.let { if (it.isHeld) it.release() }
-            wakeLock = null
-        } catch (_: Exception) {}
         // stopBubble est idempotent et safe meme si deja appele
         try {
             bubbleView?.let { windowManager?.removeView(it) }
