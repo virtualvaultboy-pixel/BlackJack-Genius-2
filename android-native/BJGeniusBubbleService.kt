@@ -62,19 +62,22 @@ class BJGeniusBubbleService : Service() {
         // v1.3 — Reference statique a l'instance du service pour que le plugin
         // Java puisse appeler les methodes de mise a jour de la bulle. Geree
         // par onCreate / onDestroy pour eviter les fuites memoire.
-        @JvmStatic
+        // Pas de @JvmStatic ici : la variable est privee, donc inutile et
+        // generait un warning Kotlin si on l'ajoutait.
         private var instance: BJGeniusBubbleService? = null
 
         /** Met a jour le texte et la couleur du rectangle decision. Appele depuis JS. */
         @JvmStatic
         fun setDecision(text: String, colorHex: String?) {
-            instance?.bubbleView?.updateDecision(text, colorHex)
+            val inst = instance ?: return
+            inst.bubbleView?.updateDecision(text, colorHex)
         }
 
         /** Met a jour l'etat actif du mic (couleur sous-bulle). Appele depuis JS. */
         @JvmStatic
         fun setMicState(active: Boolean) {
-            instance?.bubbleView?.updateMicState(active)
+            val inst = instance ?: return
+            inst.bubbleView?.updateMicState(active)
         }
     }
 
@@ -91,12 +94,6 @@ class BJGeniusBubbleService : Service() {
         instance = this
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "Service onDestroy")
-        instance = null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -260,6 +257,9 @@ class BJGeniusBubbleService : Service() {
 
     override fun onDestroy() {
         Log.d(TAG, "Service onDestroy")
+        // v1.3 — Cleanup de la reference statique pour eviter les fuites memoire
+        // et permettre au prochain demarrage du service de prendre une nouvelle instance.
+        instance = null
         stopBubble()
         super.onDestroy()
     }
