@@ -34,26 +34,48 @@ class BJGeniusBubbleService : Service() {
     companion object {
         const val ACTION_START = "studio.deponchy.bjgenius.START_BUBBLE"
         const val ACTION_STOP = "studio.deponchy.bjgenius.STOP_BUBBLE"
+        // v1.3 — Actions pour mise a jour live de la bulle depuis JS
+        const val ACTION_SET_DECISION = "studio.deponchy.bjgenius.SET_DECISION"
+        const val ACTION_SET_MIC_STATE = "studio.deponchy.bjgenius.SET_MIC_STATE"
+        const val EXTRA_DECISION_TEXT = "decision_text"
+        const val EXTRA_DECISION_COLOR = "decision_color"
+        const val EXTRA_MIC_ACTIVE = "mic_active"
+        // v1.3 — Actions diffusees du service VERS l'app (broadcast local)
+        // pour informer JS des taps de l'user sur les sous-bulles.
+        const val BROADCAST_BUBBLE_EVENT = "studio.deponchy.bjgenius.BUBBLE_EVENT"
+        const val EXTRA_EVENT_TYPE = "event_type"
+        // Types d'evenements emis vers JS
+        const val EVENT_MIC_TAP = "mic_tap"
+        const val EVENT_SCAN_TAP = "scan_tap"
+        const val EVENT_CLOSE_TAP = "close_tap"
+        const val EVENT_BUBBLE_TAP = "bubble_tap"
+
         const val CHANNEL_ID = "bjgenius_bubble_channel"
         const val NOTIFICATION_ID = 4242
         const val TAG = "BJGeniusBubble"
 
-        // v1.2 — Etat interne du service. Modifie uniquement par le service
-        // lui-meme via startBubble()/stopBubble(). Lu de l'exterieur via la
-        // fonction statique isRunning() ci-dessous.
-        // Pas de @JvmStatic ici : la variable est privee, donc inutile d'exposer
-        // au monde Java (et @JvmStatic sur une private var emet un warning).
         private var running: Boolean = false
 
-        /**
-         * Indique si le service tourne. Lu par le plugin Java pour eviter
-         * les double-starts.
-         *
-         * v1.2 — Fonction explicite plutot que propriete pour eviter les pieges
-         * de naming Kotlin/Java sur les booleens prefixes par 'is'.
-         */
         @JvmStatic
         fun isRunning(): Boolean = running
+
+        // v1.3 — Reference statique a l'instance du service pour que le plugin
+        // Java puisse appeler les methodes de mise a jour de la bulle. Geree
+        // par onCreate / onDestroy pour eviter les fuites memoire.
+        @JvmStatic
+        private var instance: BJGeniusBubbleService? = null
+
+        /** Met a jour le texte et la couleur du rectangle decision. Appele depuis JS. */
+        @JvmStatic
+        fun setDecision(text: String, colorHex: String?) {
+            instance?.bubbleView?.updateDecision(text, colorHex)
+        }
+
+        /** Met a jour l'etat actif du mic (couleur sous-bulle). Appele depuis JS. */
+        @JvmStatic
+        fun setMicState(active: Boolean) {
+            instance?.bubbleView?.updateMicState(active)
+        }
     }
 
     private var windowManager: WindowManager? = null
@@ -64,18 +86,34 @@ class BJGeniusBubbleService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service onCreate")
+        // v1.3 — Bind instance pour permettre au plugin Java d'appeler les
+        // methodes de mise a jour de la bulle.
+        instance = this
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "Service onDestroy")
+        instance = null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startBubble()
             ACTION_STOP -> stopBubble()
+            ACTION_SET_DECISION -> {
+                val text = intent.getStringExtra(EXTRA_DECISION_TEXT) ?: ""
+                val color = intent.getStringExtra(EXTRA_DECISION_COLOR)
+                bubbleView?.updateDecision(text, color)
+            }
+            ACTION_SET_MIC_STATE -> {
+                val active = intent.getBooleanExtra(EXTRA_MIC_ACTIVE, false)
+                bubbleView?.updateMicState(active)
+            }
             else -> Log.w(TAG, "Unknown action: ${intent?.action}")
         }
-        // START_NOT_STICKY : si le system kill le service (rare), on ne le
-        // restart pas automatiquement, car il faut un trigger user.
         return START_NOT_STICKY
     }
 
@@ -107,9 +145,16 @@ class BJGeniusBubbleService : Service() {
 
         try {
             bubbleView = BubbleOverlayView(this).apply {
+                // v1.3 — Callbacks de la bulle vers le service / JS.
+                // onCloseRequested ferme localement, les autres taps emettent
+                // un broadcast que le plugin Java relaie a JS via notifyListeners.
                 onCloseRequested = {
+                    emitBubbleEvent(EVENT_CLOSE_TAP)
                     stopBubble()
                 }
+                onBubbleTap = { emitBubbleEvent(EVENT_BUBBLE_TAP) }
+                onMicTap = { emitBubbleEvent(EVENT_MIC_TAP) }
+                onScanTap = { emitBubbleEvent(EVENT_SCAN_TAP) }
             }
 
             val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -148,10 +193,18 @@ class BJGeniusBubbleService : Service() {
                 PixelFormat.TRANSLUCENT
             ).apply {
                 gravity = Gravity.TOP or Gravity.START
-                // Position initiale : coin haut-droit, marges 16dp converti
+                // Position initiale : haut-droite, mais on positionne en tenant
+                // compte de la nouvelle taille de la View (qui est plus grande
+                // que la bulle seule a cause des sous-bulles potentielles).
+                // On veut que la bulle CENTRALE soit visible vers la droite.
                 val density = resources.displayMetrics.density
-                x = (resources.displayMetrics.widthPixels - 64 * density).toInt()
-                y = (120 * density).toInt()
+                val viewW = bubbleView?.width ?: (160 * density).toInt()
+                val viewH = bubbleView?.height ?: (200 * density).toInt()
+                // viewW peut etre 0 a ce stade (la View n'a pas fait son measure),
+                // on utilise une estimation. Le snap au bord au 1er drag corrigera.
+                val estimatedViewW = (224 * density).toInt() // ~ taille calculee dans la View
+                x = (resources.displayMetrics.widthPixels - estimatedViewW + 28 * density).toInt()
+                y = (90 * density).toInt()
             }
 
             bubbleView?.layoutParams = params
@@ -164,6 +217,24 @@ class BJGeniusBubbleService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start bubble", e)
             stopSelf()
+        }
+    }
+
+    /**
+     * v1.3 — Diffuse un evenement local indiquant qu'une zone de la bulle
+     * a ete tapee. Le plugin Java ecoute ce broadcast et le relaie a JS
+     * via notifyListeners() pour qu'il puisse executer toggleMic, etc.
+     */
+    private fun emitBubbleEvent(eventType: String) {
+        val intent = Intent(BROADCAST_BUBBLE_EVENT).apply {
+            putExtra(EXTRA_EVENT_TYPE, eventType)
+            setPackage(packageName) // limite au seul package, pas de broadcast global
+        }
+        try {
+            sendBroadcast(intent)
+            Log.d(TAG, "Bubble event broadcast: $eventType")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to broadcast bubble event", e)
         }
     }
 
