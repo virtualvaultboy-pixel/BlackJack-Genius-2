@@ -184,6 +184,34 @@ public class BJGeniusBubblePlugin extends Plugin {
     }
 
     /**
+     * v1.3.11 — Ramene l'app BJ Genius au premier plan. Utile pour que JS
+     * puisse demander au natif de redonner le focus a la WebView quand un
+     * tuto premiere-utilisation doit s'afficher (mic ou scan).
+     *
+     * Comportement : si l'app est deja au premier plan, no-op. Si elle est
+     * en background, elle est ramenee au top via le launch intent standard.
+     */
+    @PluginMethod
+    public void bringToFront(PluginCall call) {
+        try {
+            android.content.Intent intent = getContext().getPackageManager()
+                .getLaunchIntentForPackage(getContext().getPackageName());
+            if (intent != null) {
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                getContext().startActivity(intent);
+            }
+            JSObject ret = new JSObject();
+            ret.put("ok", true);
+            call.resolve(ret);
+        } catch (Exception e) {
+            Log.w(TAG, "bringToFront failed", e);
+            call.reject("BRING_TO_FRONT_FAILED: " + e.getMessage());
+        }
+    }
+
+    /**
      * v1.3 — Met a jour le rectangle decision affiche au-dessus de la bulle.
      * Appele depuis JS chaque fois que la decision change (suite a une carte
      * dictee, un tap sur une carte dans l'app, etc.).
