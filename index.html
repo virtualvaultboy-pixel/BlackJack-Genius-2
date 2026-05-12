@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.17 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.18 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.17</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.18</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5388,6 +5388,14 @@ async function toggleBubble(){
   if(!bubbleOn){
     // ON : verifier permission, demander si necessaire, puis demarrer
     try {
+      // v1.3.18 — FIX bug bulle 1er tap inactif : on installe le listener
+      // 'bubbleEvent' AVANT plugin.start(). Sinon, race condition possible :
+      // la bulle s'affiche et devient tactile, l'user tape sur le mic, mais
+      // le listener n'est pas encore attache cote JS (addListener Capacitor
+      // est asynchrone). Resultat : event natif emis mais perdu.
+      // installBubbleEventListener() est idempotent (no-op si deja installe).
+      installBubbleEventListener();
+
       const check=await plugin.checkOverlayPermission();
       if(!check.granted){
         // Premier usage : popup expliquant la permission
@@ -5399,8 +5407,9 @@ async function toggleBubble(){
       btn.classList.add("on");
       lbl.innerHTML = tr.bubbleLabelOn;
       console.log('[BJG] Bulle activee');
-      // v1.3 — Installation du listener pour les taps sur les sous-bulles
-      // (mic / scan / close). Idempotent : si deja installe, ne fait rien.
+      // v1.3.18 — Re-call defensif (no-op si deja installe ci-dessus). Garde
+      // la ligne pour qu'on voie clairement que le listener doit etre en place
+      // a ce point.
       installBubbleEventListener();
       // v1.3 — Sync immediate de l'etat mic et de la decision courante,
       // au cas ou l'user les avait deja avant d'activer la bulle.
@@ -7568,6 +7577,11 @@ renderHand();updateAll();applyLang();applyPremiumState();
       // v1.2.5 — Synchronise l'etat UI de la pill bulle. Si le service tournait
       // deja en background (app reouverte alors que la bulle est active), la
       // pill doit s'afficher en mode ON.
+      // v1.3.18 — On installe AUSSI le listener bubbleEvent ici pour couvrir
+      // le cas ou la bulle tourne deja au demarrage de l'app (sinon les taps
+      // sur les sous-bulles restent inactifs jusqu'a ce que l'user re-toggle
+      // la bulle depuis le header).
+      installBubbleEventListener();
       syncBubbleStateOnStartup();
     } else if(isPremium){
       // Sur web, on prefetch seulement si premium (l'user a achete l'app, autant
