@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.4 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.5 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.4</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.5</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5053,36 +5053,39 @@ function toggleMic(){
   micOn=!micOn;
   // v1.29 — Class sur body pour piloter l'affichage du bouton mic-help-fab
   // (apparait uniquement quand mic ON, symetrique du bouton AIDE en mode camera).
-  document.body.classList.toggle('mic-on',micOn);
+  if(document.body)document.body.classList.toggle('mic-on',micOn);
+  // v1.3.5 — Tous les acces DOM sont null-checked pour permettre l'appel
+  // depuis le listener de la bulle quand la WebView est en background.
   const btn=document.getElementById("mic-btn");
+  const lblEl=document.getElementById("mic-label");
+  const dm=document.getElementById("dt-mic2");
   if(micOn){
-    btn.classList.add("on");
-    document.getElementById("mic-label").innerHTML=tr.voiceLabelOn;
-    const dm=document.getElementById("dt-mic2");
+    if(btn)btn.classList.add("on");
+    if(lblEl)lblEl.innerHTML=tr.voiceLabelOn;
     if(dm)dm.classList.add("on");
     // v1.16 — Dispatcher vers le moteur actif (Web Speech ou Whisper)
-    startActiveRecognition();
+    try { startActiveRecognition(); }
+    catch(e){ console.warn('[BJG] startActiveRecognition failed:',e); }
     // v1.20 — Intro contextuel a la 1ere activation du micro
-    showIntroOnce('mic');
+    try { showIntroOnce('mic'); } catch(_){}
     // v1.2.5 — DECOUPLAGE : la bulle n'est plus activee/desactivee par le micro.
     // Elle a son propre toggle dans le header. Cela evite que les transitions
     // d'etat micro (listening/transcribing/idle) declenchent des restarts de
     // bulle qui faisaient buguer l'overlay quand la voix etait detectee.
   } else {
-    btn.classList.remove("on","listening");
-    document.getElementById("mic-label").innerHTML=tr.voiceLabelOff;
-    const dm=document.getElementById("dt-mic2");
+    if(btn)btn.classList.remove("on","listening");
+    if(lblEl)lblEl.innerHTML=tr.voiceLabelOff;
     if(dm)dm.classList.remove("on");
     // v1.16 — Stop sur les deux moteurs
-    stopAllRecognition();
+    try { stopAllRecognition(); } catch(_){}
     voiceBuffer=[];
     if(voiceTimer)clearTimeout(voiceTimer);
-    hideVoiceToast();
+    try { hideVoiceToast(); } catch(_){}
     // v1.2.5 — DECOUPLAGE : couper le micro ne coupe plus la bulle (cf. ci-dessus).
   }
   // v1.3 — Push l'etat mic vers la sous-bulle pour qu'elle change de couleur
   // (rouge pulse si actif). No-op si la bulle native n'est pas active.
-  syncBubbleMicState();
+  try { syncBubbleMicState(); } catch(_){}
 }
 
 /**
