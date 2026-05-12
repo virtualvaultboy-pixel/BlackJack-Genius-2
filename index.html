@@ -6059,7 +6059,18 @@ async function processWhisperChunk(audioData){
     const a=Math.abs(audioData[i]);
     if(a>maxAmp)maxAmp=a;
   }
-  if(maxAmp<0.015)return; // seuil bas mais évite le bruit ambiant
+  // v1.3.14 — Debug : log toujours le maxAmp pour identifier les problemes
+  // de captation mic. Si maxAmp est tres bas (<0.01) quand l'user parle,
+  // le mic est mal configure ou le signal est trop faible.
+  console.log('[BJG] Whisper chunk maxAmp:', maxAmp.toFixed(4));
+  if(maxAmp<0.015){
+    // Mode debug : si activé, on signale visuellement que le chunk est silence
+    if(window.whisperDebug){
+      showVoiceToast('🔇 silence (' + maxAmp.toFixed(3) + ')');
+      setTimeout(hideVoiceToast, 1200);
+    }
+    return; // seuil bas mais évite le bruit ambiant
+  }
 
   try{
     const lang=currentLang==='en'?'english':currentLang==='es'?'spanish':'french';
@@ -6070,6 +6081,14 @@ async function processWhisperChunk(audioData){
       return_timestamps:false,
     });
     const text=((result&&result.text)||'').trim();
+    // v1.3.14 — Debug : log toujours le texte brut transcrit par Whisper.
+    // Permet d'identifier pourquoi des cartes ne sont pas detectees :
+    // (musique), texte vide, "...", ou mots non reconnus comme cartes.
+    console.log('[BJG] Whisper raw:', JSON.stringify(text));
+    if(window.whisperDebug){
+      showVoiceToast('📝 "' + text.slice(0,40) + '"');
+      setTimeout(hideVoiceToast, 1500);
+    }
     if(!text||text.length<1)return;
     // Anti-doublon basique (Whisper peut hallucine des "Sous-titres faits par..." sur silence)
     if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text))return;
@@ -6082,7 +6101,13 @@ async function processWhisperChunk(audioData){
     // On nettoie ces marqueurs du texte. Si le texte ENTIER est un marqueur,
     // on skip completement (rien a injecter dans le buffer).
     const MARKER_RE = /[\(\[]\s*(musique|music|bruit|noise|silence|applaud|rires?|laugh|chuckle|sigh|breath|cough|inaudible|crosstalk|background|musik|m[uú]sica|ruido|risas?)[^\)\]]*[\)\]]/gi;
-    const cleanedText = text.replace(MARKER_RE, '').replace(/\s+/g, ' ').trim();
+    let cleanedText = text.replace(MARKER_RE, '').replace(/\s+/g, ' ').trim();
+    // v1.3.14 — Si le texte resultant ne contient AUCUNE lettre/chiffre, c'est
+    // du bruit pur ("...", ponctuation seule). Skip silencieusement.
+    if(cleanedText && !/[a-zA-ZàâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ0-9]/.test(cleanedText)){
+      console.log('[BJG] Whisper non-alpha noise filtered:', text);
+      return;
+    }
     if(!cleanedText||cleanedText.length<1){
       // Le texte etait UNIQUEMENT du marqueur parasite. Skip silencieusement.
       console.log('[BJG] Whisper marker filtered out:', text);
@@ -7402,6 +7427,9 @@ function onVersionTap(){
 // v1.6 — Long-press sur version-badge (≥700 ms) → toggle mode debug scan caméra
 let camDebugMode=false;
 try{camDebugMode=localStorage.getItem('bjg_cam_debug')==='1';}catch(e){}
+// v1.3.14 — Le flag whisperDebug est partage avec camDebugMode : meme bouton,
+// active ces 2 modes de debug (scan + voix) en meme temps.
+window.whisperDebug = camDebugMode;
 let versionLongPressTimer=null,versionLongPressFired=false;
 function onVersionLongPressStart(ev){
   versionLongPressFired=false;
@@ -7416,13 +7444,17 @@ function onVersionLongPressEnd(){
 }
 function toggleCamDebug(){
   camDebugMode=!camDebugMode;
+  // v1.3.14 — Le mode debug active AUSSI la trace verbale Whisper :
+  // chaque chunk audio sortira son maxAmp et le texte brut transcrit
+  // dans un toast (debug rapide sans console externe).
+  window.whisperDebug = camDebugMode;
   try{localStorage.setItem('bjg_cam_debug',camDebugMode?'1':'0');}catch(e){}
   if(navigator.vibrate)navigator.vibrate([30,40,30]);
   // Met à jour le tag affiché dans le modal cam (visible si scan ouvert)
   const tag=document.getElementById('cam-debug-tag');
   if(tag)tag.style.display=camDebugMode?'':'none';
   const tr=LANGS[currentLang]||LANGS.fr;
-  const msg=camDebugMode?(tr.camDebugOn||"🐞 Debug scan ACTIVÉ"):(tr.camDebugOff||"🐞 Debug scan désactivé");
+  const msg=camDebugMode?"🐞 Debug ACTIVÉ (scan + voix)":"🐞 Debug désactivé";
   showVoiceToast(msg);
   setTimeout(hideVoiceToast,2000);
 }
