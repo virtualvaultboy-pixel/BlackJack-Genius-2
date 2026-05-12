@@ -110,25 +110,34 @@ jobs:
         # v1.3.18 — Genere les 5 tailles mipmap (mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi)
         # depuis icon-512.png (icone D2 v5 a la racine du repo). Supprime aussi
         # le dossier mipmap-anydpi-v26 (adaptive icons XML) qui aurait priorite
-        # sur nos PNG legacy. ImageMagick "convert" est pre-installe sur ubuntu-latest.
+        # sur nos PNG legacy.
+        # v1.3.19 — Utilise Pillow (Python) car ImageMagick "convert" n'est plus
+        # pre-installe sur ubuntu-latest (Ubuntu 24.04, depuis fin 2024).
         run: |
           if [ ! -f icon-512.png ]; then
             echo "✗ icon-512.png not found at repo root"
             exit 1
           fi
-          # Les adaptive icons XML (mipmap-anydpi-v26) auraient priorite sur nos PNG :
-          # on les retire pour forcer Android a utiliser nos PNG legacy.
+          # Adaptive icons XML auraient priorite sur nos PNG : on les retire
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
-          for entry in "mdpi:48" "hdpi:72" "xhdpi:96" "xxhdpi:144" "xxxhdpi:192"; do
-            dpi="${entry%:*}"
-            size="${entry#*:}"
-            mkdir -p "android/app/src/main/res/mipmap-$dpi"
-            convert icon-512.png -filter Lanczos -resize ${size}x${size} \
-              "android/app/src/main/res/mipmap-$dpi/ic_launcher.png"
-            cp "android/app/src/main/res/mipmap-$dpi/ic_launcher.png" \
-               "android/app/src/main/res/mipmap-$dpi/ic_launcher_round.png"
-            echo "  ✓ mipmap-$dpi (${size}x${size})"
-          done
+          # Assure Pillow disponible (souvent pre-installe sur runners GH Actions ;
+          # fallback pip --break-system-packages pour Ubuntu 24.04 / PEP 668).
+          python3 -c "from PIL import Image" 2>/dev/null || \
+            pip install --break-system-packages --quiet pillow
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os
+          src = Image.open('icon-512.png')
+          sizes = [('mdpi', 48), ('hdpi', 72), ('xhdpi', 96),
+                   ('xxhdpi', 144), ('xxxhdpi', 192)]
+          for dpi, size in sizes:
+              out_dir = f'android/app/src/main/res/mipmap-{dpi}'
+              os.makedirs(out_dir, exist_ok=True)
+              resized = src.resize((size, size), Image.LANCZOS)
+              resized.save(f'{out_dir}/ic_launcher.png', optimize=True)
+              resized.save(f'{out_dir}/ic_launcher_round.png', optimize=True)
+              print(f'  ✓ mipmap-{dpi} ({size}x{size})')
+          PYEOF
           echo ""
           echo "=== mipmap-*/ content after generation ==="
           ls -la android/app/src/main/res/mipmap-*/
