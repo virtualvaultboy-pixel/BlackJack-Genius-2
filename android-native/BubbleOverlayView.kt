@@ -324,6 +324,16 @@ class BubbleOverlayView(context: Context) : View(context) {
      * de la View pour eliminer le "surbond" visuel a l'expand/collapse.
      * L'animation interpole width/height/x/y simultanement pendant 160ms,
      * en preservant la position visuelle du centre de la BJ.
+     *
+     * v1.3.20 — FIX du saut visuel au tap : avant ce fix, recomputeLayout()
+     * mettait immediatement bubbleCx/Cy (et les sous-bulles) a leurs valeurs
+     * cibles. Pendant ce temps, lp.x/y interpolait depuis oldX/Y. Resultat :
+     * a t=0 de l'anim, la BJ etait dessinee a (oldX + bubbleCx_NEW) alors
+     * qu'elle aurait du etre a (oldX + bubbleCx_OLD), soit un saut visible
+     * suivi d'un glissement de 160ms. Desormais on sauvegarde TOUS les
+     * centres avant le recompute, on capture les "new" apres, et on
+     * interpole tout simultanement dans l'updateListener. Resultat : BJ
+     * parfaitement stable, sous-bulles qui glissent depuis/vers son centre.
      */
     private fun applyResize() {
         val lp = layoutParams as? WindowManager.LayoutParams
@@ -345,29 +355,52 @@ class BubbleOverlayView(context: Context) : View(context) {
             return
         }
 
-        // Sauvegarde l'etat AVANT recompute pour calcul des deltas
+        // v1.3.20 — Sauvegarde COMPLETE de l'etat AVANT recompute.
+        // On capture lp ET tous les centres internes pour pouvoir interpoler
+        // l'ensemble pendant l'animation.
         val oldW = lp!!.width
         val oldH = lp.height
         val oldX = lp.x
         val oldY = lp.y
+        val oldBubbleCx = bubbleCx
+        val oldBubbleCy = bubbleCy
+        val oldMicCx = micCx
+        val oldMicCy = micCy
+        val oldScanCx = scanCx
+        val oldScanCy = scanCy
+        val oldCloseCx = closeCx
+        val oldCloseCy = closeCy
+        val oldDecisionTopY = decisionTopY
         val oldBubbleScreenX = lp.x + bubbleCx.toInt()
         val oldBubbleScreenY = lp.y + bubbleCy.toInt()
 
         recomputeLayout()
 
+        // v1.3.20 — Capture des valeurs "new" apres recompute, qui seront
+        // les valeurs cibles a interpoler.
+        val newBubbleCx = bubbleCx
+        val newBubbleCy = bubbleCy
+        val newMicCx = micCx
+        val newMicCy = micCy
+        val newScanCx = scanCx
+        val newScanCy = scanCy
+        val newCloseCx = closeCx
+        val newCloseCy = closeCy
+        val newDecisionTopY = decisionTopY
+
         // Nouvelles cibles : taille = currentViewW/H, position telle que le centre
         // de la BJ reste exactement au meme endroit visuellement.
         val targetW = currentViewW
         val targetH = currentViewH
-        var targetX = oldBubbleScreenX - bubbleCx.toInt()
-        var targetY = oldBubbleScreenY - bubbleCy.toInt()
+        var targetX = oldBubbleScreenX - newBubbleCx.toInt()
+        var targetY = oldBubbleScreenY - newBubbleCy.toInt()
         // Clamp pour eviter sortie d'ecran
         val sw = resources.displayMetrics.widthPixels
         val sh = resources.displayMetrics.heightPixels
-        val minX = -bubbleCx.toInt() + (4 * density).toInt()
-        val maxX = sw - bubbleCx.toInt() - (4 * density).toInt() - bubbleSize / 2
-        val minY = -bubbleCy.toInt() + (4 * density).toInt()
-        val maxY = sh - bubbleCy.toInt() - (4 * density).toInt() - bubbleSize / 2
+        val minX = -newBubbleCx.toInt() + (4 * density).toInt()
+        val maxX = sw - newBubbleCx.toInt() - (4 * density).toInt() - bubbleSize / 2
+        val minY = -newBubbleCy.toInt() + (4 * density).toInt()
+        val maxY = sh - newBubbleCy.toInt() - (4 * density).toInt() - bubbleSize / 2
         targetX = max(minX, min(maxX, targetX))
         targetY = max(minY, min(maxY, targetY))
 
@@ -389,6 +422,20 @@ class BubbleOverlayView(context: Context) : View(context) {
             return
         }
 
+        // v1.3.20 — Restaurer les centres AUX valeurs OLD avant de demarrer
+        // l'animation, sinon le premier frame post-recompute serait dessine
+        // avec les valeurs NEW (= saut visible). L'updateListener les
+        // interpolera ensuite vers NEW au fur et a mesure.
+        bubbleCx = oldBubbleCx
+        bubbleCy = oldBubbleCy
+        micCx = oldMicCx
+        micCy = oldMicCy
+        scanCx = oldScanCx
+        scanCy = oldScanCy
+        closeCx = oldCloseCx
+        closeCy = oldCloseCy
+        decisionTopY = oldDecisionTopY
+
         // Annule une animation precedente si elle est encore en cours
         resizeAnimator?.cancel()
         // Animation : interpolation lineaire sur 160ms
@@ -404,7 +451,19 @@ class BubbleOverlayView(context: Context) : View(context) {
                 lp.height = (oldH + (targetH - oldH) * t).toInt()
                 lp.x = (oldX + (targetX - oldX) * t).toInt()
                 lp.y = (oldY + (targetY - oldY) * t).toInt()
+                // v1.3.20 — Interpoler aussi tous les centres internes pour
+                // garder BJ visuellement fixe pendant l'anim.
+                bubbleCx = oldBubbleCx + (newBubbleCx - oldBubbleCx) * t
+                bubbleCy = oldBubbleCy + (newBubbleCy - oldBubbleCy) * t
+                micCx = oldMicCx + (newMicCx - oldMicCx) * t
+                micCy = oldMicCy + (newMicCy - oldMicCy) * t
+                scanCx = oldScanCx + (newScanCx - oldScanCx) * t
+                scanCy = oldScanCy + (newScanCy - oldScanCy) * t
+                closeCx = oldCloseCx + (newCloseCx - oldCloseCx) * t
+                closeCy = oldCloseCy + (newCloseCy - oldCloseCy) * t
+                decisionTopY = oldDecisionTopY + (newDecisionTopY - oldDecisionTopY) * t
                 windowManager?.updateViewLayout(this, lp)
+                invalidate()
             } catch (e: Exception) {
                 Log.w("BubbleView", "applyResize anim updateViewLayout failed", e)
                 anim.cancel()
@@ -412,7 +471,19 @@ class BubbleOverlayView(context: Context) : View(context) {
         }
         anim.addListener(object : android.animation.AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: android.animation.Animator) {
+                // v1.3.20 — Forcer les valeurs finales exactes (au cas ou l'interpolation
+                // a t=1 aurait du float imprecis) pour que les hit zones soient correctes.
+                bubbleCx = newBubbleCx
+                bubbleCy = newBubbleCy
+                micCx = newMicCx
+                micCy = newMicCy
+                scanCx = newScanCx
+                scanCy = newScanCy
+                closeCx = newCloseCx
+                closeCy = newCloseCy
+                decisionTopY = newDecisionTopY
                 resizeAnimator = null
+                invalidate()
             }
         })
         anim.start()
