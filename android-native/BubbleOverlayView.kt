@@ -16,23 +16,44 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 /**
- * Bulle flottante BJ Genius — v1.3.2
+ * Bulle flottante BJ Genius — v1.3.4
  *
- * Refonte majeure :
- *  - View REDIMENSIONNABLE selon l'etat. Quand collapsed (juste la bulle + le
- *    rectangle decision), la View ne fait que la taille minimale necessaire,
- *    ce qui evite les "zones mortes" tactiles qui consomment les events
- *    autour de la bulle, et permet a l'app du dessous (notamment au swipe
- *    gauche de BJ Genius) de fonctionner normalement.
- *  - SOUS-BULLES ADAPTATIVES : leur position depend de la position de la BJ
- *    sur l'ecran. Si BJ est dans la moitie droite, les sous-bulles s'ouvrent
- *    vers la gauche. Si BJ est en bas, le close va au-dessus.
- *  - PRESERVATION DE LA POSITION VISUELLE de la bulle BJ entre les etats
- *    (collapsed <-> expanded) : on ajuste params.x et params.y de la fenetre
- *    pour que le centre du cercle BJ ne bouge pas a l'ecran.
+ * REFONTE PROPRE :
+ *  - Le constructeur ne fait RIEN qui puisse exception (pas d'appel a
+ *    recomputeLayout dans init).
+ *  - Les dimensions et coordonnees sont calculees de maniere lazy : la
+ *    premiere fois c'est `ensureLayout()` qui s'en charge, soit lors du
+ *    premier draw, soit lors du premier touch.
+ *  - applyResize() ne touche au WindowManager QUE si la View est deja
+ *    attachee (windowManager non null ET layoutParams non null).
+ *  - Les constantes geometriques (DIMENS_*) sont expose statiquement
+ *    pour que le service puisse les utiliser pour calculer les dimensions
+ *    AVANT que la View soit instanciee, ce qui evite tout probleme
+ *    d'ordre d'initialisation.
  */
 @SuppressLint("ViewConstructor")
 class BubbleOverlayView(context: Context) : View(context) {
+
+    companion object {
+        // Dimensions en dp (multipliees par density pour avoir des pixels)
+        const val BUBBLE_DP = 56
+        const val SUB_BUBBLE_DP = 42
+        const val EXPAND_DIST_DP = 70
+        const val DECISION_HEIGHT_DP = 32
+        const val DECISION_MIN_WIDTH_DP = 110
+        const val DECISION_GAP_DP = 8
+        const val PADDING_DP = 6
+
+        /** Calcule la largeur d'une vue COLLAPSED (sans expanded, sans decision)
+         *  en pixels, utilisable AVANT que la View ne soit instanciee. */
+        @JvmStatic
+        fun collapsedWidthPx(density: Float): Int =
+            ((BUBBLE_DP + PADDING_DP * 2) * density).toInt()
+
+        @JvmStatic
+        fun collapsedHeightPx(density: Float): Int =
+            ((BUBBLE_DP + PADDING_DP * 2) * density).toInt()
+    }
 
     // ── Callbacks externes ──────────────────────────────────────────
     var windowManager: WindowManager? = null
@@ -47,30 +68,37 @@ class BubbleOverlayView(context: Context) : View(context) {
     private var decisionColor = Color.parseColor("#c9a84c")
     private var micActive = false
 
-    // ── Geometrie ───────────────────────────────────────────────────
+    // ── Geometrie en pixels (calcule a partir de la density) ────────
     private val density = resources.displayMetrics.density
-    private val bubbleSize = (56 * density).toInt()
-    private val subBubbleSize = (42 * density).toInt()
-    // Distance entre centre bulle et centre sous-bulle
-    private val expandDist = 70 * density
-    private val decisionHeight = (32 * density).toInt()
-    private val decisionMinWidth = (110 * density).toInt()
-    private val decisionGap = (8 * density).toInt()
-    // Marge de securite autour des elements pour la View
-    private val padding = (6 * density).toInt()
+    private val bubbleSize = (BUBBLE_DP * density).toInt()
+    private val subBubbleSize = (SUB_BUBBLE_DP * density).toInt()
+    private val expandDist = EXPAND_DIST_DP * density
+    private val decisionHeight = (DECISION_HEIGHT_DP * density).toInt()
+    private val decisionMinWidth = (DECISION_MIN_WIDTH_DP * density).toInt()
+    private val decisionGap = (DECISION_GAP_DP * density).toInt()
+    private val padding = (PADDING_DP * density).toInt()
 
     // ── Adaptation a la position de la BJ sur l'ecran ───────────────
-    // Mis a jour a chaque expand. Determine la direction des sous-bulles.
-    private var subBubblesLeft = false   // sous-bulles a gauche de BJ ?
-    private var closeAbove = false       // close au-dessus de BJ ?
+    private var subBubblesLeft = true
+    private var closeAbove = false
 
-    // ── Centres calcules dans recomputeLayout() ─────────────────────
-    private var bubbleCx = 0f
-    private var bubbleCy = 0f
+    // ── Centres calcules par recomputeLayout ────────────────────────
+    // Init a des valeurs par defaut sensees au cas ou recomputeLayout
+    // n'aurait pas encore tourne (mais on l'appelle dans onAttachedToWindow).
+    private var bubbleCx = (bubbleSize / 2f + padding)
+    private var bubbleCy = (bubbleSize / 2f + padding)
     private var micCx = 0f; private var micCy = 0f
     private var scanCx = 0f; private var scanCy = 0f
     private var closeCx = 0f; private var closeCy = 0f
     private var decisionTopY = 0f
+
+    // Dimensions courantes (mises a jour par recomputeLayout)
+    private var currentViewW = bubbleSize + padding * 2
+    private var currentViewH = bubbleSize + padding * 2
+
+    // Flag pour eviter le 1er recompute pre-attachement (qui n'a pas de
+    // donnees screen utiles)
+    private var hasLaidOutOnce = false
 
     // ── Peintures ───────────────────────────────────────────────────
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -130,14 +158,9 @@ class BubbleOverlayView(context: Context) : View(context) {
     private enum class HitZone { NONE, BUBBLE, MIC, SCAN, CLOSE, DECISION }
     private var hitZone = HitZone.NONE
 
-    // ── Dimensions courantes de la View (varient selon collapsed/expanded)
-    private var currentViewW = 0
-    private var currentViewH = 0
-
-    init {
-        // Layout initial : juste la bulle (collapsed sans decision)
-        recomputeLayout()
-    }
+    // ── Note importante : pas de bloc init {} faisant des calculs ───
+    // Les valeurs par defaut de currentViewW/H et bubbleCx/Cy sont deja
+    // correctes pour l'etat collapsed-sans-decision.
 
     // ── API publique ────────────────────────────────────────────────
     fun updateDecision(text: String, colorHex: String?) {
@@ -146,7 +169,6 @@ class BubbleOverlayView(context: Context) : View(context) {
             try { decisionColor = Color.parseColor(colorHex) } catch (_: Exception) {}
         }
         decisionBgPaint.color = decisionColor
-        // Le rectangle decision affecte la taille de la View, donc recompute.
         applyResize()
     }
 
@@ -164,49 +186,32 @@ class BubbleOverlayView(context: Context) : View(context) {
 
     fun toggleExpanded() = setExpanded(!expanded)
 
-    // ── Recalcul des dimensions et coordonnees ──────────────────────
-    /**
-     * Recalcule les dimensions de la View et la position des elements dedans
-     * en fonction de l'etat actuel (collapsed / expanded) et de la position
-     * sur l'ecran (pour les sous-bulles adaptatives).
-     *
-     * Ne touche PAS au layoutParams ni au WindowManager. Pour appliquer
-     * effectivement le changement de taille, appeler applyResize() qui se
-     * charge de recompute + updateViewLayout (+ ajustement de la position
-     * de la fenetre pour preserver la position visuelle de BJ).
-     */
+    // ── Recompute layout (calcule les dimensions et coordonnees) ────
     private fun recomputeLayout() {
         val mainR = bubbleSize / 2
         val subR = subBubbleSize / 2
         val hasDecision = decisionText.isNotEmpty()
 
         // Determine la direction des sous-bulles selon la position de la BJ
-        // sur l'ecran. On le fait au moment du recompute pour que le passage
-        // collapsed -> expanded adapte la direction au cote ou se trouve la BJ.
         val lp = layoutParams as? WindowManager.LayoutParams
         val screenW = resources.displayMetrics.widthPixels
         val screenH = resources.displayMetrics.heightPixels
-        if (lp != null && currentViewW > 0) {
+        if (lp != null && hasLaidOutOnce) {
             val bjScreenX = lp.x + bubbleCx.toInt()
             val bjScreenY = lp.y + bubbleCy.toInt()
             subBubblesLeft = bjScreenX > screenW / 2
-            // Close au-dessus si la BJ est dans le bas de l'ecran (< 1/3 du bas)
             closeAbove = bjScreenY > screenH * 2 / 3
-        } else {
-            // Premier calcul : on suppose en haut a droite (position initiale)
-            subBubblesLeft = true
-            closeAbove = false
         }
+        // Sinon on garde les valeurs courantes (subBubblesLeft=true par defaut
+        // pour la position initiale en haut-droite).
 
         if (!expanded) {
-            // ─── COLLAPSED : juste la bulle + decision si present ─────
-            // Largeur = max(bulle, decision si visible)
+            // ─── COLLAPSED ───────────────────────────────────────────
             val w = if (hasDecision) {
                 max(bubbleSize, decisionBoxWidth().toInt()) + padding * 2
             } else {
                 bubbleSize + padding * 2
             }
-            // Hauteur = decision + gap + bulle (si decision) sinon juste bulle
             val h = if (hasDecision) {
                 decisionHeight + decisionGap + bubbleSize + padding * 2
             } else {
@@ -214,7 +219,6 @@ class BubbleOverlayView(context: Context) : View(context) {
             }
             currentViewW = w
             currentViewH = h
-            // Centre de la bulle = centre horizontal, sous le rectangle decision
             bubbleCx = w / 2f
             bubbleCy = if (hasDecision) {
                 (padding + decisionHeight + decisionGap + mainR).toFloat()
@@ -223,58 +227,15 @@ class BubbleOverlayView(context: Context) : View(context) {
             }
             decisionTopY = padding.toFloat()
         } else {
-            // ─── EXPANDED : bulle + sous-bulles + decision (si present) ─
-            // On a 2 sous-bulles laterales (mic, scan) et 1 close au-dessus
-            // ou en dessous selon closeAbove.
-            // La direction "lateral" (mic & scan) depend de subBubblesLeft.
-            //
-            // Pour calculer l'emprise :
-            //   - cote lateral : il y a TOUJOURS 1 sous-bulle d'un cote et 1
-            //     de l'autre (mic & scan sont opposees). Donc la largeur est
-            //     2 * expandDist + subBubbleSize + paddings.
-            //   - cote vertical : si closeAbove, on a le close au-dessus, donc
-            //     hauteur = expandDist + subR + decisionHeight + gap + mainR
-            //              + mainR + padding
-            //     Si !closeAbove (close en bas, defaut) : hauteur = decision
-            //     + gap + mainR + mainR + expandDist + subR + padding
+            // ─── EXPANDED ────────────────────────────────────────────
             val w = (expandDist * 2 + subBubbleSize + padding * 2).toInt()
-
-            // Calcul hauteur selon decision presente + close above/below
             val topSpace = if (hasDecision) decisionHeight + decisionGap else 0
             val bubbleY = (topSpace + padding + mainR).toFloat()
-            // Y du close (si above : au-dessus de la bulle ; si below : en dessous)
-            val h: Int
-            if (closeAbove) {
-                // close au-dessus de la bulle => il faut de la place au-dessus
-                // pour le close. Donc on monte bubbleY de expandDist.
-                // Mais on a aussi le rectangle decision en haut potentiellement,
-                // qui ne doit pas etre occulte par le close. On laisse le close
-                // entre la decision et la bulle.
-                // Pour simplifier : on garde close EN DESSOUS dans ce cas
-                // (closeAbove sera vrai uniquement si la bulle est tout en bas).
-                h = (topSpace + padding + bubbleSize + expandDist + subR + padding).toInt()
-                bubbleCy = bubbleY
-                closeCx = w / 2f
-                closeCy = bubbleY - expandDist // au dessus de la bulle
-                if (closeCy - subR < topSpace + padding) {
-                    // Pas la place au-dessus, force en bas
-                    closeCy = bubbleY + expandDist
-                }
-            } else {
-                h = (topSpace + padding + bubbleSize + expandDist + subR + padding).toInt()
-                bubbleCy = bubbleY
-                closeCx = w / 2f
-                closeCy = bubbleY + expandDist // en dessous
-            }
+            val h = (topSpace + padding + bubbleSize + expandDist + subR + padding).toInt()
             currentViewW = w
             currentViewH = h
             bubbleCx = w / 2f
-            // Mic et scan : un a gauche, un a droite. subBubblesLeft decide
-            // QUEL ICONE va a gauche. Par convention :
-            //   - Si la bulle est dans la moitie droite (subBubblesLeft=true),
-            //     l'icone "principale" mic va a gauche (vers le centre de l'ecran)
-            //     pour etre plus accessible au pouce.
-            //   - Sinon mic a droite.
+            bubbleCy = bubbleY
             if (subBubblesLeft) {
                 micCx = bubbleCx - expandDist
                 scanCx = bubbleCx + expandDist
@@ -284,31 +245,37 @@ class BubbleOverlayView(context: Context) : View(context) {
             }
             micCy = bubbleCy
             scanCy = bubbleCy
+            closeCx = bubbleCx
+            if (closeAbove && bubbleY - expandDist - subR >= topSpace + padding) {
+                closeCy = bubbleY - expandDist
+            } else {
+                closeCy = bubbleY + expandDist
+            }
             decisionTopY = padding.toFloat()
         }
+        hasLaidOutOnce = true
     }
 
     /**
-     * Applique le nouveau layout : recompute + redimensionne la fenetre +
-     * preserve la position visuelle de la bulle BJ a l'ecran.
+     * Applique le nouveau layout au WindowManager si on est attache.
      */
     private fun applyResize() {
         val lp = layoutParams as? WindowManager.LayoutParams
-        // Sauvegarde la position visuelle (screen-coords) du centre BJ AVANT recompute
-        val oldBubbleScreenX = if (lp != null && currentViewW > 0)
-            lp.x + bubbleCx.toInt() else Int.MIN_VALUE
-        val oldBubbleScreenY = if (lp != null && currentViewW > 0)
-            lp.y + bubbleCy.toInt() else Int.MIN_VALUE
+        // Avant de recompute, on sauvegarde la position visuelle screen-coord
+        // de la BJ pour pouvoir la preserver apres le resize.
+        val canPreservePos = lp != null && windowManager != null && hasLaidOutOnce
+        val oldBubbleScreenX = if (canPreservePos) lp!!.x + bubbleCx.toInt() else 0
+        val oldBubbleScreenY = if (canPreservePos) lp!!.y + bubbleCy.toInt() else 0
 
         recomputeLayout()
 
-        if (lp != null) {
-            // Si la View etait deja attachee, on ajuste params pour que le
-            // centre de la BJ reste au meme endroit visuellement.
-            if (oldBubbleScreenX != Int.MIN_VALUE) {
+        if (lp != null && windowManager != null) {
+            lp.width = currentViewW
+            lp.height = currentViewH
+            if (canPreservePos) {
                 lp.x = oldBubbleScreenX - bubbleCx.toInt()
                 lp.y = oldBubbleScreenY - bubbleCy.toInt()
-                // Clamping ecran pour eviter que la BJ sorte de l'ecran
+                // Clamp pour eviter de sortir de l'ecran
                 val sw = resources.displayMetrics.widthPixels
                 val sh = resources.displayMetrics.heightPixels
                 val minX = -bubbleCx.toInt() + (4 * density).toInt()
@@ -318,16 +285,11 @@ class BubbleOverlayView(context: Context) : View(context) {
                 lp.x = max(minX, min(maxX, lp.x))
                 lp.y = max(minY, min(maxY, lp.y))
             }
-            lp.width = currentViewW
-            lp.height = currentViewH
             try {
                 windowManager?.updateViewLayout(this, lp)
             } catch (e: Exception) {
                 Log.w("BubbleView", "applyResize updateViewLayout failed", e)
             }
-        } else {
-            // Premier appel, la View n'est pas encore attachee. On cree des params.
-            layoutParams = WindowManager.LayoutParams(currentViewW, currentViewH)
         }
         invalidate()
     }
@@ -339,10 +301,18 @@ class BubbleOverlayView(context: Context) : View(context) {
         return max(decisionMinWidth.toFloat(), measured)
     }
 
+    // ── Cycle de vie : on declenche le recompute quand on est attache ───
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        // Recompute initial maintenant qu'on a un layoutParams et qu'on est
+        // visible. Aucun risque d'exception ici.
+        recomputeLayout()
+    }
+
     // ── Dessin ──────────────────────────────────────────────────────
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // 1) Rectangle decision (s'il y a un texte)
+        // 1) Rectangle decision
         if (decisionText.isNotEmpty()) {
             val w = decisionBoxWidth()
             val rect = RectF(
@@ -391,7 +361,7 @@ class BubbleOverlayView(context: Context) : View(context) {
         canvas.drawLine(cx - xSize, cy + xSize, cx + xSize, cy - xSize, closeXPaint)
     }
 
-    // ── Hit-test : utilise les centres a jour ───────────────────────
+    // ── Hit-test ───────────────────────────────────────────────────
     private fun hitTest(x: Float, y: Float): HitZone {
         if (decisionText.isNotEmpty()) {
             val w = decisionBoxWidth()
@@ -423,11 +393,6 @@ class BubbleOverlayView(context: Context) : View(context) {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 hitZone = hitTest(event.x, event.y)
-                // Si on ne touche aucune zone interactive, on laisse passer
-                // l'evenement vers la fenetre dessous (FLAG_NOT_TOUCH_MODAL fait
-                // le reste). Important : en collapsed la View est minuscule donc
-                // cette situation est rare ; en expanded la View est plus grande
-                // mais le hit-test discrimine bien.
                 if (hitZone == HitZone.NONE) return false
                 initialX = params.x
                 initialY = params.y
@@ -449,7 +414,6 @@ class BubbleOverlayView(context: Context) : View(context) {
                     params.y = (initialY + dy).toInt()
                     val sw = resources.displayMetrics.widthPixels
                     val sh = resources.displayMetrics.heightPixels
-                    // Clamp : la BJ doit rester visible a l'ecran
                     val minX = -bubbleCx.toInt() + (4 * density).toInt()
                     val maxX = sw - bubbleCx.toInt() - (4 * density).toInt() - bubbleSize / 2
                     val minY = -bubbleCy.toInt() + (4 * density).toInt()
