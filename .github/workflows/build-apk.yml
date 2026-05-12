@@ -310,11 +310,13 @@ jobs:
 
           # Portrait lock (v1.14)
           content = add_activity_attr(content, 'screenOrientation', 'portrait')
-          # configChanges requis pour PiP ET pour eviter restart en rotation
+          # configChanges pour eviter le restart de l'activity en rotation/clavier.
+          # Note v1.2.5 : on garde l'attribut (utile pour gerer les transitions)
+          # mais on a retire le support PiP du flow (la bulle systeme remplace).
           content = add_activity_attr(content, 'configChanges',
               'screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden')
-          # PiP support (v1.17)
-          content = add_activity_attr(content, 'supportsPictureInPicture', 'true')
+          # v1.2.5 — supportsPictureInPicture RETIRE : la bulle systeme draggable
+          # remplace entierement le PiP 1/4 d'ecran qui faisait doublon visuel.
 
           # 3) Validation : le manifest doit etre du XML valide avant ecriture
           try:
@@ -333,14 +335,15 @@ jobs:
           print("=== End Final ===")
           PYEOF
 
-      - name: Patch MainActivity.java (auto-enter PiP on Home + register Bubble plugin)
+      - name: Patch MainActivity.java (register Bubble plugin)
         run: |
           python3 << 'PYEOF'
           import os, glob, re, textwrap
-          # v1.17 - Patch de MainActivity.java pour declencher PiP automatiquement
-          # quand l'user appuie Home (onUserLeaveHint). Faisable sur Android 8+.
-          # v1.2 - Enregistre aussi le plugin BJGeniusBubble pour exposer la bulle
-          # flottante au JS.
+          # v1.2.5 — Patch de MainActivity.java pour enregistrer le plugin
+          # BJGeniusBubble. Le PiP automatique au Home a ete RETIRE en v1.2.5
+          # car il faisait doublon avec la bulle systeme draggable. La bulle
+          # remplace entierement le PiP pour le cas d'usage "voir BJ Genius
+          # par-dessus une autre app".
           matches = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)
           if not matches:
               print("WARN: MainActivity.java not found, skipping patch")
@@ -354,8 +357,8 @@ jobs:
               m = re.match(r'package\s+([^;]+);', content)
               if not m:
                   print("WARN: package declaration not found, skipping")
-              elif 'enterPictureInPictureMode' in content and 'BJGeniusBubblePlugin' in content:
-                  print("Already fully patched, skipping")
+              elif 'BJGeniusBubblePlugin' in content and 'enterPictureInPictureMode' not in content:
+                  print("Already patched v1.2.5 (no PiP, with Bubble), skipping")
               else:
                   package = m.group(1)
                   # textwrap.dedent retire l'indentation commune pour produire
@@ -363,11 +366,7 @@ jobs:
                   new_content = textwrap.dedent(f"""\
                       package {package};
 
-                      import android.app.PictureInPictureParams;
-                      import android.content.res.Configuration;
-                      import android.os.Build;
                       import android.os.Bundle;
-                      import android.util.Rational;
                       import com.getcapacitor.BridgeActivity;
                       import studio.deponchy.bjgenius.BJGeniusBubblePlugin;
 
@@ -376,40 +375,16 @@ jobs:
                           public void onCreate(Bundle savedInstanceState) {{
                               // v1.2 — Enregistre le plugin BJGeniusBubble AVANT super.onCreate
                               // pour que Capacitor le decouvre au demarrage.
+                              // v1.2.5 — PiP automatique au Home retire : la bulle systeme
+                              // (foreground service overlay) le remplace avantageusement.
                               registerPlugin(BJGeniusBubblePlugin.class);
                               super.onCreate(savedInstanceState);
-                          }}
-
-                          @Override
-                          public void onUserLeaveHint() {{
-                              super.onUserLeaveHint();
-                              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {{
-                                  try {{
-                                      PictureInPictureParams params = new PictureInPictureParams.Builder()
-                                          .setAspectRatio(new Rational(9, 16))
-                                          .build();
-                                      enterPictureInPictureMode(params);
-                                  }} catch (Exception e) {{
-                                      // PiP not supported in this state, ignore
-                                  }}
-                              }}
-                          }}
-
-                          @Override
-                          public void onPictureInPictureModeChanged(boolean isInPip, Configuration newConfig) {{
-                              super.onPictureInPictureModeChanged(isInPip, newConfig);
-                              if (this.bridge != null && this.bridge.getWebView() != null) {{
-                                  final String js = "document.body.classList." + (isInPip ? "add" : "remove") + "('pip-mode');";
-                                  this.bridge.getWebView().post(() ->
-                                      this.bridge.getWebView().evaluateJavascript(js, null)
-                                  );
-                              }}
                           }}
                       }}
                       """)
                   with open(path, "w", encoding="utf-8") as f:
                       f.write(new_content)
-                  print("MainActivity.java patched (PiP + Bubble plugin registered)")
+                  print("MainActivity.java patched (v1.2.5 : no PiP, Bubble plugin registered)")
                   print("=== New MainActivity.java ===")
                   print(new_content)
           PYEOF
