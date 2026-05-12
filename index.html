@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.2.6 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.2.7 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.6</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.2.7</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5530,14 +5530,19 @@ function stopAllRecognition(){
 }
 
 // Lazy load de transformers.js + du modèle Whisper. Appelé au 1er start.
-async function loadWhisper(){
+// v1.2.7 — Parametre 'silent' ajoute : quand true, supprime les toasts de
+// progression et de succes. Utilise par le preload au boot Android : l'user
+// n'a rien demande, donc lui balancer "Whisper pret" a chaque ouverture
+// d'app pollue l'UX. Les toasts ne sont conserves que pour les appels
+// explicites depuis Settings ou via toggleMic (1er usage).
+async function loadWhisper(silent=false){
   if(whisperReady)return true;
   if(whisperLoading){
     while(whisperLoading)await new Promise(r=>setTimeout(r,150));
     return whisperReady;
   }
   whisperLoading=true;
-  showVoiceToast("⏳ Chargement Whisper...");
+  if(!silent)showVoiceToast("⏳ Chargement Whisper...");
   updateWhisperDLStatus(); // v1.29 — sync ligne paramètres "Moteur vocal"
   try{
     // Import dynamique de transformers.js depuis jsDelivr
@@ -5565,21 +5570,26 @@ async function loadWhisper(){
       progress_callback:(p)=>{
         if(p.status==='progress'&&typeof p.progress==='number'){
           const pct=Math.round(p.progress);
-          showVoiceToast("⏳ Whisper "+pct+"%");
+          if(!silent)showVoiceToast("⏳ Whisper "+pct+"%");
           // v1.29 — Update aussi la ligne paramètres en temps reel
           const dlStatus=document.getElementById('whisper-dl-status');
           if(dlStatus)dlStatus.textContent='⏳ '+pct+'%';
         } else if(p.status==='downloading'){
-          showVoiceToast("⏳ Téléchargement...");
+          if(!silent)showVoiceToast("⏳ Téléchargement...");
         } else if(p.status==='loading'){
-          showVoiceToast("⏳ Initialisation...");
+          if(!silent)showVoiceToast("⏳ Initialisation...");
         }
       }
     });
     whisperReady=true;
     whisperLoading=false;
-    showVoiceToast("✓ Whisper prêt");
-    setTimeout(hideVoiceToast,1200);
+    // v1.2.7 — Toast "Whisper pret" supprime si silent (preload au boot).
+    // Sur Android, le modele est deja bundle dans l'APK donc le "chargement"
+    // est instantane, ce toast a chaque ouverture etait gratuit.
+    if(!silent){
+      showVoiceToast("✓ Whisper prêt");
+      setTimeout(hideVoiceToast,1200);
+    }
     // v1.29 — Marquer ready en localStorage pour persister l'etat entre sessions
     try{localStorage.setItem('bjg_whisper_ready','1');}catch(e){}
     updateWhisperDLStatus();
@@ -5588,6 +5598,8 @@ async function loadWhisper(){
     console.error('Whisper load failed:',err);
     whisperLoading=false;
     whisperReady=false;
+    // v1.2.7 — Toast d'erreur garde meme en mode silent : un echec doit
+    // toujours etre signale a l'user (fallback Web Speech).
     showVoiceToast("⚠ Whisper indisponible — mode classique");
     setTimeout(hideVoiceToast,2200);
     // Auto-revert au Web Speech pour ne pas bloquer l'user
@@ -7080,7 +7092,11 @@ renderHand();updateAll();applyLang();applyPremiumState();
     const isAndroidApp=!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform());
     if(isAndroidApp){
       console.log('[BJG] Whisper preload starting (bundled in APK)...');
-      loadWhisper().then(ok=>{
+      // v1.2.7 — silent=true : pas de toast "Whisper pret" a chaque ouverture
+      // de l'app. L'user n'a rien demande, le modele est bundle, donc le
+      // chargement est invisible. Les toasts restent pour les appels
+      // explicites via Settings ou via toggleMic (1er usage).
+      loadWhisper(true).then(ok=>{
         console.log('[BJG] Whisper preload:',ok?'READY':'failed');
       });
       // v1.2.5 — Synchronise l'etat UI de la pill bulle. Si le service tournait
@@ -7091,7 +7107,8 @@ renderHand();updateAll();applyLang();applyPremiumState();
       // Sur web, on prefetch seulement si premium (l'user a achete l'app, autant
       // que ce soit pret quand il en aura besoin)
       console.log('[BJG] Whisper prefetch (web premium)...');
-      loadWhisper();
+      // v1.2.7 — silent=true : preload web aussi silencieux.
+      loadWhisper(true);
     }
   },3000); // 3s apres boot pour ne pas surcharger le 1er paint
 })();
