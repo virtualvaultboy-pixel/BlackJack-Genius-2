@@ -38,7 +38,7 @@ class BubbleOverlayView(context: Context) : View(context) {
         // Dimensions en dp (multipliees par density pour avoir des pixels)
         const val BUBBLE_DP = 56
         const val SUB_BUBBLE_DP = 42
-        const val EXPAND_DIST_DP = 70
+        const val EXPAND_DIST_DP = 64
         const val DECISION_HEIGHT_DP = 32
         const val DECISION_MIN_WIDTH_DP = 110
         const val DECISION_GAP_DP = 8
@@ -245,8 +245,10 @@ class BubbleOverlayView(context: Context) : View(context) {
             //   close    ↙ (+60 deg)
             //
             val arcRadius = expandDist
-            val angleSpread = Math.toRadians(60.0)  // +/- 60deg autour de l'axe horizontal
-            // Direction principale : 180 deg (gauche) si BJ a droite, 0 deg (droite) sinon
+            // v1.3.7 — Angle d'arc reduit a 50deg (au lieu de 60) pour un layout
+            // plus serre et visuellement plus harmonieux. Les 3 sous-bulles
+            // restent bien distinctes mais ne s'eloignent pas trop verticalement.
+            val angleSpread = Math.toRadians(50.0)
             val baseAngle = if (subBubblesLeft) Math.PI else 0.0
             // 3 angles : -spread, 0, +spread
             val angleMic = baseAngle
