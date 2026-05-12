@@ -53,13 +53,29 @@ public class BJGeniusBubblePlugin extends Plugin {
         // pour eviter d'ecouter d'autres apps malveillantes.
         bubbleEventReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                String type = intent.getStringExtra(BJGeniusBubbleService.EXTRA_EVENT_TYPE);
+            public void onReceive(Context context, final Intent intent) {
+                final String type = intent.getStringExtra(BJGeniusBubbleService.EXTRA_EVENT_TYPE);
                 if (type == null) return;
-                JSObject data = new JSObject();
-                data.put("type", type);
-                notifyListeners("bubbleEvent", data);
-                Log.d(TAG, "Bubble event relayed to JS: " + type);
+                // v1.3.5 — On poste sur le main thread via le bridge Capacitor
+                // pour eviter tout risque de notifyListeners depuis un mauvais
+                // contexte (la WebView doit etre touchee uniquement depuis UI thread).
+                try {
+                    getBridge().getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                JSObject data = new JSObject();
+                                data.put("type", type);
+                                notifyListeners("bubbleEvent", data);
+                                Log.d(TAG, "Bubble event relayed to JS: " + type);
+                            } catch (Exception e) {
+                                Log.w(TAG, "notifyListeners failed", e);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.w(TAG, "Cannot post bubble event to main thread", e);
+                }
             }
         };
         IntentFilter filter = new IntentFilter(BJGeniusBubbleService.BROADCAST_BUBBLE_EVENT);

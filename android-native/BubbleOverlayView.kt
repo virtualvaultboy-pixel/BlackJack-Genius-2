@@ -227,30 +227,84 @@ class BubbleOverlayView(context: Context) : View(context) {
             }
             decisionTopY = padding.toFloat()
         } else {
-            // ─── EXPANDED ────────────────────────────────────────────
-            val w = (expandDist * 2 + subBubbleSize + padding * 2).toInt()
+            // ─── EXPANDED : sous-bulles en ARC autour de BJ ──────────
+            // Les 3 sous-bulles (mic, scan, close) sont toutes positionnees
+            // DU MEME COTE que opposé à la position de BJ sur l'ecran.
+            // - Si BJ est dans la moitie droite : sous-bulles a GAUCHE
+            //   en arc de cercle (mic au milieu, scan au-dessus, close au-dessous)
+            // - Si BJ est a gauche : sous-bulles a droite
+            // Cela evite qu'une sous-bulle sorte de l'ecran.
+            //
+            // Layout en arc de 120 degres (de -60 a +60 par rapport a la
+            // direction opposee a la BJ) :
+            //
+            //   scan     ↖ (-60 deg)
+            //     \
+            //   mic  ←--- BJ          (cote gauche = vers gauche)
+            //     /
+            //   close    ↙ (+60 deg)
+            //
+            val arcRadius = expandDist
+            val angleSpread = Math.toRadians(60.0)  // +/- 60deg autour de l'axe horizontal
+            // Direction principale : 180 deg (gauche) si BJ a droite, 0 deg (droite) sinon
+            val baseAngle = if (subBubblesLeft) Math.PI else 0.0
+            // 3 angles : -spread, 0, +spread
+            val angleMic = baseAngle
+            val angleScan = baseAngle - angleSpread
+            val angleClose = baseAngle + angleSpread
+
+            // Calcul de la bounding box (largeur et hauteur en pixels)
+            // necessaire pour contenir BJ + sous-bulles + decision en haut.
+            // Pour des angles symetriques en haut/bas, le max vertical depasse
+            // de l'arc d'environ arcRadius * sin(spread) + subR.
+            //
+            // Bounding box autour de la bulle centrale (en pixels relatifs) :
+            //   x_min/max = +/- (cos(spread)*arcRadius + subR) si side opposé
+            //   y_min/max = +/- (sin(spread)*arcRadius + subR)
+            val cosSpread = Math.cos(angleSpread).toFloat()
+            val sinSpread = Math.sin(angleSpread).toFloat()
+
+            // Largeur : il faut contenir BJ (bubbleSize) plus l'arc d'un seul cote.
+            // L'arc s'etend au max de cos(spread) * arcRadius + subR vers le cote opposé.
+            val arcExtent = (arcRadius * cosSpread + subR).toInt()
+            var w = bubbleSize + arcExtent + padding * 2
+            // Si on a une decision, sa largeur peut depasser la View. On etend
+            // la View pour la contenir.
+            if (hasDecision) {
+                val decW = decisionBoxWidth().toInt() + padding * 2
+                w = max(w, decW)
+            }
+
+            // Hauteur : il faut contenir l'arc complet en vertical (-spread a +spread)
+            // soit 2 * sin(spread) * arcRadius + 2*subR (subR de chaque cote)
+            // + decision en haut si present.
             val topSpace = if (hasDecision) decisionHeight + decisionGap else 0
-            val bubbleY = (topSpace + padding + mainR).toFloat()
-            val h = (topSpace + padding + bubbleSize + expandDist + subR + padding).toInt()
+            val arcHalfHeight = (arcRadius * sinSpread + subR).toInt()
+            val h = topSpace + max(bubbleSize, arcHalfHeight * 2) + padding * 2
+
             currentViewW = w
             currentViewH = h
-            bubbleCx = w / 2f
-            bubbleCy = bubbleY
-            if (subBubblesLeft) {
-                micCx = bubbleCx - expandDist
-                scanCx = bubbleCx + expandDist
+
+            // Position de BJ dans la View :
+            // - Horizontalement : si sous-bulles a GAUCHE, BJ est a DROITE de la View
+            //   (donc bubbleCx = w - padding - mainR)
+            //   Si sous-bulles a DROITE, BJ est a gauche.
+            // - Verticalement : centre vertical, sous l'eventuel rectangle decision
+            bubbleCx = if (subBubblesLeft) {
+                (w - padding - mainR).toFloat()
             } else {
-                micCx = bubbleCx + expandDist
-                scanCx = bubbleCx - expandDist
+                (padding + mainR).toFloat()
             }
-            micCy = bubbleCy
-            scanCy = bubbleCy
-            closeCx = bubbleCx
-            if (closeAbove && bubbleY - expandDist - subR >= topSpace + padding) {
-                closeCy = bubbleY - expandDist
-            } else {
-                closeCy = bubbleY + expandDist
-            }
+            bubbleCy = (topSpace + padding + max(bubbleSize, arcHalfHeight * 2) / 2f)
+
+            // Sous-bulles positionnees autour de BJ via angle
+            micCx = bubbleCx + (arcRadius * Math.cos(angleMic)).toFloat()
+            micCy = bubbleCy + (arcRadius * Math.sin(angleMic)).toFloat()
+            scanCx = bubbleCx + (arcRadius * Math.cos(angleScan)).toFloat()
+            scanCy = bubbleCy + (arcRadius * Math.sin(angleScan)).toFloat()
+            closeCx = bubbleCx + (arcRadius * Math.cos(angleClose)).toFloat()
+            closeCy = bubbleCy + (arcRadius * Math.sin(angleClose)).toFloat()
+
             decisionTopY = padding.toFloat()
         }
         hasLaidOutOnce = true
@@ -294,6 +348,13 @@ class BubbleOverlayView(context: Context) : View(context) {
         invalidate()
     }
 
+    /** X du centre du rectangle decision. En collapsed, centre sur bubbleCx
+     *  (qui est au centre de la View). En expanded, BJ est decalee a un cote
+     *  donc on centre plutot le rectangle decision sur le milieu de la View
+     *  pour qu'il ne sorte pas. */
+    private fun decisionCenterX(): Float =
+        if (expanded) currentViewW / 2f else bubbleCx
+
     private fun decisionBoxWidth(): Float {
         val measured = if (decisionText.isNotEmpty())
             decisionTextPaint.measureText(decisionText) + 24 * density
@@ -315,9 +376,10 @@ class BubbleOverlayView(context: Context) : View(context) {
         // 1) Rectangle decision
         if (decisionText.isNotEmpty()) {
             val w = decisionBoxWidth()
+            val dcx = decisionCenterX()
             val rect = RectF(
-                bubbleCx - w / 2f, decisionTopY,
-                bubbleCx + w / 2f, decisionTopY + decisionHeight
+                dcx - w / 2f, decisionTopY,
+                dcx + w / 2f, decisionTopY + decisionHeight
             )
             val shadowRect = RectF(rect).apply { offset(1.5f * density, 2 * density) }
             canvas.drawRoundRect(shadowRect, 10 * density, 10 * density, shadowPaint)
@@ -365,7 +427,8 @@ class BubbleOverlayView(context: Context) : View(context) {
     private fun hitTest(x: Float, y: Float): HitZone {
         if (decisionText.isNotEmpty()) {
             val w = decisionBoxWidth()
-            if (x in (bubbleCx - w / 2f)..(bubbleCx + w / 2f) &&
+            val dcx = decisionCenterX()
+            if (x in (dcx - w / 2f)..(dcx + w / 2f) &&
                 y in decisionTopY..(decisionTopY + decisionHeight)) {
                 return HitZone.DECISION
             }
