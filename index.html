@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.11 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.12 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.11</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.12</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -5100,10 +5100,10 @@ function extractCards(transcript){
 // Mic continu en permanence via onend → setTimeout(startRecognition,80).
 
 let easterBuffer=[];
-// v1.3.8 — Reduit de 400 a 250ms pour traiter les cartes plus vite apres
-// reception du dernier texte de transcription. Le delai sert a accumuler des
-// transcriptions partielles fragmentees ; 250ms suffit largement.
-const VOICE_COMMIT_DELAY=250; // ms d'inactivité après le dernier final avant traitement
+// v1.3.12 — Rollback a 400ms (la v1.3.8 l'avait baisse a 250 pour reduire la
+// latence, mais le gain etait marginal et fragilisait les transcriptions
+// partielles fragmentees). 400ms est la valeur eprouvee depuis l'origine.
+const VOICE_COMMIT_DELAY=400; // ms d'inactivité après le dernier final avant traitement
 
 function processBuffer(){
   if(voiceBuffer.length===0)return;
@@ -5651,23 +5651,14 @@ let voiceEngine=(function(){
 let whisperPipeline=null,whisperReady=false,whisperLoading=false;
 let whisperStream=null,whisperAudioContext=null,whisperProcessor=null,whisperSource=null;
 let whisperActive=false,whisperAudioBuf=[];
-const WHISPER_CHUNK_SECONDS=1.5;
+// v1.3.12 — ROLLBACK Whisper aux réglages d'origine apres echec des
+// optimisations v1.3.8-9. Le VAD precoce avec chunks courts (<1s) faisait
+// que Whisper sortait des marqueurs parasites type "(musique)", "[noise]"
+// au lieu de transcrire les mots, car le modele a besoin d'au moins ~2s de
+// contexte audio pour bien reconnaitre la parole isolee.
+// Reglage qui marchait avant la v1.3 : 2.5s chunk, pas de VAD precoce.
+const WHISPER_CHUNK_SECONDS=2.5;
 const WHISPER_SAMPLE_RATE=16000;
-// v1.3.8 — VAD "fin de phrase". Le ScriptProcessor produit des frames de 4096
-// samples a 16kHz = 256ms par frame. Avec WHISPER_SILENCE_FRAMES=3 on detecte
-// 512ms de silence pour declencher un flush precoce. v1.3.9 : ~768ms. Avant on attendait
-// systematiquement la fin du chunk (2.5s), maintenant on peut transcrire
-// des qu'on detecte une fin de phrase.
-const WHISPER_SILENCE_RMS=0.012;       // seuil RMS au-dessus duquel c'est de la voix
-// v1.3.9 — Passe de 2 a 3 frames pour laisser ~768ms de silence entre les
-// phrases. Permet de dire plusieurs cartes en un souffle ("as 4 roi") sans
-// que Whisper coupe en plein milieu d'une micro-pause de respiration.
-// Apres test : si certains users parlent tres lentement, on pourrait monter a 4
-// (~1024ms). Pour l'instant 3 frames est le bon compromis adaptatif.
-const WHISPER_SILENCE_FRAMES=3;        // ~768ms de silence consecutif = fin de phrase
-// Pour eviter de transcrire des silences courts au debut, on impose qu'au moins
-// 0.4s d'audio aient ete capturees avant un flush precoce.
-const WHISPER_MIN_FLUSH_SECONDS=0.4;
 
 // ═══════════════════════════════════════════════════════════════════
 // ══ v1.20 — POPUPS INTRO CONTEXTUELS ══
@@ -6014,43 +6005,20 @@ async function startWhisperRecognition(){
     whisperProcessor=whisperAudioContext.createScriptProcessor(4096,1,1);
 
     const CHUNK_SAMPLES=Math.floor(WHISPER_SAMPLE_RATE*WHISPER_CHUNK_SECONDS);
-    const MIN_FLUSH_SAMPLES=Math.floor(WHISPER_SAMPLE_RATE*WHISPER_MIN_FLUSH_SECONDS);
     whisperAudioBuf=[];
-    // v1.3.8 — Compteur de frames consecutives en silence pour detecter
-    // une fin de phrase et flusher tot. Reset des qu'on detecte de la voix.
-    let silenceFrames=0;
 
+    // v1.3.12 — Rollback a la logique d'origine (avant v1.3.8) : on attend
+    // qu'un chunk de 2.5s soit plein, puis on le transcrit. Pas de VAD precoce.
+    // Whisper a besoin de ce contexte audio complet pour bien reconnaitre les
+    // mots isoles (sans contexte, il sort des marqueurs "(musique)" / "[noise]"
+    // au lieu de transcrire).
     whisperProcessor.onaudioprocess=(e)=>{
       if(!whisperActive)return;
       const input=e.inputBuffer.getChannelData(0);
-      // VAD : calcul RMS de la frame courante (cheap)
-      let sumSq=0;
-      for(let i=0;i<input.length;i++)sumSq+=input[i]*input[i];
-      const rms=Math.sqrt(sumSq/input.length);
-      const isSilence=rms<WHISPER_SILENCE_RMS;
-      // Append au buffer global
       for(let i=0;i<input.length;i++)whisperAudioBuf.push(input[i]);
-      // Mise a jour compteur silence
-      if(isSilence){
-        silenceFrames++;
-      } else {
-        silenceFrames=0;
-      }
-      // v1.3.8 — Flush precoce : si on a au moins MIN_FLUSH_SAMPLES dans le buffer
-      // ET qu'on detecte 2 frames consecutives de silence (= fin de phrase),
-      // on transcrit immediatement plutot que d'attendre la fin du chunk.
-      // Garde-fou : on ne flush que si la frame courante est en silence (sinon
-      // on couperait au milieu d'un mot).
-      const earlyFlush = isSilence
-        && silenceFrames>=WHISPER_SILENCE_FRAMES
-        && whisperAudioBuf.length>=MIN_FLUSH_SAMPLES;
-      // Flush si on atteint un chunk plein OU si on detecte fin de phrase
-      if(whisperAudioBuf.length>=CHUNK_SAMPLES||earlyFlush){
-        const takeN=Math.min(whisperAudioBuf.length,CHUNK_SAMPLES);
-        const chunk=new Float32Array(whisperAudioBuf.slice(0,takeN));
-        whisperAudioBuf=whisperAudioBuf.slice(takeN);
-        silenceFrames=0; // reset pour la prochaine phrase
-        // Async, ne bloque pas la capture
+      if(whisperAudioBuf.length>=CHUNK_SAMPLES){
+        const chunk=new Float32Array(whisperAudioBuf.slice(0,CHUNK_SAMPLES));
+        whisperAudioBuf=whisperAudioBuf.slice(CHUNK_SAMPLES);
         processWhisperChunk(chunk);
       }
     };
@@ -6106,8 +6074,23 @@ async function processWhisperChunk(audioData){
     // Anti-doublon basique (Whisper peut hallucine des "Sous-titres faits par..." sur silence)
     if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text))return;
 
+    // v1.3.12 — Filtre des MARQUEURS PARASITES Whisper. Quand Whisper recoit
+    // un chunk audio avec peu/pas de parole intelligible (bruit ambiant,
+    // musique, silence), il sort des marqueurs entre parentheses/crochets :
+    //   "(musique)", "[Musique]", "(bruit de fond)", "[Music]", "(silence)",
+    //   "[Applause]", "(rires)", "[chuckles]", etc.
+    // On nettoie ces marqueurs du texte. Si le texte ENTIER est un marqueur,
+    // on skip completement (rien a injecter dans le buffer).
+    const MARKER_RE = /[\(\[]\s*(musique|music|bruit|noise|silence|applaud|rires?|laugh|chuckle|sigh|breath|cough|inaudible|crosstalk|background|musik|m[uú]sica|ruido|risas?)[^\)\]]*[\)\]]/gi;
+    const cleanedText = text.replace(MARKER_RE, '').replace(/\s+/g, ' ').trim();
+    if(!cleanedText||cleanedText.length<1){
+      // Le texte etait UNIQUEMENT du marqueur parasite. Skip silencieusement.
+      console.log('[BJG] Whisper marker filtered out:', text);
+      return;
+    }
+
     // Injection dans le buffer comme Web Speech
-    voiceBuffer.push(text);
+    voiceBuffer.push(cleanedText);
     if(voiceTimer)clearTimeout(voiceTimer);
     voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},VOICE_COMMIT_DELAY);
   } catch(err){
