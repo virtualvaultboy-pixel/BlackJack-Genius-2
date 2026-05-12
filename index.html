@@ -5657,14 +5657,13 @@ let voiceEngine=(function(){
 })();
 let whisperPipeline=null,whisperReady=false,whisperLoading=false;
 let whisperStream=null,whisperAudioContext=null,whisperProcessor=null,whisperSource=null;
-let whisperActive=false,whisperAudioBuf=[];
+let whisperActive=false;
 // v1.3.12 — ROLLBACK Whisper aux réglages d'origine apres echec des
 // optimisations v1.3.8-9. Le VAD precoce avec chunks courts (<1s) faisait
 // que Whisper sortait des marqueurs parasites type "(musique)", "[noise]"
 // au lieu de transcrire les mots, car le modele a besoin d'au moins ~2s de
 // contexte audio pour bien reconnaitre la parole isolee.
 // Reglage qui marchait avant la v1.3 : 2.5s chunk, pas de VAD precoce.
-const WHISPER_CHUNK_SECONDS=2.5;
 const WHISPER_SAMPLE_RATE=16000;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6011,8 +6010,10 @@ async function startWhisperRecognition(){
     // ScriptProcessor : deprecated mais widely supported, donne Float32Array brut
     whisperProcessor=whisperAudioContext.createScriptProcessor(4096,1,1);
 
-    const CHUNK_SAMPLES=Math.floor(WHISPER_SAMPLE_RATE*WHISPER_CHUNK_SECONDS);
-    whisperAudioBuf=[];
+    // v1.3.17 — Code nettoye : CHUNK_SAMPLES et whisperAudioBuf etaient utilises
+    // avant la machine VAD (transcription continue toutes les 2.5s).
+    // Avec le VAD, on n'a plus de chunks de taille fixe : chaque segment de
+    // parole est envoye a Whisper quand l'user fait une pause.
 
     // v1.3.16 — VAD INTELLIGENT : on ne transcrit QUE quand l'user parle.
     //
@@ -6148,7 +6149,6 @@ async function startWhisperRecognition(){
 
 function stopWhisperRecognition(){
   whisperActive=false;
-  whisperAudioBuf=[];
   // v1.3.14 — Reset du dedup anti-hallucination pour que la prochaine
   // session vocale ne soit pas bloquee par le dernier texte de la precedente.
   window.__lastWhisperText='';
