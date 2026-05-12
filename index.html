@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.10 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.11 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.10</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.11</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -1453,6 +1453,75 @@ body.pip-mode #pip-display{display:flex!important;}
   </div>
 </div>
 
+<!-- v1.3.11 — POPUP INTRO BUBBLE MIC : affiche au 1er tap sur la sous-bulle
+     mic de la bulle flottante (si le micro n'a jamais ete utilise auparavant).
+     Le bouton "Activer le micro" ferme + marque AUSSI bjg_intro_mic_seen=1
+     pour eviter la redondance avec le tuto mic classique. -->
+<div class="popup-overlay" id="popup-intro-bubble-mic" onclick="closePopup('popup-intro-bubble-mic')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:4px;">🫧🎤</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;" id="intro-bmic-title">Micro depuis la bulle</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-bmic-sub">Activez le micro directement depuis la bulle, sans revenir dans l'app. Vos cartes sont reconnues à la volée.</div>
+
+    <!-- Démo : dire des cartes -> décision dans le rectangle au-dessus de la bulle -->
+    <div style="background:rgba(0,0,0,0.28);border:1px solid rgba(212,184,99,0.18);border-radius:12px;padding:13px 10px;margin-bottom:10px;">
+      <div style="font-size:0.62rem;color:rgba(240,236,224,0.5);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:9px;" id="intro-bmic-sayh">Dites</div>
+      <div style="font-size:0.88rem;font-weight:800;color:#f0ecdf;margin-bottom:11px;font-style:italic;letter-spacing:0.5px;" id="intro-bmic-saytx">« croupier 7 main as 6 »</div>
+      <div style="font-size:0.5rem;color:rgba(240,236,224,0.4);letter-spacing:1.5px;margin-bottom:9px;">▼</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:#22c55e;color:#0a2515;font-weight:900;font-size:0.85rem;padding:6px 14px;border-radius:8px;letter-spacing:1.5px;" id="intro-bmic-decision">TIRER</div>
+      <div style="font-size:0.55rem;color:rgba(240,236,224,0.55);margin-top:8px;" id="intro-bmic-decisionhelp">s'affiche au-dessus de la bulle</div>
+    </div>
+
+    <!-- 2 conseils clés -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:9px;padding:8px 6px;text-align:center;">
+        <div style="font-size:0.55rem;color:#22c55e;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:3px;" id="intro-bmic-tip1h">Bulle visible</div>
+        <div style="font-size:0.62rem;color:rgba(240,236,224,0.8);" id="intro-bmic-tip1ex">même hors de l'app</div>
+      </div>
+      <div style="background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.22);border-radius:9px;padding:8px 6px;text-align:center;">
+        <div style="font-size:0.55rem;color:#38bdf8;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:3px;" id="intro-bmic-tip2h">Tap rouge</div>
+        <div style="font-size:0.62rem;color:rgba(240,236,224,0.8);" id="intro-bmic-tip2ex">pour arrêter</div>
+      </div>
+    </div>
+
+    <!-- Permission Android + DL Whisper info -->
+    <div style="background:rgba(127,170,255,0.07);border:1px solid rgba(127,170,255,0.22);border-radius:11px;padding:9px 11px;margin-bottom:12px;text-align:left;font-size:0.62rem;color:rgba(240,236,224,0.85);line-height:1.5;" id="intro-bmic-info">🔒 Android vous demandera l'autorisation micro. Au 1er usage, téléchargement automatique du moteur vocal (~40 Mo) — soyez en <strong>Wi-Fi</strong>.</div>
+
+    <!-- Bouton confirmation -->
+    <div onclick="confirmBubbleMicIntro()" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-bmic-ok">Activer le micro ✓</div>
+  </div>
+</div>
+
+<!-- v1.3.11 — POPUP INTRO BUBBLE SCAN : affiche au 1er tap sur la sous-bulle
+     scan. Pour l'instant le scan est en preview (sera dispo en v1.7+) donc le
+     popup explique que la fonction arrive bientot. -->
+<div class="popup-overlay" id="popup-intro-bubble-scan" onclick="closePopup('popup-intro-bubble-scan')">
+  <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="popup-handle"></div>
+    <div style="font-size:2.6rem;margin-bottom:4px;">🫧📷</div>
+    <div style="font-size:1rem;font-weight:900;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;" id="intro-bscan-title">Scan zone d'écran</div>
+    <div style="font-size:0.7rem;color:rgba(240,236,224,0.75);line-height:1.5;margin-bottom:14px;" id="intro-bscan-sub">Délimitez une zone de votre écran (le casino en ligne par exemple). La bulle lit les cartes en temps réel.</div>
+
+    <!-- Visualisation : rectangle sur écran -->
+    <div style="background:linear-gradient(180deg,#0a3d1f 0%,#0a2515 100%);border:1.5px solid rgba(212,184,99,0.3);border-radius:14px;padding:14px 12px;margin-bottom:11px;position:relative;">
+      <div style="background:rgba(0,0,0,0.45);border:2px dashed #c9a84c;border-radius:9px;padding:14px 9px;">
+        <div style="font-size:0.55rem;letter-spacing:2px;color:#c9a84c;font-weight:800;text-transform:uppercase;margin-bottom:7px;" id="intro-bscan-zonelbl">Zone scannée</div>
+        <div style="display:flex;justify-content:center;gap:5px;">
+          <div style="background:#f0ecdf;color:#c00;font-weight:900;font-size:0.85rem;padding:6px 11px;border-radius:5px;">A</div>
+          <div style="background:#f0ecdf;color:#1a1a1a;font-weight:900;font-size:0.85rem;padding:6px 11px;border-radius:5px;">10</div>
+        </div>
+      </div>
+      <div style="position:absolute;top:-10px;right:-6px;background:#c9a84c;color:#1a1000;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;box-shadow:0 2px 8px rgba(0,0,0,0.5);">📷</div>
+    </div>
+
+    <!-- Avertissement preview -->
+    <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:11px;padding:10px 11px;margin-bottom:12px;text-align:left;font-size:0.65rem;color:rgba(240,236,224,0.9);line-height:1.5;" id="intro-bscan-warn">🚧 <strong>Bientôt disponible</strong>. Cette fonction est en préparation et arrivera dans une prochaine mise à jour. Vous recevrez une notif quand elle sera prête.</div>
+
+    <div onclick="confirmBubbleScanIntro()" style="background:linear-gradient(135deg,#8a6020,#c9a84c);border-radius:12px;padding:11px;color:#1a1000;font-size:0.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" id="intro-bscan-ok">Compris ✓</div>
+  </div>
+</div>
+
 <!-- POPUP RESTORE RESULT (résultat de "Restaurer mon achat") -->
 <div class="popup-overlay" id="popup-restore-result" onclick="closePopup('popup-restore-result')">
   <div class="popup" onclick="event.stopPropagation()" style="text-align:center;">
@@ -1982,6 +2051,25 @@ const LANGS={
     introBubbleHow4:"Croix rouge ou re-tap 🫧 pour la fermer",
     introBubbleTip:"💡 <strong>Indépendante du micro</strong> : la bulle peut tourner seule, ou avec le micro pour dicter vos cartes en parallèle.",
     introBubbleOk:"Compris ✓",
+    // v1.3.11 — Popup intro Mic depuis la bulle (1ere utilisation)
+    introBmicTitle:"Micro depuis la bulle",
+    introBmicSub:"Activez le micro directement depuis la bulle, sans revenir dans l'app. Vos cartes sont reconnues à la volée.",
+    introBmicSayh:"Dites",
+    introBmicSaytx:"« croupier 7 main as 6 »",
+    introBmicDecision:"TIRER",
+    introBmicDecisionhelp:"s'affiche au-dessus de la bulle",
+    introBmicTip1h:"Bulle visible",
+    introBmicTip1ex:"même hors de l'app",
+    introBmicTip2h:"Tap rouge",
+    introBmicTip2ex:"pour arrêter",
+    introBmicInfo:"🔒 Android vous demandera l'autorisation micro. Au 1er usage, téléchargement automatique du moteur vocal (~40 Mo) — soyez en <strong>Wi-Fi</strong>.",
+    introBmicOk:"Activer le micro ✓",
+    // v1.3.11 — Popup intro Scan depuis la bulle (1ere utilisation)
+    introBscanTitle:"Scan zone d'écran",
+    introBscanSub:"Délimitez une zone de votre écran (le casino en ligne par exemple). La bulle lit les cartes en temps réel.",
+    introBscanZonelbl:"Zone scannée",
+    introBscanWarn:"🚧 <strong>Bientôt disponible</strong>. Cette fonction est en préparation et arrivera dans une prochaine mise à jour. Vous recevrez une notif quand elle sera prête.",
+    introBscanOk:"Compris ✓",
     // v1.2.6 — Bande Hi-Lo (label sous le header)
     hiloBarLabel:"Compteur Hi-Lo",
     tutoSpT8:"Prêt à passer au niveau supérieur ?",
@@ -2319,6 +2407,25 @@ const LANGS={
     introBubbleHow4:"Red cross or re-tap 🫧 to close it",
     introBubbleTip:"💡 <strong>Independent from the mic</strong>: the bubble can run alone, or with the mic to dictate your cards alongside.",
     introBubbleOk:"Got it ✓",
+    // v1.3.11 — Mic from bubble intro popup (first use)
+    introBmicTitle:"Mic from the bubble",
+    introBmicSub:"Activate the mic directly from the bubble, no need to return to the app. Cards are recognized on the fly.",
+    introBmicSayh:"Say",
+    introBmicSaytx:"\"dealer 7 hand ace 6\"",
+    introBmicDecision:"HIT",
+    introBmicDecisionhelp:"shows above the bubble",
+    introBmicTip1h:"Bubble visible",
+    introBmicTip1ex:"even outside the app",
+    introBmicTip2h:"Red tap",
+    introBmicTip2ex:"to stop",
+    introBmicInfo:"🔒 Android will ask for mic permission. On first use, automatic download of the voice engine (~40 MB) — be on <strong>Wi-Fi</strong>.",
+    introBmicOk:"Enable mic ✓",
+    // v1.3.11 — Scan from bubble intro popup (first use)
+    introBscanTitle:"Screen zone scan",
+    introBscanSub:"Outline a zone of your screen (e.g. the online casino). The bubble reads cards in real time.",
+    introBscanZonelbl:"Scanned zone",
+    introBscanWarn:"🚧 <strong>Coming soon</strong>. This feature is in preparation and will arrive in an upcoming update. You'll get a notif when it's ready.",
+    introBscanOk:"Got it ✓",
     // v1.2.6 — Hi-Lo bar label under header
     hiloBarLabel:"Hi-Lo Counter",
     tutoSpT8:"Ready to level up?",
@@ -2656,6 +2763,25 @@ const LANGS={
     introBubbleHow4:"Cruz roja o re-tap 🫧 para cerrarla",
     introBubbleTip:"💡 <strong>Independiente del micro</strong>: la burbuja puede funcionar sola, o con el micro para dictar tus cartas en paralelo.",
     introBubbleOk:"Entendido ✓",
+    // v1.3.11 — Popup intro Micro desde la burbuja (1er uso)
+    introBmicTitle:"Micro desde la burbuja",
+    introBmicSub:"Activa el micro directamente desde la burbuja, sin volver a la app. Tus cartas se reconocen al vuelo.",
+    introBmicSayh:"Di",
+    introBmicSaytx:"\"crupier 7 mano as 6\"",
+    introBmicDecision:"PEDIR",
+    introBmicDecisionhelp:"aparece encima de la burbuja",
+    introBmicTip1h:"Burbuja visible",
+    introBmicTip1ex:"incluso fuera de la app",
+    introBmicTip2h:"Tap rojo",
+    introBmicTip2ex:"para parar",
+    introBmicInfo:"🔒 Android te pedirá el permiso de micro. En el 1er uso, descarga automática del motor de voz (~40 MB) — usa <strong>Wi-Fi</strong>.",
+    introBmicOk:"Activar el micro ✓",
+    // v1.3.11 — Popup intro Escaneo desde la burbuja (1er uso)
+    introBscanTitle:"Escaneo de zona",
+    introBscanSub:"Delimita una zona de tu pantalla (el casino online por ejemplo). La burbuja lee las cartas en tiempo real.",
+    introBscanZonelbl:"Zona escaneada",
+    introBscanWarn:"🚧 <strong>Próximamente</strong>. Esta función está en preparación y llegará en una próxima actualización. Recibirás una notif cuando esté lista.",
+    introBscanOk:"Entendido ✓",
     // v1.2.6 — Etiqueta de la barra Hi-Lo bajo el header
     hiloBarLabel:"Contador Hi-Lo",
     tutoSpT8:"¿Listo para subir de nivel?",
@@ -2828,6 +2954,25 @@ function applyLang(){
       "<div><strong>3.</strong> "+t.introBubbleHow3+"</div>"+
       "<div><strong>4.</strong> "+t.introBubbleHow4+"</div>";
   }
+  // v1.3.11 — Popup intro bulle-mic (1er tap mic depuis bulle)
+  ib("intro-bmic-title","introBmicTitle");
+  ib("intro-bmic-sub","introBmicSub");
+  ib("intro-bmic-sayh","introBmicSayh");
+  ib("intro-bmic-saytx","introBmicSaytx");
+  ib("intro-bmic-decision","introBmicDecision");
+  ib("intro-bmic-decisionhelp","introBmicDecisionhelp");
+  ib("intro-bmic-tip1h","introBmicTip1h");
+  ib("intro-bmic-tip1ex","introBmicTip1ex");
+  ib("intro-bmic-tip2h","introBmicTip2h");
+  ib("intro-bmic-tip2ex","introBmicTip2ex");
+  ib("intro-bmic-info","introBmicInfo",true);
+  ib("intro-bmic-ok","introBmicOk");
+  // v1.3.11 — Popup intro bulle-scan (1er tap scan depuis bulle)
+  ib("intro-bscan-title","introBscanTitle");
+  ib("intro-bscan-sub","introBscanSub");
+  ib("intro-bscan-zonelbl","introBscanZonelbl");
+  ib("intro-bscan-warn","introBscanWarn",true);
+  ib("intro-bscan-ok","introBscanOk");
   // Drawer items
   const dsec=document.querySelectorAll(".dsec-title");
   const labels=[t.drawerTools,t.drawerDisplay,t.drawerSound,t.drawerLang];
@@ -5139,17 +5284,33 @@ function installBubbleEventListener(){
       console.log('[BJG] Bubble event from native:',type);
       switch(type){
         case 'mic_tap':
-          // L'user a tape sur la sous-bulle mic -> bascule le mic
-          // v1.3.6 — On retire le check isPremium ici. Si l'user a active la
-          // bulle, c'est qu'il est deja PRO (la pill bulle est verrouillee PRO).
-          // Donc inutile de re-checker, et ca elimine un cas ou le toast "Mic Pro
-          // requis" s'affichait a tort si isPremium n'etait pas encore initialise.
+          // v1.3.11 — Si le mic n'a jamais ete configure (1ere utilisation
+          // dans cette installation), on affiche un popup specifique bulle
+          // qui explique la fonctionnalite, demande confirmation, puis
+          // declenche la permission Android + active le mic. Le flag
+          // bjg_intro_mic_seen est marque a 1 dans confirmBubbleMicIntro(),
+          // ce qui evite que l'user revoie le tuto micro classique quand il
+          // revient dans l'app.
+          if(!hasIntroSeen('mic')){
+            const popup=document.getElementById('popup-intro-bubble-mic');
+            if(popup)popup.classList.add('show');
+            return;
+          }
+          // Cas standard : mic deja configure, on bascule directement
           try { toggleMic(); }
           catch(e){ console.warn('[BJG] toggleMic from bubble failed:',e); }
           break;
         case 'scan_tap':
-          // v1.7 (a venir) : ouvrira la selection de zone d'ecran.
-          // Pour v1.3 : toast d'info.
+          // v1.3.11 — Idem mic : popup intro specifique bulle si jamais vu.
+          // Le scan est encore en preview (v1.7+) donc le popup explique
+          // ca clairement. Confirmation = marquer 'cam' comme vu pour
+          // eviter la redondance avec le tuto camera classique.
+          if(!hasIntroSeen('cam')){
+            const popup=document.getElementById('popup-intro-bubble-scan');
+            if(popup)popup.classList.add('show');
+            return;
+          }
+          // Cas standard : toast d'info (le scan n'est pas encore actif)
           try { showVoiceToast('Scan zone : bientôt'); setTimeout(hideVoiceToast, 1500); } catch(_){}
           break;
         case 'close_tap':
@@ -5538,6 +5699,37 @@ function showIntro(name){
   if(name==='mic-detail')renderMicCommandsDetail();
   const popup=document.getElementById('popup-intro-'+name);
   if(popup)popup.classList.add('show');
+}
+
+// v1.3.11 — Confirmation du popup intro bubble-mic : ferme le popup, marque
+// AUSSI bjg_intro_mic_seen=1 (pas seulement bubble-mic) pour eviter que
+// l'user revoie le tuto mic classique quand il revient dans l'app, puis
+// declenche toggleMic() qui demandera la permission Android si necessaire.
+function confirmBubbleMicIntro(){
+  try {
+    const popup=document.getElementById('popup-intro-bubble-mic');
+    if(popup)popup.classList.remove('show');
+    // Marque le tuto mic comme vu pour eviter la redondance dans l'app
+    markIntroSeen('mic');
+    // Active le mic. Si la permission Android n'a jamais ete accordee,
+    // le navigateur la demandera automatiquement au moment de getUserMedia.
+    toggleMic();
+  } catch(e){
+    console.warn('[BJG] confirmBubbleMicIntro failed:',e);
+  }
+}
+
+// v1.3.11 — Confirmation du popup intro bubble-scan. Le scan reel n'est pas
+// encore implemente (preview v1.7+), donc on ne lance rien : on ferme juste
+// le popup et on marque cam comme seen.
+function confirmBubbleScanIntro(){
+  try {
+    const popup=document.getElementById('popup-intro-bubble-scan');
+    if(popup)popup.classList.remove('show');
+    markIntroSeen('cam');
+  } catch(e){
+    console.warn('[BJG] confirmBubbleScanIntro failed:',e);
+  }
 }
 
 // v1.22 — Remplit dynamiquement le popup-intro-mic-detail avec la liste
