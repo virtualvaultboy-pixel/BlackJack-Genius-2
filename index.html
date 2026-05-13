@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.20 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.21 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.20</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.21</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -6065,7 +6065,11 @@ async function startWhisperRecognition(){
     // Nouveaux seuils plus permissifs.
     const RMS_START = 0.010;                 // seuil pour entrer en VOICE
     const RMS_END = 0.005;                   // seuil pour considerer comme silence (hysteresis)
-    const SILENCE_TAIL_MS = 700;             // duree de silence apres parole avant flush
+    // v1.3.21 — Reduit de 700 a 500ms : la latence ressentie etait trop longue
+    // entre la fin de la parole et l'affichage du resultat. 500ms reste
+    // confortable (l'user a encore ~0.5s pour bien terminer son chiffre)
+    // et fait gagner 200ms direct sur le tour de boucle.
+    const SILENCE_TAIL_MS = 500;             // duree de silence apres parole avant flush
     const SILENCE_TAIL_FRAMES = Math.ceil(SILENCE_TAIL_MS / FRAME_MS);
     const PRE_BUFFER_FRAMES = 1;             // garde 1 frame avant la voix (~256ms) pour ne pas couper l'attaque
     const MIN_VOICE_FRAMES = 2;              // minimum 2 frames de voix nette (~512ms) pour qu'on envoie a Whisper
@@ -6195,6 +6199,13 @@ async function processWhisperChunk(audioData){
   // onaudioprocess garantit qu'on ne recoit ici que des segments de parole
   // detectes activement (silence deja exclu, attaque preservee).
 
+  // v1.3.21 — Feedback visuel "Traitement en cours". L'inference Whisper
+  // sur CPU Samsung milieu de gamme prend 1.5-3s. Sans feedback, l'user
+  // pensait que la reco etait cassee. On affiche un toast immediatement
+  // et il sera remplace par le resultat (✓ cartes ou ❓ pas reconnu)
+  // quand processBuffer tournera.
+  try { showVoiceToast("⏳ Traitement…"); } catch(_){}
+
   try{
     const lang=currentLang==='en'?'english':currentLang==='es'?'spanish':'french';
     const result=await whisperPipeline(audioData,{
@@ -6203,10 +6214,17 @@ async function processWhisperChunk(audioData){
       return_timestamps:false,
     });
     const text=((result&&result.text)||'').trim();
-    if(!text||text.length<1)return;
+    if(!text||text.length<1){
+      // v1.3.21 — Rien transcrit, on cache le toast "Traitement"
+      try { hideVoiceToast(); } catch(_){}
+      return;
+    }
 
     // Anti-hallucinations Whisper sur silence (sous-titres bidons connus du modele)
-    if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text))return;
+    if(/sous-?titres?|amara\.org|by amara|subt[ií]tulos|subtitles/i.test(text)){
+      try { hideVoiceToast(); } catch(_){}
+      return;
+    }
 
     // v1.3.12 — Filtre des marqueurs entre parentheses/crochets ("(musique)",
     // "[noise]", "(silence)"...). Whisper en sort quand le chunk audio n'a
@@ -6214,7 +6232,10 @@ async function processWhisperChunk(audioData){
     // on skip ; sinon on nettoie et on garde le reste.
     const MARKER_RE=/[\(\[]\s*(musique|music|bruit|noise|silence|applaud|rires?|laugh|chuckle|sigh|breath|cough|inaudible|crosstalk|background|musik|m[uú]sica|ruido|risas?)[^\)\]]*[\)\]]/gi;
     const cleanedText=text.replace(MARKER_RE,'').replace(/\s+/g,' ').trim();
-    if(!cleanedText)return;
+    if(!cleanedText){
+      try { hideVoiceToast(); } catch(_){}
+      return;
+    }
 
     // v1.3.14 — Anti-hallucination INTER-CHUNKS : Whisper peut entrer en boucle
     // et repeter le meme texte sur plusieurs chunks consecutifs (le mic capte
@@ -6223,16 +6244,22 @@ async function processWhisperChunk(audioData){
     // d'accumuler 10x "10" dans le buffer.
     if(cleanedText===window.__lastWhisperText){
       // On a deja ce texte du chunk precedent, c'est une hallucination en boucle.
+      try { hideVoiceToast(); } catch(_){}
       return;
     }
     window.__lastWhisperText=cleanedText;
 
     // Injection dans le buffer comme Web Speech
     voiceBuffer.push(cleanedText);
-    if(voiceTimer)clearTimeout(voiceTimer);
-    voiceTimer=setTimeout(()=>{processBuffer();voiceTimer=null;},VOICE_COMMIT_DELAY);
+    // v1.3.21 — Whisper renvoie un texte DEFINITIF d'un coup (pas de partiels
+    // a accumuler comme Web Speech). Le VOICE_COMMIT_DELAY de 400ms etait
+    // hérité du path Web Speech et coutait 400ms inutiles a chaque transcription.
+    // On flush immediatement pour gagner ces 400ms de latence ressentie.
+    if(voiceTimer){clearTimeout(voiceTimer);voiceTimer=null;}
+    processBuffer();
   } catch(err){
     console.error('Whisper transcribe error:',err);
+    try { hideVoiceToast(); } catch(_){}
   }
 }
 
