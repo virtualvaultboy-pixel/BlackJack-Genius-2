@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ═══════════════════════ BJ Genius — v1.3.21 ═══════════════════════ -->
+<!-- ═══════════════════════ BJ Genius — v1.3.22 ═══════════════════════ -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -674,7 +674,7 @@ body.pip-mode #pip-display{display:flex!important;}
 <div class="app">
   <div class="hdr">
     <div class="hdr-title-block">
-      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.21</span></div>
+      <div class="hdr-title">♠ BJ Genius ♥ <span id="version-badge" onclick="onVersionTap()" ontouchstart="onVersionLongPressStart(event)" ontouchend="onVersionLongPressEnd()" ontouchcancel="onVersionLongPressEnd()" onmousedown="onVersionLongPressStart(event)" onmouseup="onVersionLongPressEnd()" onmouseleave="onVersionLongPressEnd()" style="font-size:0.5rem;color:rgba(201,168,76,0.5);letter-spacing:1px;cursor:pointer;">v1.3.22</span></div>
       <div class="hdr-sub">Tableau standard</div>
     </div>
     <div class="hdr-pills">
@@ -3835,6 +3835,15 @@ function resetAll(){
   document.getElementById('split-tabs').classList.remove('show');
   document.getElementById('split-action-btn').classList.remove('show');
   renderHand();updateAll();
+  // v1.3.22 — Fix decision rect bulle qui ne se vidait pas au reset :
+  // updateAll() return early quand DC=null (ligne 3295) AVANT d'arriver a
+  // syncBubbleDecision() (ligne 3361), donc l'ancienne decision ("DOUBLER",
+  // "RESTER", ...) restait affichee dans le rect natif au-dessus du BJ.
+  // On force le sync ici en bypassant le throttle 250ms pour garantir
+  // que la bulle soit vide immediatement apres le reset.
+  lastBubbleDecisionPayload = '__force_resync__';
+  lastBubbleDecisionTime = 0;
+  syncBubbleDecision();
   tutoCheckAutoAdvance('reset');
 }
 
@@ -5134,7 +5143,34 @@ function processBuffer(){
   // ── Reset ──
   if(n.includes("reset")||n.includes("nouvelle")||n.includes("recommence")||n.includes("efface")){
     const tr=LANGS[currentLang]||LANGS.fr;
-    resetAll();showVoiceToast(tr.voiceReset);setTimeout(hideVoiceToast,1200);return;
+    resetAll();
+    showVoiceToast(tr.voiceReset);
+    setTimeout(hideVoiceToast,1200);
+    // v1.3.22 — Feedback "Nouvelle main" visible cote BULLE NATIVE pour l'user
+    // qui pilote BJG depuis une autre app (casino). Sans ca, il dit "nouvelle
+    // main" mais ne voit rien (le toast est dans BJG en background). On push
+    // "↺ Reset" en vert dans le rect natif de la bulle pendant 1.5s puis on
+    // re-sync pour le vider. resetAll() vient juste de syncBubbleDecision()
+    // (donc rect vide), on overwrite avec le message transient ici.
+    try{
+      const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BJGeniusBubble;
+      if(bubbleOn && plugin && plugin.setDecision){
+        // Bypass throttle pour que ce push passe meme si le precedent
+        // setDecision (le force-resync de resetAll) etait il y a <250ms.
+        lastBubbleDecisionPayload = '__transient_newhand__';
+        lastBubbleDecisionTime = Date.now();
+        plugin.setDecision({ text: '↺ Reset', color: '#22c55e' }).catch(_=>{});
+        // 1.5s plus tard : on force un nouveau resync qui remettra le rect
+        // a vide (puisque DC=null apres reset, syncBubbleDecision detecte
+        // aph visible -> text='').
+        setTimeout(()=>{
+          lastBubbleDecisionPayload = '__force_clear__';
+          lastBubbleDecisionTime = 0;
+          syncBubbleDecision();
+        }, 1500);
+      }
+    }catch(_){}
+    return;
   }
 
   // ── Split ──
